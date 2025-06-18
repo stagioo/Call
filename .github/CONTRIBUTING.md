@@ -30,7 +30,7 @@ Thanks for your interest in contributing to Call, the open-source alternative to
 
 5. **Communication**
 
-   - Join our Discord Server <a href="discord.gg/bre4echNxB" target="_blank">Here</a>
+   - Join our Discord Server; discord.gg/bre4echNxB
 
 6. **Questions?**
 
