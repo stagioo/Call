@@ -1,0 +1,22 @@
+{
+  "name": "@call/db",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "generate": "bunx drizzle-kit generate",
+    "migrate": "bunx drizzle-kit generate && bunx drizzle-kit migrate",
+    "studio": "bunx drizzle-kit studio"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./schema.ts"
+  },
+  "devDependencies": {
+    "@call/typescript-config": "workspace:^",
+    "drizzle-kit": "^0.31.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
