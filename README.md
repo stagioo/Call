@@ -1,23 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# shadcn/ui monorepo template
 
-## Getting Started
+This template is for creating a monorepo with shadcn/ui.
 
-First, run the development server:
+## Usage
 
 ```bash
-bun dev
+pnpm dlx shadcn@latest init
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Adding components
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To add components to your app, run the following command at the root of your `web` app:
 
-## Tech Stack
+```bash
+pnpm dlx shadcn@latest add button -c apps/web
+```
 
-Call will be built on modern, sustainable, and reliable technologies.
+This will place the ui components in the `packages/ui/src/components` directory.
 
-- **Frontend**: Next.js, React, TypeScript, TailwindCSS, Shadcn UI
-- **Backend**: Node.js
-- **Realtime**:Socket.io, WebRTC
-- **Database**: PostgreSQL
-- **Authentication**: Better Auth, Google OAuth
+## Tailwind
+
+Your `tailwind.config.ts` and `globals.css` are already set up to use the components from the `ui` package.
+
+## Using components
+
+To use the components in your app, import them from the `ui` package.
+
+```tsx
+import { Button } from "@workspace/ui/components/button"
+```

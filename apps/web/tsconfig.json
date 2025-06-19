@@ -1,0 +1,26 @@
+{
+  "extends": "@call/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@call/ui/*": ["../../packages/ui/src/*"],
+      "@call/db/*": ["../../packages/db/src/*"],
+      "@call/eslint-config": ["../../packages/eslint-config/src/*"],
+      "@call/typescript-config": ["../../packages/typescript-config/src/*"]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "next.config.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}
