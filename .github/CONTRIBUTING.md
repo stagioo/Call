@@ -1,37 +1,65 @@
-## Contributing to Call
+# Contributing to Call
 
-Thanks for your interest in contributing to Call, the open-source alternative to Google Meet and Zoom. Every contribution helps us in our mission to give users control over their data.
+Thanks for your interest in contributing to **Call**, the open-source alternative to Google Meet and Zoom. Every contribution helps us in our mission to give users control over their data.
 
-## How to contribute
+---
 
-1. **Code contribution**
+## How to Contribute
 
-   - Fork the repository
-   - Create a branch `git checkout -b feature/your-feature`
-   - Commit your changes `git commit -m "Add your feature"`
-   - Push to your fork `git push origin feature/your-feature`
-   - Open a pull request.
+### 1. Code Contributions
 
-2. **Setting Up the Environment**
+* Fork the repository.
+* Create a new branch:
 
-   - Clone the repo: `git clone https://github.com/your-org/call.git`
-   - Install `Bun`
-   - Run locally `Bun dev`
+  ```bash
+  git checkout -b feature/your-feature
+  ```
 
-3. **Code style**
+* Commit your changes:
 
-   - Keep code readable and add comments when needed
+  ```bash
+  git commit -m "Add your feature"
+  ```
 
-4. **Pull Request Process**
+* Push to your fork:
 
-   - Ensure your code is tested
-   - Describe your changes in the pull request.
-   - A maintainer will review your PR
+  ```bash
+  git push origin feature/your-feature
+  ```
 
-5. **Communication**
+* Open a pull request.
 
-   - Join our Discord Server; discord.gg/bre4echNxB
+### 2. Setting Up the Environment
 
-6. **Questions?**
+* Clone the repo:
 
-   - Feel free to open an issue or ask in our community channel. Thanks for contributing!
+  ```bash
+  git clone https://github.com/your-org/call.git
+  ```
+
+* Install [Bun](https://bun.sh/)
+* Run the app locally:
+
+  ```bash
+  bun dev
+  ```
+
+### 3. Code Style
+
+* Keep your code clean and readable.
+* Add comments where necessary to explain complex logic.
+
+### 4. Pull Request Process
+
+* Ensure your code is tested.
+* Clearly describe your changes in the pull request.
+* A maintainer will review your PR and provide feedback if needed.
+
+### 5. Communication
+
+* Join our [Discord server](https://discord.gg/bre4echNxB) to connect with the community and maintainers.
+
+### 6. Questions?
+
+* Feel free to open an issue or ask in our community channel.
+  Thanks again for contributing!
