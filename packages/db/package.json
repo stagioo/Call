@@ -4,16 +4,16 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "generate": "bunx drizzle-kit generate",
-    "migrate": "bunx drizzle-kit generate && bunx drizzle-kit migrate",
-    "studio": "bunx drizzle-kit studio"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit generate && drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "exports": {
     ".": "./src/index.ts",
     "./schema": "./schema.ts"
   },
   "devDependencies": {
-    "@call/eslint-config": "workspace:^",
+    "@call/eslint-config": "workspace:*",
     "@call/typescript-config": "workspace:*",
     "@types/pg": "^8.15.4",
     "drizzle-kit": "^0.31.1"
