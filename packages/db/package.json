@@ -13,10 +13,16 @@
     "./schema": "./schema.ts"
   },
   "devDependencies": {
-    "@call/typescript-config": "workspace:^",
+    "@call/eslint-config": "workspace:^",
+    "@call/typescript-config": "workspace:*",
+    "@types/pg": "^8.15.4",
     "drizzle-kit": "^0.31.1"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.2",
+    "pg": "^8.16.1"
   }
 }
