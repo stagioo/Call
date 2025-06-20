@@ -1,3 +1,12 @@
 {
-  "tailwindCSS.experimental.configFile": "packages/ui/src/styles/globals.css"
+  "editor.formatOnSave": true,
+  // Set Prettier as the default formatter.
+  // Ensure you have the Prettier extension installed: esbenp.prettier-vscode
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "tailwindCSS.experimental.configFile": "packages/ui/tailwind.config.ts"
 }
