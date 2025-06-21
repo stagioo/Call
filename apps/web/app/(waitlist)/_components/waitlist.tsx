@@ -98,11 +98,15 @@ function useWaitlistCount() {
           timestamp: Date.now(),
         })
       );
+
       confettiBurst({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
       });
+
+      toast.success("You're on the waitlist! 🎉");
+
     },
     onError: (error) => {
       const errorMessage =
