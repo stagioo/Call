@@ -7,7 +7,7 @@ export default function Page() {
       <Navbar />
       <HeroWithForm />
 
-      <div className="absolute inset-0 max-w-5xl w-full mx-auto bg-transparent pointer-events-none -z-10 border-x border-border" />
+      <div className="absolute inset-0 max-w-5xl w-full mx-auto bg-transparent pointer-events-none -z-10 border-x border-border dark:border-white/5" />
     </main>
   );
 }

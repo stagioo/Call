@@ -146,7 +146,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         </div>
       ) : (
         <form
-          className="mx-auto flex w-full max-w-sm flex-col gap-3 sm:flex-row"
+          className="mx-auto flex w-full max-w-md flex-col gap-3 sm:flex-row"
           onSubmit={handleSubmit(handleJoinWaitlist)}
         >
           <Input
