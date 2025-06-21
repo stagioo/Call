@@ -21,7 +21,8 @@
     "next.config.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "../../packages/ui/src/components/square-dot.tsx"
   ],
   "exclude": ["node_modules"]
 }
