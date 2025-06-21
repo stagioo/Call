@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { confettiBurst } from "@call/ui/lib/confetti";
+
 const formSchema = z.object({
   email: z.string().email(),
 });
@@ -44,60 +45,60 @@ async function joinWaitlist(email: string): Promise<void> {
   }
 }
 
-const LOCAL_STORAGE_KEY = "waitlist_count";
-const CACHE_DURATION = 2 * 60 * 60 * 1000;
+// Helper function to safely access localStorage (only for success state)
+const getLocalStorageItem = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const setLocalStorageItem = (key: string, value: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore localStorage errors
+  }
+};
 
 function useWaitlistCount() {
   const queryClient = useQueryClient();
   const [success, setSuccess] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // --- CONTADOR GLOBAL CON POLLING ---
   const query = useQuery({
     queryKey: ["waitlist", "count"],
-    queryFn: async () => {
-      const cachedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (cachedData) {
-        try {
-          const { count, timestamp } = JSON.parse(cachedData);
-          const isExpired = Date.now() - timestamp > CACHE_DURATION;
-
-          if (!isExpired) {
-            return { count };
-          }
-        } catch (e) {
-          console.error("Error parsing waitlist cache:", e);
-        }
-      }
-
-      const data = await getWaitlistCount();
-
-      localStorage.setItem(
-        LOCAL_STORAGE_KEY,
-        JSON.stringify({
-          count: data.count,
-          timestamp: Date.now(),
-        })
-      );
-
-      return data;
-    },
-    staleTime: CACHE_DURATION,
-    gcTime: CACHE_DURATION * 2,
+    queryFn: getWaitlistCount,
+    // Polling cada 5 segundos para mantener el contador actualizado
+    refetchInterval: 5000,
+    // Refetch cuando la ventana vuelve a estar activa
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    // Solo ejecutar en el cliente
+    enabled: isClient,
   });
 
   const { mutate } = useMutation({
     mutationFn: (email: string) => joinWaitlist(email),
     onSuccess: () => {
       setSuccess(true);
+      
+      // Inmediatamente invalidar y refetch el contador
+      queryClient.invalidateQueries({ queryKey: ["waitlist", "count"] });
+      
+      // También actualizar optimísticamente
       const newCount = (query.data?.count ?? 0) + 1;
       queryClient.setQueryData(["waitlist", "count"], { count: newCount });
-      // set localStorage with the new count
-      localStorage.setItem(
-        LOCAL_STORAGE_KEY,
-        JSON.stringify({
-          count: newCount,
-          timestamp: Date.now(),
-        })
-      );
+
+      setLocalStorageItem("waitlist_success", "true");
 
       confettiBurst({
         particleCount: 100,
@@ -134,22 +135,36 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
 
   const waitlist = useWaitlistCount();
   const [localSuccess, setLocalSuccess] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
     if (waitlist.success) {
-      localStorage.setItem("waitlist_success", "true");
+      setLocalStorageItem("waitlist_success", "true");
       setLocalSuccess(true);
     } else {
-      const stored = localStorage.getItem("waitlist_success");
+      const stored = getLocalStorageItem("waitlist_success");
       if (stored === "true") {
         setLocalSuccess(true);
       }
     }
-  }, [waitlist.success]);
+  }, [waitlist.success, isClient]);
 
   function handleJoinWaitlist({ email }: FormSchema) {
     waitlist.mutate(email);
   }
+
+  // --- CORRECCIÓN DE HIDRATACIÓN ---
+  if (!isClient) {
+    // Mientras no sea cliente, no renderizamos nada del formulario
+    return null;
+  }
+  // --- FIN CORRECCIÓN ---
 
   return (
     <div
