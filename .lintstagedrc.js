@@ -1,6 +1,5 @@
 module.exports = {
   "*.js": (filenames) => {
-    // Excluir archivos del paquete eslint-config y archivos de configuración de la raíz
     const eslintFiles = filenames.filter(
       (file) =>
         !file.includes("packages/eslint-config") &&

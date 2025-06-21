@@ -17,11 +17,8 @@ const formSchema = z.object({
   email: z.string().email(),
 });
 
-// this is a copy of Analogs waitlist component with some changes
-// https://github.com/analogdotnow/Analog/blob/main/apps/web/src/components/sections/home/waitlist-form.tsx
 type FormSchema = z.infer<typeof formSchema>;
 
-// API functions for Hono backend
 async function getWaitlistCount(): Promise<{ count: number }> {
   return fetch("/api/waitlist/count").then((res) => {
     if (!res.ok) {
@@ -45,9 +42,8 @@ async function joinWaitlist(email: string): Promise<void> {
   }
 }
 
-// Helper function to safely access localStorage (only for success state)
 const getLocalStorageItem = (key: string): string | null => {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
     return localStorage.getItem(key);
   } catch {
@@ -56,12 +52,10 @@ const getLocalStorageItem = (key: string): string | null => {
 };
 
 const setLocalStorageItem = (key: string, value: string): void => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(key, value);
-  } catch {
-    // Ignore localStorage errors
-  }
+  } catch {}
 };
 
 function useWaitlistCount() {
@@ -73,16 +67,12 @@ function useWaitlistCount() {
     setIsClient(true);
   }, []);
 
-  // --- CONTADOR GLOBAL CON POLLING ---
   const query = useQuery({
     queryKey: ["waitlist", "count"],
     queryFn: getWaitlistCount,
-    // Polling cada 5 segundos para mantener el contador actualizado
     refetchInterval: 5000,
-    // Refetch cuando la ventana vuelve a estar activa
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
-    // Solo ejecutar en el cliente
     enabled: isClient,
   });
 
@@ -90,11 +80,9 @@ function useWaitlistCount() {
     mutationFn: (email: string) => joinWaitlist(email),
     onSuccess: () => {
       setSuccess(true);
-      
-      // Inmediatamente invalidar y refetch el contador
+
       queryClient.invalidateQueries({ queryKey: ["waitlist", "count"] });
-      
-      // También actualizar optimísticamente
+
       const newCount = (query.data?.count ?? 0) + 1;
       queryClient.setQueryData(["waitlist", "count"], { count: newCount });
 
@@ -107,7 +95,6 @@ function useWaitlistCount() {
       });
 
       toast.success("You're on the waitlist! 🎉");
-
     },
     onError: (error) => {
       const errorMessage =
@@ -159,12 +146,9 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
     waitlist.mutate(email);
   }
 
-  // --- CORRECCIÓN DE HIDRATACIÓN ---
   if (!isClient) {
-    // Mientras no sea cliente, no renderizamos nada del formulario
     return null;
   }
-  // --- FIN CORRECCIÓN ---
 
   return (
     <div
