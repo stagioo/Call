@@ -11,7 +11,7 @@ import { cn } from "@call/ui/lib/utils";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-
+import { confettiBurst } from "@call/ui/lib/confetti";
 const formSchema = z.object({
   email: z.string().email(),
 });
@@ -98,6 +98,11 @@ function useWaitlistCount() {
           timestamp: Date.now(),
         })
       );
+      confettiBurst({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
     },
     onError: (error) => {
       const errorMessage =
