@@ -13,7 +13,8 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "jsx": "preserve"
   },
   "include": [
     "next-env.d.ts",
