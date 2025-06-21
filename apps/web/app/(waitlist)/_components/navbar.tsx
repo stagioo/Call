@@ -28,7 +28,7 @@ const Navbar = () => {
       <div className="max-w-5xl w-full mx-auto px-6 py-2 flex items-center justify-between relative">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Icons.logoDark className="size-6 " />
-          <span className="text-primary">Call</span>
+          <span className="text-primary font-lora">Call</span>
         </h1>
         <div className="flex items-center gap-2">
           {links.map((link) => (
