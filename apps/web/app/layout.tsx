@@ -90,7 +90,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${fontSans.variable} ${fontLora.variable} ${fontMono.variable} font-sans antialiased `}
+        className={`${fontSans.variable} ${fontLora.variable} ${fontMono.variable} font-sans antialiased transition-all duration-300`}
       >
         <Providers>{children}</Providers>
       </body>
