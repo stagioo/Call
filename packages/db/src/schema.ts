@@ -80,7 +80,10 @@ export const waitlist = pgTable("waitlist", {
 export const rateLimitAttempts = pgTable("rate_limit_attempts", {
   identifier: text("identifier").primaryKey(), // e.g., IP address
   count: integer("count").notNull().default(1),
-  expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }).notNull(),
+  expiresAt: timestamp("expires_at", {
+    mode: "date",
+    withTimezone: true,
+  }).notNull(),
 });
 
 const schema = {
