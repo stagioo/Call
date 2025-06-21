@@ -98,6 +98,7 @@ function useWaitlistCount() {
           timestamp: Date.now(),
         })
       );
+      toast.success("You're on the waitlist! 🎉");
     },
     onError: (error) => {
       const errorMessage =
