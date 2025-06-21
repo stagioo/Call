@@ -46,7 +46,7 @@ const Community = () => {
           <Link
             key={link.label}
             href={link.href}
-            className="flex w-full flex-col items-center gap-4 rounded-2xl bg-background px-4 py-3 shadow-lg  md:p-7 md:text-center xl:gap-6 xl:rounded-3xl xl:p-8 border border-border dark:border-white/5"
+            className="flex w-full flex-col items-center gap-4 rounded-2xl bg-background px-4 py-3 shadow-xs  md:p-7 md:text-center xl:gap-6 xl:rounded-3xl xl:p-8 border border-border dark:border-white/5"
           >
             <link.icon className="md:size-14 size-8 text-primary/50" />
             <div className="flex flex-col items-center justify-center gap-2">

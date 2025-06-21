@@ -8,7 +8,7 @@ import { Input } from "@call/ui/components/input";
 import NumberFlow from "@number-flow/react";
 import { useForm } from "react-hook-form";
 import { cn } from "@call/ui/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -124,6 +124,19 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
   });
 
   const waitlist = useWaitlistCount();
+  const [localSuccess, setLocalSuccess] = useState(false);
+
+  useEffect(() => {
+    if (waitlist.success) {
+      localStorage.setItem("waitlist_success", "true");
+      setLocalSuccess(true);
+    } else {
+      const stored = localStorage.getItem("waitlist_success");
+      if (stored === "true") {
+        setLocalSuccess(true);
+      }
+    }
+  }, [waitlist.success]);
 
   function handleJoinWaitlist({ email }: FormSchema) {
     waitlist.mutate(email);
@@ -136,7 +149,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         className
       )}
     >
-      {waitlist.success ? (
+      {localSuccess ? (
         <div className="flex flex-col items-center justify-center gap-4 text-center">
           <p className="text-xl font-semibold">Welcome to the waitlist! 🎉</p>
           <p className="text-muted-foreground text-base">
