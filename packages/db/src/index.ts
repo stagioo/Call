@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 import { config } from 'dotenv';
 import { resolve } from 'path';
-=======
->>>>>>> parent of a56ad4e (fix: centralize env vars to root .env file)
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import schema from "./schema";
