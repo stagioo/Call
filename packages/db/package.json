@@ -16,6 +16,7 @@
   "devDependencies": {
     "@call/eslint-config": "workspace:*",
     "@call/typescript-config": "workspace:*",
+    "@types/node": "^20",
     "@types/pg": "^8.15.4",
     "drizzle-kit": "^0.31.1"
   },

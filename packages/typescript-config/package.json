@@ -5,5 +5,10 @@
   "license": "PROPRIETARY",
   "publishConfig": {
     "access": "public"
+  },
+  "exports": {
+    "./base": "./base.json",
+    "./nextjs": "./nextjs.json",
+    "./react-library": "./react-library.json"
   }
 }

@@ -1,17 +1,18 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Icons } from "@call/ui/components/icons";
 import { Button } from "@call/ui/components/button";
 import { Input } from "@call/ui/components/input";
-import NumberFlow from "@number-flow/react";
-import { useForm } from "react-hook-form";
+import { confettiBurst } from "@call/ui/lib/confetti";
 import { cn } from "@call/ui/lib/utils";
-import { useState, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import NumberFlow from "@number-flow/react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { confettiBurst } from "@call/ui/lib/confetti";
+
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -20,12 +21,11 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>;
 
 async function getWaitlistCount(): Promise<{ count: number }> {
-  return fetch("/api/waitlist/count").then((res) => {
-    if (!res.ok) {
-      throw new Error("Failed to get waitlist count");
-    }
-    return res.json();
-  });
+  const res = await fetch("/api/waitlist/count");
+  if (!res.ok) {
+    throw new Error("Failed to get waitlist count");
+  }
+  return res.json();
 }
 
 async function joinWaitlist(email: string): Promise<void> {
@@ -37,7 +37,9 @@ async function joinWaitlist(email: string): Promise<void> {
     body: JSON.stringify({ email }),
   });
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData: { error?: string } = await response
+      .json()
+      .catch(() => ({}));
     throw new Error(errorData.error || "Failed to join waitlist");
   }
 }
