@@ -21,12 +21,11 @@ type FormSchema = z.infer<typeof formSchema>;
 
 // API functions for Hono backend
 async function getWaitlistCount(): Promise<{ count: number }> {
-  return fetch("/api/waitlist/count").then((res) => {
-    if (!res.ok) {
-      throw new Error("Failed to get waitlist count");
-    }
-    return res.json();
-  });
+  const res = await fetch("/api/waitlist/count");
+  if (!res.ok) {
+    throw new Error("Failed to get waitlist count");
+  }
+  return res.json();
 }
 
 async function joinWaitlist(email: string): Promise<void> {
@@ -38,7 +37,9 @@ async function joinWaitlist(email: string): Promise<void> {
     body: JSON.stringify({ email }),
   });
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData: { error?: string } = await response
+      .json()
+      .catch(() => ({}));
     throw new Error(errorData.error || "Failed to join waitlist");
   }
 }

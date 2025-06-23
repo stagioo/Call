@@ -3,7 +3,7 @@ import { Geist, Geist_Mono, Lora } from "next/font/google";
 import "@call/ui/globals.css";
 import { Providers } from "@/components/providers";
 import { siteConfig } from "@/lib/site";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 const fontSans = Geist({
   subsets: ["latin"],

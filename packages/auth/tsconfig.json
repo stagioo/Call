@@ -1,5 +1,5 @@
 {
-  "extends": "@call/typescript-config/base.json",
+  "extends": "@call/typescript-config/base",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {

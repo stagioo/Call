@@ -148,6 +148,9 @@ importers:
       '@call/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      '@types/node':
+        specifier: ^20
+        version: 20.17.19
 
   packages/db:
     dependencies:
@@ -167,6 +170,9 @@ importers:
       '@call/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      '@types/node':
+        specifier: ^20
+        version: 20.17.19
       '@types/pg':
         specifier: ^8.15.4
         version: 8.15.4
