@@ -7,6 +7,7 @@ import { siteConfig } from "@/lib/site";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const links = [
   {
@@ -28,6 +29,11 @@ const links = [
 
 const Navbar = () => {
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   return (
     <header className="border-b border-border dark:border-white/5">
       <div className="max-w-5xl w-full mx-auto px-6 py-2 flex items-center justify-between relative">
@@ -50,18 +56,20 @@ const Navbar = () => {
               </Link>
             </Button>
           ))}
-          <Button
-            size="icon"
-            variant="ghost"
-            className="hover:bg-muted-foreground/10"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
-            {theme === "dark" ? (
-              <Sun className="size-4" />
-            ) : (
-              <Moon className="size-4" />
-            )}
-          </Button>
+          {mounted && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="hover:bg-muted-foreground/10"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              {theme === "dark" ? (
+                <Sun className="size-4" />
+              ) : (
+                <Moon className="size-4" />
+              )}
+            </Button>
+          )}
         </div>
         <SquareDot position="bottomLeft" />
         <SquareDot position="bottomRight" />
