@@ -9,7 +9,14 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "prepare": "husky",
     "pre-commit": "lint-staged",
-    "commit-msg": "commitlint --edit"
+    "commit-msg": "commitlint --edit",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:clean": "docker-compose down -v",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "dotenv -- turbo run db:migrate",
+    "db:push": "dotenv -- turbo run db:push",
+    "db:studio": "dotenv -- turbo run db:studio"
   },
   "devDependencies": {
     "@call/eslint-config": "workspace:^",
@@ -30,5 +37,9 @@
   },
   "dependencies": {
     "dotenv": "^16.5.0"
-  }
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }
