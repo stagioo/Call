@@ -1,6 +1,7 @@
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth";
 import { db } from "@call/db";
+//@ts-expect-error - schema is a module
 import schema from "@call/db/schema";
 import { extractTokenFromUrl } from "@/utils/extract-token";
 import { sendMail } from "@/utils/send-mail";
