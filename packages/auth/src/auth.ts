@@ -1,10 +1,11 @@
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth";
 import { db } from "@call/db";
-//@ts-expect-error - schema is a module
+// @ts-expect-error - schema is a module
 import schema from "@call/db/schema";
 import { extractTokenFromUrl } from "@/utils/extract-token";
 import { sendMail } from "@/utils/send-mail";
+import { anonymous } from "better-auth/plugins";
 
 if (!process.env.FRONTEND_URL || !process.env.BACKEND_URL) {
   throw new Error(
@@ -20,6 +21,13 @@ export const auth = betterAuth({
     },
   }),
 
+  plugins: [
+    anonymous({
+      onLinkAccount: async ({ anonymousUser, newUser }) => {
+        console.log("onLinkAccount", anonymousUser, newUser);
+      },
+    }),
+  ],
   trustedOrigins: [process.env.FRONTEND_URL, process.env.BACKEND_URL],
 
   emailAndPassword: {
