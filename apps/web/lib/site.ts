@@ -7,7 +7,7 @@ export const siteConfig = {
     github: "https://github.com/Call0dotco/call",
     author: "Call",
     authorSite: "https://call0.co",
-    discord: "https://discord.com/invite/cM7kD5Sd",
+    discord: "https://discord.com/invite/bre4echNxB",
     x: "https://x.com/call0dotco",
   },
 };
