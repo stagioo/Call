@@ -61,7 +61,7 @@ for i in {1..30}; do
   if docker compose exec -T postgres pg_isready -U postgres >/dev/null 2>&1; then
     print_success "PostgreSQL is ready"
     print_step "Migrating db..."
-    pnpm run db:migratesudo systemctl start docker
+    pnpm run db:migrate
     break
   fi
   if [ $i -eq 30 ]; then
