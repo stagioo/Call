@@ -11,8 +11,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { confettiBurst } from "@call/ui/lib/confetti";
-
 
 const formSchema = z.object({
   email: z.string().email(),

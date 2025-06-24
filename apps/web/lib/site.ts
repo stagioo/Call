@@ -4,10 +4,10 @@ export const siteConfig = {
   ogImage: "https://call0.co/og.png",
   url: "https://call0.co",
   links: {
-    github: "https://github.com/Calldotso/call",
+    github: "https://github.com/Call0dotco/call",
     author: "Call",
     authorSite: "https://call0.co",
-    discord: "https://discord.com/invite/cM7kD5Sd",
+    discord: "https://discord.com/invite/bre4echNxB",
     x: "https://x.com/call0dotco",
   },
 };
