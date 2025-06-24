@@ -6,13 +6,16 @@ import { Hono } from "hono";
 const roomRouter = new Hono();
 
 roomRouter.post(
-  "/send-mail",
+  "/create",
   zValidator("json", createRoomSchema),
   async (c: Context) => {
     try {
-      const { name, joinCode, requireAccessBeforeJoining } = await c.req.json();
+      const { name } = await c.req.json();
 
-      console.log({ name, joinCode, requireAccessBeforeJoining });
+      return c.json({
+        success: true,
+        message: "Room created successfully",
+      });
     } catch (err) {
       console.error("Unexpected error sending email:", err);
       return c.json(

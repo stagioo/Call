@@ -38,6 +38,12 @@ app.use("*", async (c, next) => {
   return next();
 });
 
+app.get("/nothing", (c) => {
+  return c.json({
+    message: "Hello World",
+  });
+});
+
 app.route("/api", routes);
 
 export default {

@@ -18,11 +18,6 @@ export const createRoomSchema = z.object({
     .string()
     .min(1, "Name cannot be empty")
     .max(100, "Name cannot be longer than 100 characters"),
-  joinCode: z
-    .string()
-    .min(1, "Join code cannot be empty")
-    .max(6, "Join code cannot be longer than 6 characters"),
-  requireAccessBeforeJoining: z.boolean().default(false),
 });
 
 export const emailSchema = z.object({

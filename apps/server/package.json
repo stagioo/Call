@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "pnpm dlx --watch src/index.ts",
+    "dev": "bun --watch src/index.ts",
     "dev:hot": "pnpm --hot src/index.ts",
     "build": "pnpm build src/index.ts --target pnpm --outdir dist",
     "start": "bun dist/index.js"
@@ -27,6 +27,8 @@
   "devDependencies": {
     "@call/typescript-config": "workspace:*",
     "@types/node": "^20",
-    "@types/pg": "^8.15.4"
+    "@types/pg": "^8.15.4",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2"
   }
 }
