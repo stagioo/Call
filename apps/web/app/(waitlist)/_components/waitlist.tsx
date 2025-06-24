@@ -55,7 +55,9 @@ const setLocalStorageItem = (key: string, value: string): void => {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(key, value);
-  } catch {}
+  } catch {
+    console.error("Failed to set localStorage item", key, value);
+  }
 };
 
 function useWaitlistCount() {
