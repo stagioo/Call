@@ -89,6 +89,22 @@ export const rateLimitAttempts = pgTable("rate_limit_attempts", {
   }).notNull(),
 });
 
+// Room Schema
+export const room = pgTable("room", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  joinCode: text("join_code").notNull(),
+  requireAccessBeforeJoining: boolean("require_access_before_joining")
+    .notNull()
+    .default(false),
+});
+
 const schema = {
   user,
   session,
@@ -96,6 +112,7 @@ const schema = {
   verification,
   waitlist,
   rateLimitAttempts,
+  room,
 };
 
 export default schema;
