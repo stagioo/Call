@@ -8,8 +8,10 @@ Thank you for your interest in contributing to Call-SO! This document will guide
 .
 ├── apps/                   # Application code
 │   └── web/               # Next.js web application
+│   └── server/               # Node Hono backend
 ├── packages/              # Shared packages
 │   ├── db/               # Database schemas and utilities
+│   ├── auth/               # Authentication schemas and utilities
 │   ├── eslint-config/    # Shared ESLint configurations
 │   ├── typescript-config/ # Shared TypeScript configurations
 │   └── ui/               # Shared UI components (shadcn/ui)
