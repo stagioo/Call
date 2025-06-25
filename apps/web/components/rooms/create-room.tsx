@@ -6,7 +6,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@call/ui/components/form";
 import { Input } from "@call/ui/components/input";
@@ -36,7 +35,7 @@ const CreateRoom = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-md p-4 bg-white rounded-lg border">
+      <div className="w-full max-w-md p-4 bg-background rounded-lg border">
         <h1 className="text-2xl font-bold mb-4">Create Room</h1>
         <div>
           <Form {...form}>
