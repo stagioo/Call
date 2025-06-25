@@ -1,7 +1,6 @@
 "use client";
 
 import { siteConfig } from "@/lib/site";
-import { Button } from "@call/ui/components/button";
 import { WaitlistForm } from "./waitlist";
 
 const HeroWithForm = () => {
