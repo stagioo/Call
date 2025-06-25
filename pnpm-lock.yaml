@@ -106,6 +106,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@call/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@call/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -130,6 +133,9 @@ importers:
       axios:
         specifier: ^1.10.0
         version: 1.10.0
+      better-auth:
+        specifier: ^1.2.9
+        version: 1.2.10
       drizzle-orm:
         specifier: ^0.44.2
         version: 0.44.2(@types/pg@8.15.4)(kysely@0.28.2)(pg@8.16.1)(postgres@3.4.7)

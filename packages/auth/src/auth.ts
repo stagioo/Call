@@ -1,11 +1,9 @@
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { betterAuth } from "better-auth";
-import { db } from "@call/db";
-// @ts-expect-error - schema is a module
-import schema from "@call/db/schema";
 import { extractTokenFromUrl } from "@/utils/extract-token";
 import { sendMail } from "@/utils/send-mail";
-import { anonymous } from "better-auth/plugins";
+import { db } from "@call/db";
+import schema from "@call/db/schema";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
 if (!process.env.FRONTEND_URL || !process.env.BACKEND_URL) {
   throw new Error(
@@ -21,13 +19,6 @@ export const auth = betterAuth({
     },
   }),
 
-  plugins: [
-    anonymous({
-      onLinkAccount: async ({ anonymousUser, newUser }) => {
-        console.log("onLinkAccount", anonymousUser, newUser);
-      },
-    }),
-  ],
   trustedOrigins: [process.env.FRONTEND_URL, process.env.BACKEND_URL],
 
   emailAndPassword: {
@@ -53,8 +44,8 @@ export const auth = betterAuth({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       scope: [
-        "https://www.googleapis.com/auth/userinfo.profile",
-        "https://www.googleapis.com/auth/userinfo.email",
+        // "https://www.googleapis.com/auth/userinfo.profile",
+        // "https://www.googleapis.com/auth/userinfo.email",
       ],
       accessType: "offline",
       prompt: "consent",

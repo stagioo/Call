@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { db } from "@call/db";
 import routes from "@/routes";
 import { Hono } from "hono";
+import { logger } from "hono/logger";
 
 export interface ReqVariables {
   user: typeof auth.$Infer.Session.user | null;
@@ -12,6 +13,8 @@ export interface ReqVariables {
 }
 
 const app = new Hono<{ Variables: ReqVariables }>();
+
+app.use("*", logger());
 
 app.use(
   cors({
@@ -36,12 +39,6 @@ app.use("*", async (c, next) => {
   c.set("user", session.user);
   c.set("session", session.session);
   return next();
-});
-
-app.get("/nothing", (c) => {
-  return c.json({
-    message: "Hello World",
-  });
 });
 
 app.route("/api", routes);

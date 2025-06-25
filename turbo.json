@@ -2,11 +2,16 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "globalEnv": [
-    "POSTGRES_USER",
-    "POSTGRES_PASSWORD",
-    "POSTGRES_DB",
-    "POSTGRES_URL",
-    "NODE_ENV"
+    "DATABASE_URL",
+    "NODE_ENV",
+    "NEXT_PUBLIC_BACKEND_URL",
+    "NEXT_PUBLIC_CALLBACK_URL",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "FRONTEND_URL",
+    "BACKEND_URL",
+    "RESEND_API_KEY",
+    "EMAIL_FROM"
   ],
   "tasks": {
     "build": {
