@@ -128,3 +128,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+.custom_scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 3px;
+}
+
+.custom_scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom_scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.556 0 0);
+  border-radius: 0;
+}
