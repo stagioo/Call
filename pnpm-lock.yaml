@@ -11,6 +11,9 @@ importers:
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0
+      hono:
+        specifier: ^4.8.0
+        version: 4.8.2
     devDependencies:
       '@call/eslint-config':
         specifier: workspace:^
