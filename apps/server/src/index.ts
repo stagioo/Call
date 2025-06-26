@@ -28,14 +28,14 @@ app.use(
 app.use("*", async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
 
+  c.set("db", db);
+
   if (!session) {
-    c.set("db", null);
     c.set("user", null);
     c.set("session", null);
     return next();
   }
 
-  c.set("db", db);
   c.set("user", session.user);
   c.set("session", session.session);
   return next();
