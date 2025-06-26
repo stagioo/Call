@@ -302,24 +302,10 @@ export const useWebRTC = (): UseWebRTCReturn => {
         return updated;
       });
       
-      // Create peer connection for new participant
+      // Create peer connection for new participant, but DO NOT create an offer.
       const peerConnection = createPeerConnection(newParticipant.socketId);
       peerConnectionsRef.current.set(newParticipant.socketId, peerConnection);
-      
-      // Wait a bit before creating offer to ensure connection is ready
-      setTimeout(() => {
-        // Create and send offer
-        peerConnection.createOffer().then((offer) => {
-          return peerConnection.setLocalDescription(offer);
-        }).then(() => {
-          socketRef.current?.emit("offer", {
-            to: newParticipant.socketId,
-            offer: peerConnection.localDescription,
-          });
-        }).catch((error) => {
-          console.error("Error creating offer for new participant:", error);
-        });
-      }, 500);
+      // The new participant will wait for an offer from the existing participant.
     });
 
     socketRef.current.on("user-left", ({ socketId }) => {
