@@ -3,10 +3,10 @@
 import { useEffect, useState, use } from "react";
 import { Button } from "@call/ui/components/button";
 import { apiClient } from "@/lib/api-client";
-import { useWebRTC } from "@/hooks/useWebRTC";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { VideoControls } from "@/components/video/VideoControls";
 import { useRouter } from "next/navigation";
+import { useMediasoup } from "@/hooks/useMediasoup";
 
 interface Room {
   id: string;
@@ -24,31 +24,26 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showShareModal, setShowShareModal] = useState(false);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [hasJoined, setHasJoined] = useState(false);
   const router = useRouter();
 
-  const {
-    localStream,
-    participants,
-    isConnected,
-    isHost,
-    joinRoom,
-    leaveRoom,
-    toggleMute,
-    toggleVideo,
-    isMuted,
-    isVideoEnabled,
-    reconnect,
-    isConnecting,
-  } = useWebRTC();
+  // Generate a random user ID for this session
+  const userId = useState(
+    () => `user_${Math.random().toString(36).substr(2, 9)}`
+  )[0];
 
-  // Debug logs
-  useEffect(() => {
-    console.log("Participants updated:", participants);
-    console.log("Local stream:", localStream);
-    console.log("Is connected:", isConnected);
-  }, [participants, localStream, isConnected]);
+  const {
+    connect,
+    disconnect,
+    produce,
+    isConnected,
+    error: mediasoupError,
+    participants,
+  } = useMediasoup(roomId, userId);
+
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
 
   useEffect(() => {
     const fetchRoom = async () => {
@@ -71,9 +66,60 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
 
   const handleJoinCall = async () => {
     try {
-      const userId = `user_${Math.random().toString(36).substr(2, 9)}`;
-      await joinRoom(roomId, userId);
+      console.log(`[handleJoinCall] Starting join process`);
+
+      // Get user media
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
+      console.log(`[handleJoinCall] Got media stream:`, {
+        active: stream.active,
+        tracks: stream.getTracks().map((track) => ({
+          kind: track.kind,
+          enabled: track.enabled,
+          readyState: track.readyState,
+        })),
+      });
+
+      setLocalStream(stream);
+      console.log(`[handleJoinCall] Set local stream state`);
+
+      // Connect to the mediasoup server
+      console.log(`[handleJoinCall] Connecting to mediasoup server`);
+      await connect();
+      console.log(`[handleJoinCall] Connected to mediasoup server`);
+
+      // Produce audio and video tracks
+      const videoTrack = stream.getVideoTracks()[0];
+      const audioTrack = stream.getAudioTracks()[0];
+
+      console.log(`[handleJoinCall] Producing tracks:`, {
+        video: videoTrack
+          ? {
+              enabled: videoTrack.enabled,
+              readyState: videoTrack.readyState,
+            }
+          : null,
+        audio: audioTrack
+          ? {
+              enabled: audioTrack.enabled,
+              readyState: audioTrack.readyState,
+            }
+          : null,
+      });
+
+      if (videoTrack) {
+        await produce(videoTrack);
+        console.log(`[handleJoinCall] Video track produced`);
+      }
+      if (audioTrack) {
+        await produce(audioTrack);
+        console.log(`[handleJoinCall] Audio track produced`);
+      }
+
       setHasJoined(true);
+      console.log(`[handleJoinCall] Join process completed`);
     } catch (error) {
       console.error("Error joining call:", error);
       if (error instanceof Error) {
@@ -97,8 +143,32 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
   };
 
   const handleLeaveCall = () => {
-    leaveRoom();
+    if (localStream) {
+      localStream.getTracks().forEach((track) => track.stop());
+      setLocalStream(null);
+    }
+    disconnect();
     setHasJoined(false);
+  };
+
+  const toggleMute = () => {
+    if (localStream) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMuted(!audioTrack.enabled);
+      }
+    }
+  };
+
+  const toggleVideo = () => {
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setIsVideoEnabled(!isVideoEnabled);
+      }
+    }
   };
 
   const shareRoom = async () => {
@@ -131,6 +201,7 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
       }
     }
   };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -289,9 +360,9 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
 
             {/* Remote Videos */}
             {participants.map((participant) => (
-              <div key={participant.socketId} className="aspect-video">
+              <div key={participant.userId} className="aspect-video">
                 <VideoPlayer
-                  stream={participant.stream || null}
+                  stream={participant.stream}
                   isLocal={false}
                   className="w-full h-full"
                 />
@@ -307,22 +378,11 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
             <h3 className="font-semibold mb-2">Debug Info:</h3>
             <p>Participants: {participants.length + 1}</p>
             <p>Connected: {isConnected ? "Yes" : "No"}</p>
-            <p>Is host: {isHost ? "Yes" : "No"}</p>
             <p>Local stream: {localStream ? "Yes" : "No"}</p>
-            <p>Remote streams: {participants.filter((p) => p.stream).length}</p>
-            <div className="mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  console.log("=== DEBUG INFO ===");
-                  console.log("Local stream:", localStream);
-                  console.log("Participants:", participants);
-                }}
-              >
-                Debug Console
-              </Button>
-            </div>
+            <p>Remote streams: {participants.length}</p>
+            {mediasoupError && (
+              <p className="text-red-500">Error: {mediasoupError}</p>
+            )}
           </div>
 
           {/* Controls */}
@@ -333,8 +393,8 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
               onToggleMute={toggleMute}
               onToggleVideo={toggleVideo}
               onLeaveCall={handleLeaveCall}
-              onReconnect={reconnect}
-              isConnecting={isConnecting}
+              onReconnect={connect}
+              isConnecting={!isConnected}
             />
           </div>
         </div>

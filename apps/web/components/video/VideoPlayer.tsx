@@ -14,19 +14,45 @@ export const VideoPlayer = ({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    console.log(`VideoPlayer: ${isLocal ? "local" : "remote"} stream:`, stream);
-    console.log(`VideoPlayer: Stream active:`, stream?.active);
-    console.log(`VideoPlayer: Stream tracks:`, stream?.getTracks());
+    // Detailed stream logging
+    console.log(`[VideoPlayer] ${isLocal ? "Local" : "Remote"} stream:`, {
+      stream: stream,
+      active: stream?.active,
+      tracks: stream?.getTracks().map((track) => ({
+        kind: track.kind,
+        enabled: track.enabled,
+        readyState: track.readyState,
+        muted: track.muted,
+      })),
+    });
 
     if (videoRef.current && stream) {
-      // Solo asignar srcObject si realmente cambió
+      console.log(`[VideoPlayer] Current video element state:`, {
+        readyState: videoRef.current.readyState,
+        paused: videoRef.current.paused,
+        currentSrc: videoRef.current.currentSrc,
+        srcObject: videoRef.current.srcObject,
+      });
+
+      // Only assign srcObject if it has changed
       if (videoRef.current.srcObject !== stream) {
+        console.log(`[VideoPlayer] Setting new srcObject`);
         videoRef.current.srcObject = stream;
       }
-      // play() solo cuando el video esté listo
+
+      // Play when metadata is loaded
       const handleLoadedMetadata = () => {
-        videoRef.current?.play().catch(() => {});
+        console.log(`[VideoPlayer] Metadata loaded, attempting to play`);
+        videoRef.current
+          ?.play()
+          .then(() => {
+            console.log(`[VideoPlayer] Playback started successfully`);
+          })
+          .catch((error) => {
+            console.error(`[VideoPlayer] Playback failed:`, error);
+          });
       };
+
       videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
       return () => {
         videoRef.current?.removeEventListener(
@@ -35,7 +61,8 @@ export const VideoPlayer = ({
         );
       };
     }
-  }, [stream]);
+  }, [stream, isLocal]);
+
   return (
     <div className={`relative ${className}`}>
       <video

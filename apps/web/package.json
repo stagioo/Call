@@ -34,7 +34,8 @@
     "react-hook-form": "^7.58.1",
     "socket.io-client": "^4.8.1",
     "sonner": "^2.0.5",
-    "zod": "^3.25.67"
+    "zod": "^3.25.67",
+    "mediasoup-client": "^3.7.2"
   },
   "devDependencies": {
     "@call/eslint-config": "workspace:^",

@@ -1,11 +1,14 @@
-import { auth } from "@call/auth/auth";
 import { env } from "@/config/env";
-import { cors } from "hono/cors";
-import { db } from "@call/db";
 import routes from "@/routes";
+import { auth } from "@call/auth/auth";
+import { db } from "@call/db";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { createServer, IncomingMessage } from "node:http";
 import { WebSocketServer } from "./websocket-server";
+
+process.env.PORT = "1284";
 
 export interface ReqVariables {
   user: typeof auth.$Infer.Session.user | null;
@@ -44,7 +47,56 @@ app.use("*", async (c, next) => {
 
 app.route("/api", routes);
 
-// Initialize WebSocket server
-new WebSocketServer();
+function incomingMessageToReadableStream(req: IncomingMessage): ReadableStream {
+  return new ReadableStream({
+    start(controller) {
+      req.on("data", (chunk) => {
+        controller.enqueue(chunk);
+      });
+      req.on("end", () => controller.close());
+      req.on("error", (err) => controller.error(err));
+    },
+  });
+}
 
-export default app;
+const port = 1284;
+const server = createServer(async (req, res) => {
+  try {
+    const url = new URL(
+      req.url || "",
+      `http://${req.headers.host || "localhost"}`
+    );
+    const request = new Request(url, {
+      method: req.method,
+      headers: req.headers as HeadersInit,
+      body:
+        req.method !== "GET" && req.method !== "HEAD"
+          ? incomingMessageToReadableStream(req)
+          : null,
+    });
+
+    const response = await app.fetch(request);
+
+    res.statusCode = response.status;
+    response.headers.forEach((value, key) => res.setHeader(key, value));
+
+    if (response.body) {
+      const reader = response.body.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(value);
+      }
+    }
+    res.end();
+  } catch (error) {
+    console.error("Error handling request:", error);
+    res.statusCode = 500;
+    res.end("Internal Server Error");
+  }
+});
+
+new WebSocketServer(server);
+
+console.log(`Server is running on port ${port}`);
+server.listen(port);
