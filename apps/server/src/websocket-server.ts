@@ -12,7 +12,7 @@ interface Room {
   hostId?: string;
 }
 
-class WebSocketServer {
+export class WebSocketServer {
   private io: SocketIOServer;
   private rooms: Map<string, Room> = new Map();
 
@@ -149,5 +149,5 @@ class WebSocketServer {
   }
 }
 
-// Start WebSocket server
-new WebSocketServer();
+// Remove the auto-initialization
+// new WebSocketServer();
