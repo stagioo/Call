@@ -23,6 +23,7 @@
     "@call/typescript-config": "workspace:^",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@shadcn/ui": "^0.0.4",
     "dotenv-cli": "^8.0.0",
     "eslint": "^9.20.1",
     "husky": "^9.1.7",
@@ -36,7 +37,9 @@
     "node": ">=20"
   },
   "dependencies": {
-    "dotenv": "^16.5.0"
+    "@geist-ui/icons": "^1.0.2",
+    "dotenv": "^16.5.0",
+    "zod": "^3.25.67"
   },
   "workspaces": [
     "apps/*",
