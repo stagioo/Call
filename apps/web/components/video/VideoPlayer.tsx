@@ -11,10 +11,14 @@ export const VideoPlayer = ({
   isLocal = false,
   className = "",
 }: VideoPlayerProps) => {
+  console.log({
+    stream,
+    isLocal,
+    className,
+  });
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    // Detailed stream logging
     console.log(`[VideoPlayer] ${isLocal ? "Local" : "Remote"} stream:`, {
       stream: stream,
       active: stream?.active,
@@ -27,38 +31,57 @@ export const VideoPlayer = ({
     });
 
     if (videoRef.current && stream) {
+      const videoElement = videoRef.current;
+
       console.log(`[VideoPlayer] Current video element state:`, {
-        readyState: videoRef.current.readyState,
-        paused: videoRef.current.paused,
-        currentSrc: videoRef.current.currentSrc,
-        srcObject: videoRef.current.srcObject,
+        readyState: videoElement.readyState,
+        paused: videoElement.paused,
+        currentSrc: videoElement.currentSrc,
+        srcObject: videoElement.srcObject,
       });
 
-      // Only assign srcObject if it has changed
-      if (videoRef.current.srcObject !== stream) {
-        console.log(`[VideoPlayer] Setting new srcObject`);
-        videoRef.current.srcObject = stream;
+      if (videoElement.srcObject) {
+        videoElement.srcObject = null;
       }
+      videoElement.srcObject = stream;
+      console.log(`[VideoPlayer] Set new srcObject:`, {
+        srcObject: videoElement.srcObject,
+        streamActive: stream.active,
+        videoTracks: stream.getVideoTracks().length,
+      });
 
-      // Play when metadata is loaded
-      const handleLoadedMetadata = () => {
+      // Try to play immediately and also wait for metadata
+      const tryPlay = async () => {
+        try {
+          await videoElement.play();
+          console.log(`[VideoPlayer] Immediate playback started`);
+        } catch (error) {
+          console.error(`[VideoPlayer] Immediate playback failed:`, error);
+        }
+      };
+      tryPlay();
+
+      const handleLoadedMetadata = async () => {
         console.log(`[VideoPlayer] Metadata loaded, attempting to play`);
-        videoRef.current
-          ?.play()
-          .then(() => {
-            console.log(`[VideoPlayer] Playback started successfully`);
-          })
-          .catch((error) => {
-            console.error(`[VideoPlayer] Playback failed:`, error);
-          });
+        try {
+          await videoElement.play();
+          console.log(
+            `[VideoPlayer] Playback after metadata started successfully`
+          );
+        } catch (error) {
+          console.error(`[VideoPlayer] Playback after metadata failed:`, error);
+        }
       };
 
-      videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
+      videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
       return () => {
-        videoRef.current?.removeEventListener(
+        videoElement.removeEventListener(
           "loadedmetadata",
           handleLoadedMetadata
         );
+        if (videoElement.srcObject) {
+          videoElement.srcObject = null;
+        }
       };
     }
   }, [stream, isLocal]);
@@ -70,6 +93,9 @@ export const VideoPlayer = ({
         autoPlay
         playsInline
         muted={isLocal}
+        width="100%"
+        height="100%"
+        style={{ backgroundColor: "#000" }}
         className="w-full h-full object-cover rounded-lg"
       />
       {isLocal && (

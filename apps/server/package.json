@@ -8,7 +8,8 @@
     "dev:hot": "bun src/index.ts",
     "dev:ws": "bun src/websocket-server.ts",
     "build": "bun build src/index.ts --target bun --outdir dist",
-    "start": "bun dist/index.js"
+    "start": "bun dist/index.js",
+    "postinstall": "cd node_modules/mediasoup && node npm-scripts.js"
   },
   "dependencies": {
     "@call/auth": "workspace:*",
@@ -20,7 +21,7 @@
     "drizzle-orm": "^0.44.2",
     "hono": "^4.8.0",
     "iovalkey": "^0.3.3",
-    "mediasoup": "^3.13.24",
+    "mediasoup": "^3.16.1",
     "nanoid": "^5.1.5",
     "pg": "^8.16.1",
     "postgres": "^3.4.7",

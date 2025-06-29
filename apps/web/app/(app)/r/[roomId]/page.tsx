@@ -28,7 +28,6 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
   const [hasJoined, setHasJoined] = useState(false);
   const router = useRouter();
 
-  // Generate a random user ID for this session
   const userId = useState(
     () => `user_${Math.random().toString(36).substr(2, 9)}`
   )[0];
@@ -55,6 +54,7 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
           setError("Could not load the room");
         }
       } catch (err) {
+        console.error("Error fetching room:", err);
         setError("Room not found");
       } finally {
         setLoading(false);
@@ -66,9 +66,11 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
 
   const handleJoinCall = async () => {
     try {
-      console.log(`[handleJoinCall] Starting join process`);
+      console.log(
+        `[handleJoinCall] Starting join process. Current hasJoined:`,
+        hasJoined
+      );
 
-      // Get user media
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: true,
@@ -85,12 +87,10 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
       setLocalStream(stream);
       console.log(`[handleJoinCall] Set local stream state`);
 
-      // Connect to the mediasoup server
       console.log(`[handleJoinCall] Connecting to mediasoup server`);
       await connect();
       console.log(`[handleJoinCall] Connected to mediasoup server`);
 
-      // Produce audio and video tracks
       const videoTrack = stream.getVideoTracks()[0];
       const audioTrack = stream.getAudioTracks()[0];
 
@@ -118,6 +118,7 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
         console.log(`[handleJoinCall] Audio track produced`);
       }
 
+      console.log(`[handleJoinCall] Setting hasJoined to true`);
       setHasJoined(true);
       console.log(`[handleJoinCall] Join process completed`);
     } catch (error) {
@@ -181,16 +182,15 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
           text: `Join my video call room: ${room?.name}`,
           url: roomUrl,
         });
-      } catch (err) {
-        // User cancelled sharing
+      } catch (error) {
+        console.error("Error sharing link:", error);
       }
     } else {
-      // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(roomUrl);
         alert("Link copied to clipboard!");
       } catch (err) {
-        // Fallback for older browsers
+        console.error("Error copying link to clipboard:", err);
         const textArea = document.createElement("textarea");
         textArea.value = roomUrl;
         document.body.appendChild(textArea);
@@ -230,7 +230,6 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
   if (!hasJoined) {
     return (
       <div className="min-h-screen bg-background">
-        {/* Header */}
         <div className="border-b p-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div>
@@ -260,7 +259,6 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
           </div>
         </div>
 
-        {/* Join Call Screen */}
         <div className="flex-1 p-4">
           <div className="max-w-7xl mx-auto">
             <div className="bg-muted rounded-lg h-96 flex items-center justify-center">
@@ -282,13 +280,10 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
                 </div>
                 <h2 className="text-lg font-semibold mb-2">Video Call</h2>
                 <p className="text-muted-foreground mb-4">
-                  Click "Join" to start the video call
+                  Click &quot;Join&quot; to start the video call.
                 </p>
                 <div className="flex gap-2 justify-center">
-                  <Button
-                    onClick={handleJoinCall}
-                    disabled={!isConnected && hasJoined}
-                  >
+                  <Button onClick={handleJoinCall} disabled={hasJoined}>
                     <svg
                       className="w-4 h-4 mr-2"
                       fill="none"
@@ -315,7 +310,6 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="border-b p-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
@@ -345,11 +339,9 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
         </div>
       </div>
 
-      {/* Video Call Area */}
       <div className="flex-1 p-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            {/* Local Video */}
             <div className="aspect-video">
               <VideoPlayer
                 stream={localStream}
@@ -358,7 +350,6 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
               />
             </div>
 
-            {/* Remote Videos */}
             {participants.map((participant) => (
               <div key={participant.userId} className="aspect-video">
                 <VideoPlayer
@@ -373,7 +364,6 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
             ))}
           </div>
 
-          {/* Debug Info */}
           <div className="mb-4 p-4 bg-muted rounded-lg">
             <h3 className="font-semibold mb-2">Debug Info:</h3>
             <p>Participants: {participants.length + 1}</p>
@@ -385,7 +375,6 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
             )}
           </div>
 
-          {/* Controls */}
           <div className="flex justify-center">
             <VideoControls
               isMuted={isMuted}

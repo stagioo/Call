@@ -42,5 +42,16 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "mediasoup",
+      "sharp"
+    ],
+    "onlyBuiltDependencies": [
+      "core-js-pure",
+      "esbuild",
+      "mediasoup"
+    ]
+  }
 }

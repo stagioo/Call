@@ -11,12 +11,17 @@ interface MediasoupState {
   consumers: Map<string, types.Consumer>;
 }
 
+interface Participant {
+  socketId: string;
+  userId: string;
+  isHost: boolean;
+  stream?: MediaStream;
+}
+
 export function useMediasoup(roomId: string, userId: string) {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [participants, setParticipants] = useState<
-    { userId: string; stream: MediaStream }[]
-  >([]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
 
   const socketRef = useRef<Socket | null>(null);
   const stateRef = useRef<MediasoupState>({
@@ -96,6 +101,34 @@ export function useMediasoup(roomId: string, userId: string) {
                 .catch(errback);
             });
 
+            if (producing) {
+              transport.on(
+                "produce",
+                async ({ kind, rtpParameters, appData }, callback, errback) => {
+                  try {
+                    socketRef.current!.emit(
+                      "produce",
+                      {
+                        transportId: transport.id,
+                        kind,
+                        rtpParameters,
+                        appData,
+                      },
+                      (response: { producerId: string }) => {
+                        callback({ id: response.producerId });
+                      }
+                    );
+                  } catch (error) {
+                    errback(
+                      error instanceof Error
+                        ? error
+                        : new Error("Failed to produce")
+                    );
+                  }
+                }
+              );
+            }
+
             resolve(transport);
           }
         );
@@ -172,7 +205,9 @@ export function useMediasoup(roomId: string, userId: string) {
           stateRef.current.consumers.set(consumer.id, consumer);
 
           const stream = new MediaStream([consumer.track]);
-          setParticipants((prev) => [...prev, { userId, stream }]);
+          setParticipants((prev) =>
+            prev.map((p) => (p.userId === userId ? { ...p, stream } : p))
+          );
 
           resolve(stream);
         }
@@ -187,40 +222,57 @@ export function useMediasoup(roomId: string, userId: string) {
         query: { roomId, userId },
       });
 
-      // Wait for connection
-      await new Promise<void>((resolve) => {
-        socketRef.current!.on("connect", () => resolve());
-      });
+      // Wait for connection and room join
+      await new Promise<void>((resolve, reject) => {
+        socketRef.current!.on("connect", () => {
+          console.log("Socket connected, joining room...");
+          socketRef.current!.emit("join-room", { roomId, userId });
+        });
 
-      // Load device
-      const device = new Device();
-      const { rtpCapabilities } = await new Promise<{
-        rtpCapabilities: types.RtpCapabilities;
-      }>((resolve) => {
-        socketRef.current!.emit(
-          "getRouterRtpCapabilities",
-          (response: { rtpCapabilities: types.RtpCapabilities }) =>
-            resolve(response)
+        socketRef.current!.on(
+          "room-joined",
+          async ({ participants, rtpCapabilities }) => {
+            try {
+              console.log("Joined room, initializing device...");
+              // Load device
+              const device = new Device();
+              await device.load({ routerRtpCapabilities: rtpCapabilities });
+              stateRef.current.device = device;
+
+              // Initialize transports
+              await initializeTransports();
+
+              // Add existing participants
+              setParticipants(participants);
+
+              setIsConnected(true);
+              resolve();
+            } catch (err) {
+              reject(err);
+            }
+          }
         );
+
+        socketRef.current!.on("error", (error) => {
+          reject(new Error(error.message));
+        });
       });
 
-      await device.load({ routerRtpCapabilities: rtpCapabilities });
-      stateRef.current.device = device;
-
-      // Initialize transports
-      await initializeTransports();
-
-      // Handle new producers
-      socketRef.current.on("newProducer", async ({ producerId, userId }) => {
-        await consume(producerId, userId);
+      // Handle participant events
+      socketRef.current.on("user-joined", ({ socketId, userId, isHost }) => {
+        console.log(`New user joined: ${userId}`);
+        setParticipants((prev) => [...prev, { socketId, userId, isHost }]);
       });
 
-      setIsConnected(true);
+      socketRef.current.on("user-left", ({ socketId }) => {
+        console.log(`User left: ${socketId}`);
+        setParticipants((prev) => prev.filter((p) => p.socketId !== socketId));
+      });
     } catch (err) {
       console.error("Failed to connect:", err);
       setError(err instanceof Error ? err.message : "Failed to connect");
     }
-  }, [roomId, userId, initializeTransports, consume]);
+  }, [roomId, userId, initializeTransports]);
 
   const disconnect = useCallback(() => {
     // Close all producers
