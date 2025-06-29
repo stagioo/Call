@@ -1,5 +1,5 @@
 {
-  "name": "calldotso",
+  "name": "call0dotco",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -40,6 +40,7 @@
     "@geist-ui/icons": "^1.0.2",
     "dotenv": "^16.5.0",
     "zod": "^3.25.67"
+    "hono": "^4.8.0"
   },
   "workspaces": [
     "apps/*",
