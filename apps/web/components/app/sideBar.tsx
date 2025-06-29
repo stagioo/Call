@@ -11,18 +11,16 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@call/ui/components/dropdown-menu"
+} from "@call/ui/components/dropdown-menu";
 
 import { Button } from "@call/ui/components/button";
-import { MoreHorizontal } from "@geist-ui/icons";
+import { MoreHorizontal, LogOut } from "@geist-ui/icons";
 import { useSession } from "@/hooks/useSession";
+import { authClient } from "@call/auth/auth-client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 function Pfp({ user }: { user: { name: string; image?: string | null } }) {
   // Generate initials from user name
@@ -36,13 +34,33 @@ function Pfp({ user }: { user: { name: string; image?: string | null } }) {
   return (
     <Avatar className="rounded-sm w-[25px] h-[25px]">
       <AvatarImage src={user.image || undefined} />
-      <AvatarFallback>{initials}</AvatarFallback>
+      <AvatarFallback className="rounded-sm w-[25px] h-[25px]" >{initials}</AvatarFallback>
     </Avatar>
   );
 }
 
 export default function SideBar() {
   const { session, isLoading, error } = useSession();
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      
+      // Call the logout endpoint
+      await authClient.signOut();
+      
+      // Redirect to login page
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if logout fails, redirect to login page
+      router.push("/login");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -90,9 +108,52 @@ export default function SideBar() {
               <p className="text-sm">{session.user.name}</p>
             </div>
             <div>
-              <Button className="w-8 h-8 text-[#d8d8d8]" variant={"ghost"}>
-                <MoreHorizontal />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="w-8 h-8 text-[#d8d8d8]" variant={"ghost"}>
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8 rounded-md">
+                          <AvatarImage src={session.user.image || undefined} />
+                          <AvatarFallback>
+                            {session.user.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {session.user.name}
+                          </p>
+                          <p className="text-xs leading-none text-muted-foreground">
+                            {session.user.email}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem 
+                      className="cursor-pointer" 
+                      variant="default"
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>{isLoggingOut ? "Cerrando sesión..." : "Cerrar sesión"}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
