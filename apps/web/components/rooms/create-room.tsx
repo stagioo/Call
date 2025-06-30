@@ -1,6 +1,8 @@
 "use client"
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@call/ui/components/button";
+import { useRouter } from "next/navigation";
+import { nanoid } from "nanoid";
 // You can replace these with shadcn/ui dropdown components if available
 import { Input } from "@call/ui/components/input";
 
@@ -14,6 +16,7 @@ const CreateRoom = () => {
   const [selectedMic, setSelectedMic] = useState<string>("");
   const [roomName, setRoomName] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
+  const router = useRouter();
 
   // Get available media devices
   useEffect(() => {
@@ -49,6 +52,12 @@ const CreateRoom = () => {
     if (cameras.length && !selectedCamera) setSelectedCamera(cameras[0]?.deviceId ?? "");
     if (microphones.length && !selectedMic) setSelectedMic(microphones[0]?.deviceId ?? "");
   }, [cameras, microphones]);
+
+  // Handle Join Room: generate unique id and redirect
+  const handleJoinRoom = () => {
+    const roomId = nanoid(12); // 12-char unique id
+    router.push(`/r/${roomId}`);
+  };
 
   // UI for the configuration step
   const renderConfig = () => (
@@ -100,8 +109,10 @@ const CreateRoom = () => {
         value={roomName}
         onChange={(e) => setRoomName(e.target.value)}
       />
-      {/* Join Room button (does nothing for now) */}
-      <Button className="w-full rounded-md">Join Room</Button>
+      {/* Join Room button */}
+      <Button className="w-full rounded-md" onClick={handleJoinRoom}>
+        Join Room
+      </Button>
     </div>
   );
 
