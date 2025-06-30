@@ -407,6 +407,11 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
                   {participant.stream
                     ? `${participant.stream.getTracks().length} tracks, ${participant.stream.active ? "active" : "inactive"}`
                     : "No stream"}
+                  {participant.tracks && participant.tracks.size > 0 && (
+                    <div className="ml-4 text-xs text-muted-foreground">
+                      Tracks: {Array.from(participant.tracks.keys()).join(", ")}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

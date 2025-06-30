@@ -115,6 +115,104 @@ export default function DebugPage() {
     }
   };
 
+  const testCodecCompatibility = async () => {
+    try {
+      addLog("Testing codec compatibility...");
+
+      // Import mediasoup-client
+      const { Device } = await import("mediasoup-client");
+
+      // Create socket connection
+      const { io } = await import("socket.io-client");
+      const socket = io("http://localhost:1284", {
+        query: { roomId: "debug-room", userId: "debug-user" },
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(
+          () => reject(new Error("Connection timeout")),
+          5000
+        );
+
+        socket.on("connect", () => {
+          addLog("Socket connected successfully");
+          socket.emit("join-room", {
+            roomId: "debug-room",
+            userId: "debug-user",
+          });
+        });
+
+        socket.on("room-joined", async ({ rtpCapabilities }) => {
+          try {
+            clearTimeout(timeout);
+            addLog("Room joined, analyzing codec compatibility...");
+
+            // Log router capabilities
+            addLog(
+              `Router codecs: ${JSON.stringify(rtpCapabilities.codecs, null, 2)}`
+            );
+
+            const device = new Device();
+            await device.load({ routerRtpCapabilities: rtpCapabilities });
+
+            addLog(`Device loaded successfully`);
+
+            // Log device capabilities
+            addLog(
+              `Device codecs: ${JSON.stringify(device.rtpCapabilities.codecs, null, 2)}`
+            );
+
+            // Test production capabilities
+            addLog(`Can produce audio: ${device.canProduce("audio")}`);
+            addLog(`Can produce video: ${device.canProduce("video")}`);
+
+            // Test with actual media
+            try {
+              const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: true,
+              });
+
+              const videoTrack = stream.getVideoTracks()[0];
+              const audioTrack = stream.getAudioTracks()[0];
+
+              if (audioTrack) {
+                addLog(
+                  `Audio track: ${audioTrack.kind}, enabled: ${audioTrack.enabled}, readyState: ${audioTrack.readyState}`
+                );
+              }
+
+              if (videoTrack) {
+                addLog(
+                  `Video track: ${videoTrack.kind}, enabled: ${videoTrack.enabled}, readyState: ${videoTrack.readyState}`
+                );
+              }
+
+              // Clean up
+              stream.getTracks().forEach((track) => track.stop());
+            } catch (mediaError) {
+              addLog(`Media access error: ${mediaError}`);
+            }
+
+            setDevice(device);
+            resolve();
+          } catch (err) {
+            addLog(`Device loading failed: ${err}`);
+            reject(err);
+          }
+        });
+
+        socket.on("connect_error", (error) => {
+          clearTimeout(timeout);
+          addLog(`Socket connection error: ${error}`);
+          reject(error);
+        });
+      });
+    } catch (error) {
+      addLog(`Codec compatibility test failed: ${error}`);
+    }
+  };
+
   const clearLogs = () => {
     setLogs([]);
   };
@@ -133,6 +231,9 @@ export default function DebugPage() {
           </Button>
           <Button onClick={testMediasoupDevice} variant="outline">
             Test Mediasoup Device Loading
+          </Button>
+          <Button onClick={testCodecCompatibility} variant="outline">
+            Test Codec Compatibility
           </Button>
           <Button onClick={clearLogs} variant="destructive">
             Clear Logs

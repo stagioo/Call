@@ -53,51 +53,18 @@ const webRtcTransportSettings: types.WebRtcTransportOptions = {
   enableSctp: false, // We're not using DataChannels in this setup
 };
 
-// Supported media codecs
+// Supported media codecs - minimal configuration for debugging
 const mediaCodecs: types.RtpCodecCapability[] = [
   {
     kind: "audio",
     mimeType: "audio/opus",
     clockRate: 48000,
     channels: 2,
-    parameters: {
-      maxplaybackrate: 48000,
-      stereo: 1,
-      useinbandfec: 1,
-    },
   },
   {
     kind: "video",
     mimeType: "video/VP8",
     clockRate: 90000,
-    parameters: {
-      "x-google-start-bitrate": 1000,
-    },
-    rtcpFeedback: [
-      { type: "nack" },
-      { type: "nack", parameter: "pli" },
-      { type: "ccm", parameter: "fir" },
-      { type: "goog-remb" },
-      { type: "transport-cc" },
-    ],
-  },
-  {
-    kind: "video",
-    mimeType: "video/H264",
-    clockRate: 90000,
-    parameters: {
-      "packetization-mode": 1,
-      "profile-level-id": "42e01f",
-      "level-asymmetry-allowed": 1,
-      "x-google-start-bitrate": 1000,
-    },
-    rtcpFeedback: [
-      { type: "nack" },
-      { type: "nack", parameter: "pli" },
-      { type: "ccm", parameter: "fir" },
-      { type: "goog-remb" },
-      { type: "transport-cc" },
-    ],
   },
 ];
 

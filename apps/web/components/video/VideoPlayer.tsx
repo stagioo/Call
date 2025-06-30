@@ -38,6 +38,8 @@ export const VideoPlayer = ({
         paused: videoElement.paused,
         currentSrc: videoElement.currentSrc,
         srcObject: videoElement.srcObject,
+        videoWidth: videoElement.videoWidth,
+        videoHeight: videoElement.videoHeight,
       });
 
       if (videoElement.srcObject) {
@@ -48,6 +50,7 @@ export const VideoPlayer = ({
         srcObject: videoElement.srcObject,
         streamActive: stream.active,
         videoTracks: stream.getVideoTracks().length,
+        audioTracks: stream.getAudioTracks().length,
       });
 
       // Try to play immediately and also wait for metadata
@@ -63,6 +66,9 @@ export const VideoPlayer = ({
 
       const handleLoadedMetadata = async () => {
         console.log(`[VideoPlayer] Metadata loaded, attempting to play`);
+        console.log(
+          `[VideoPlayer] Video dimensions: ${videoElement.videoWidth}x${videoElement.videoHeight}`
+        );
         try {
           await videoElement.play();
           console.log(
@@ -73,16 +79,56 @@ export const VideoPlayer = ({
         }
       };
 
+      const handleCanPlay = async () => {
+        console.log(`[VideoPlayer] Can play event fired`);
+        try {
+          await videoElement.play();
+          console.log(`[VideoPlayer] Playback on canplay started successfully`);
+        } catch (error) {
+          console.error(`[VideoPlayer] Playback on canplay failed:`, error);
+        }
+      };
+
+      const handlePlay = () => {
+        console.log(`[VideoPlayer] Play event fired - video is now playing`);
+      };
+
+      const handlePause = () => {
+        console.log(`[VideoPlayer] Pause event fired - video is now paused`);
+      };
+
+      const handleError = (event: Event) => {
+        console.error(`[VideoPlayer] Video error:`, event);
+        const target = event.target as HTMLVideoElement;
+        if (target.error) {
+          console.error(`[VideoPlayer] Video error details:`, {
+            code: target.error.code,
+            message: target.error.message,
+          });
+        }
+      };
+
       videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
+      videoElement.addEventListener("canplay", handleCanPlay);
+      videoElement.addEventListener("play", handlePlay);
+      videoElement.addEventListener("pause", handlePause);
+      videoElement.addEventListener("error", handleError);
+
       return () => {
-        videoElement.removeEventListener(
+        const currentVideoElement = videoElement; // Store ref value
+        currentVideoElement.removeEventListener(
           "loadedmetadata",
           handleLoadedMetadata
         );
-        if (videoElement.srcObject) {
-          videoElement.srcObject = null;
-        }
+        currentVideoElement.removeEventListener("canplay", handleCanPlay);
+        currentVideoElement.removeEventListener("play", handlePlay);
+        currentVideoElement.removeEventListener("pause", handlePause);
+        currentVideoElement.removeEventListener("error", handleError);
       };
+    } else if (videoRef.current && !stream) {
+      console.log(`[VideoPlayer] No stream provided, clearing video element`);
+      const videoElement = videoRef.current;
+      videoElement.srcObject = null;
     }
   }, [stream, isLocal]);
 

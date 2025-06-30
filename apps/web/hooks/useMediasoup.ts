@@ -16,6 +16,7 @@ interface Participant {
   userId: string;
   isHost: boolean;
   stream?: MediaStream;
+  tracks: Map<string, MediaStreamTrack>; // Track kind -> track
 }
 
 export function useMediasoup(roomId: string, userId: string) {
@@ -31,6 +32,44 @@ export function useMediasoup(roomId: string, userId: string) {
     producers: new Map(),
     consumers: new Map(),
   });
+
+  const updateParticipantStream = useCallback(
+    (userId: string, track: MediaStreamTrack) => {
+      console.log(
+        `[useMediasoup] Updating participant ${userId} with ${track.kind} track`
+      );
+
+      setParticipants((prev) => {
+        const updated = prev.map((p) => {
+          if (p.userId === userId) {
+            // Update tracks map
+            const newTracks = new Map(p.tracks || new Map());
+            newTracks.set(track.kind, track);
+
+            // Create new stream with all tracks
+            const allTracks = Array.from(newTracks.values());
+            const newStream = new MediaStream(allTracks);
+
+            console.log(`[useMediasoup] Updated stream for ${userId}:`, {
+              streamId: newStream.id,
+              tracks: allTracks.map((t) => ({
+                kind: t.kind,
+                enabled: t.enabled,
+                readyState: t.readyState,
+              })),
+              active: newStream.active,
+            });
+
+            return { ...p, tracks: newTracks, stream: newStream };
+          }
+          return p;
+        });
+
+        return updated;
+      });
+    },
+    []
+  );
 
   const connectTransport = useCallback(
     async (
@@ -174,8 +213,27 @@ export function useMediasoup(roomId: string, userId: string) {
     console.log(`[useMediasoup] Device can produce ${track.kind}:`, canProduce);
 
     if (!canProduce) {
+      console.error(
+        `[useMediasoup] Device cannot produce ${track.kind} media.`
+      );
+      console.error(
+        `[useMediasoup] Device RTP capabilities:`,
+        stateRef.current.device.rtpCapabilities
+      );
+      console.error(
+        `[useMediasoup] Available ${track.kind} codecs:`,
+        stateRef.current.device.rtpCapabilities.codecs?.filter(
+          (c) => c.kind === track.kind
+        )
+      );
+
       throw new Error(
-        `Device cannot produce ${track.kind} media. Check codec configuration.`
+        `Device cannot produce ${track.kind} media. Available codecs: ${
+          stateRef.current.device.rtpCapabilities.codecs
+            ?.filter((c) => c.kind === track.kind)
+            .map((c) => c.mimeType)
+            .join(", ") || "none"
+        }`
       );
     }
 
@@ -229,107 +287,129 @@ export function useMediasoup(roomId: string, userId: string) {
     }
   }, []);
 
-  const consume = useCallback(async (producerId: string, userId: string) => {
-    if (
-      !socketRef.current ||
-      !stateRef.current.recvTransport ||
-      !stateRef.current.device
-    ) {
-      console.error(`[useMediasoup] Missing requirements for consuming:`, {
-        socket: !!socketRef.current,
-        recvTransport: !!stateRef.current.recvTransport,
-        device: !!stateRef.current.device,
-      });
-      return null;
-    }
+  const consume = useCallback(
+    async (producerId: string, userId: string) => {
+      if (
+        !socketRef.current ||
+        !stateRef.current.recvTransport ||
+        !stateRef.current.device
+      ) {
+        console.error(`[useMediasoup] Missing requirements for consuming:`, {
+          socket: !!socketRef.current,
+          recvTransport: !!stateRef.current.recvTransport,
+          device: !!stateRef.current.device,
+        });
+        return null;
+      }
 
-    const { rtpCapabilities } = stateRef.current.device;
+      const { rtpCapabilities } = stateRef.current.device;
 
-    console.log(
-      `[useMediasoup] Starting consume for producer ${producerId} from user ${userId}`
-    );
-
-    return new Promise<MediaStream | null>((resolve, reject) => {
-      socketRef.current!.emit(
-        "consume",
-        {
-          producerId,
-          rtpCapabilities,
-        },
-        async (response: {
-          ok: boolean;
-          params?: {
-            id: string;
-            producerId: string;
-            kind: types.MediaKind;
-            rtpParameters: types.RtpParameters;
-            type: string;
-            producerPaused: boolean;
-          };
-        }) => {
-          if (!response.ok || !response.params) {
-            console.error(
-              `[useMediasoup] Failed to consume producer ${producerId}`
-            );
-            resolve(null);
-            return;
-          }
-
-          try {
-            console.log(
-              `[useMediasoup] Creating consumer for producer ${producerId}:`,
-              response.params
-            );
-
-            const consumer = await stateRef.current.recvTransport!.consume({
-              id: response.params.id,
-              producerId: response.params.producerId,
-              kind: response.params.kind,
-              rtpParameters: response.params.rtpParameters,
-            });
-
-            console.log(`[useMediasoup] Consumer created:`, {
-              consumerId: consumer.id,
-              kind: consumer.kind,
-              paused: consumer.paused,
-            });
-
-            stateRef.current.consumers.set(consumer.id, consumer);
-
-            // Resume the consumer
-            console.log(`[useMediasoup] Resuming consumer ${consumer.id}`);
-            socketRef.current!.emit(
-              "resumeConsumer",
-              { consumerId: consumer.id },
-              (resumeResponse: { ok: boolean }) => {
-                if (resumeResponse.ok) {
-                  console.log(`[useMediasoup] Consumer resumed successfully`);
-                } else {
-                  console.error(`[useMediasoup] Failed to resume consumer`);
-                }
-              }
-            );
-
-            const stream = new MediaStream([consumer.track]);
-            console.log(`[useMediasoup] Created stream for user ${userId}:`, {
-              streamId: stream.id,
-              tracks: stream.getTracks().length,
-              active: stream.active,
-            });
-
-            setParticipants((prev) =>
-              prev.map((p) => (p.userId === userId ? { ...p, stream } : p))
-            );
-
-            resolve(stream);
-          } catch (error) {
-            console.error(`[useMediasoup] Error creating consumer:`, error);
-            reject(error);
-          }
-        }
+      console.log(
+        `[useMediasoup] Starting consume for producer ${producerId} from user ${userId}`
       );
-    });
-  }, []);
+
+      return new Promise<MediaStreamTrack | null>((resolve, reject) => {
+        socketRef.current!.emit(
+          "consume",
+          {
+            producerId,
+            rtpCapabilities,
+          },
+          async (response: {
+            ok: boolean;
+            params?: {
+              id: string;
+              producerId: string;
+              kind: types.MediaKind;
+              rtpParameters: types.RtpParameters;
+              type: string;
+              producerPaused: boolean;
+            };
+          }) => {
+            if (!response.ok || !response.params) {
+              console.error(
+                `[useMediasoup] Failed to consume producer ${producerId}`
+              );
+              resolve(null);
+              return;
+            }
+
+            try {
+              console.log(
+                `[useMediasoup] Creating consumer for producer ${producerId}:`,
+                response.params
+              );
+
+              const consumer = await stateRef.current.recvTransport!.consume({
+                id: response.params.id,
+                producerId: response.params.producerId,
+                kind: response.params.kind,
+                rtpParameters: response.params.rtpParameters,
+              });
+
+              console.log(`[useMediasoup] Consumer created:`, {
+                consumerId: consumer.id,
+                kind: consumer.kind,
+                paused: consumer.paused,
+                track: {
+                  id: consumer.track.id,
+                  kind: consumer.track.kind,
+                  enabled: consumer.track.enabled,
+                  readyState: consumer.track.readyState,
+                },
+              });
+
+              stateRef.current.consumers.set(consumer.id, consumer);
+
+              // Resume the consumer and wait for it
+              console.log(`[useMediasoup] Resuming consumer ${consumer.id}`);
+              const resumeResult = await new Promise<boolean>(
+                (resumeResolve) => {
+                  socketRef.current!.emit(
+                    "resumeConsumer",
+                    { consumerId: consumer.id },
+                    (resumeResponse: { ok: boolean }) => {
+                      if (resumeResponse.ok) {
+                        console.log(
+                          `[useMediasoup] Consumer resumed successfully`
+                        );
+                        resumeResolve(true);
+                      } else {
+                        console.error(
+                          `[useMediasoup] Failed to resume consumer`
+                        );
+                        resumeResolve(false);
+                      }
+                    }
+                  );
+                }
+              );
+
+              if (!resumeResult) {
+                console.error(
+                  `[useMediasoup] Consumer resume failed, not adding track`
+                );
+                resolve(null);
+                return;
+              }
+
+              // Add track to participant
+              updateParticipantStream(userId, consumer.track);
+
+              console.log(
+                `[useMediasoup] Successfully consumed ${consumer.kind} track for user ${userId}`
+              );
+              resolve(consumer.track);
+            } catch (error) {
+              console.error(`[useMediasoup] Error creating consumer:`, error);
+              reject(error);
+            }
+          }
+        );
+      });
+    },
+    [updateParticipantStream]
+  );
 
   const consumeExistingProducers = useCallback(async () => {
     if (!socketRef.current) return;
@@ -450,18 +530,71 @@ export function useMediasoup(roomId: string, userId: string) {
                       mimeType: c.mimeType,
                       clockRate: c.clockRate,
                       channels: c.channels,
+                      parameters: c.parameters,
                     })),
+                    headerExtensions:
+                      device.rtpCapabilities.headerExtensions?.length,
                   },
+                  routerCodecs: rtpCapabilities.codecs?.map((c: any) => ({
+                    kind: c.kind,
+                    mimeType: c.mimeType,
+                    clockRate: c.clockRate,
+                    channels: c.channels,
+                    parameters: c.parameters,
+                  })),
                 }
               );
+
+              // Debug: Check what codecs are available
+              console.log(`[useMediasoup] Detailed codec analysis:`);
+              console.log(
+                `[useMediasoup] Router video codecs:`,
+                rtpCapabilities.codecs?.filter((c: any) => c.kind === "video")
+              );
+              console.log(
+                `[useMediasoup] Device video codecs:`,
+                device.rtpCapabilities.codecs?.filter(
+                  (c: any) => c.kind === "video"
+                )
+              );
+
+              // Check if there are any video codecs at all
+              const routerVideoCodecs =
+                rtpCapabilities.codecs?.filter(
+                  (c: any) => c.kind === "video"
+                ) || [];
+              const deviceVideoCodecs =
+                device.rtpCapabilities.codecs?.filter(
+                  (c: any) => c.kind === "video"
+                ) || [];
+
+              console.log(
+                `[useMediasoup] Router has ${routerVideoCodecs.length} video codecs`
+              );
+              console.log(
+                `[useMediasoup] Device has ${deviceVideoCodecs.length} video codecs`
+              );
+
+              if (routerVideoCodecs.length === 0) {
+                console.error(
+                  `[useMediasoup] Router has no video codecs configured!`
+                );
+              }
+              if (deviceVideoCodecs.length === 0) {
+                console.error(
+                  `[useMediasoup] Device has no video codecs available!`
+                );
+              }
 
               // Initialize transports
               console.log(`[useMediasoup] Initializing transports...`);
               await initializeTransports();
               console.log(`[useMediasoup] Transports initialized successfully`);
 
-              // Add existing participants
-              setParticipants(participants);
+              // Add existing participants with tracks map
+              setParticipants(
+                participants.map((p: any) => ({ ...p, tracks: new Map() }))
+              );
 
               setIsConnected(true);
               console.log(
@@ -471,7 +604,7 @@ export function useMediasoup(roomId: string, userId: string) {
               // Consume existing producers after a short delay to ensure transports are ready
               setTimeout(async () => {
                 await consumeExistingProducers();
-              }, 500);
+              }, 1000); // Increased delay
 
               resolve();
             } catch (err) {
@@ -492,7 +625,10 @@ export function useMediasoup(roomId: string, userId: string) {
       // Handle participant events
       socketRef.current.on("user-joined", ({ socketId, userId, isHost }) => {
         console.log(`[useMediasoup] New user joined: ${userId} (${socketId})`);
-        setParticipants((prev) => [...prev, { socketId, userId, isHost }]);
+        setParticipants((prev) => [
+          ...prev,
+          { socketId, userId, isHost, tracks: new Map() },
+        ]);
       });
 
       socketRef.current.on("user-left", ({ socketId }) => {
@@ -527,6 +663,19 @@ export function useMediasoup(roomId: string, userId: string) {
         if (consumer) {
           consumer.close();
           stateRef.current.consumers.delete(consumerId);
+
+          // Remove track from participant
+          const track = consumer.track;
+          setParticipants((prev) =>
+            prev.map((p) => {
+              const newTracks = new Map(p.tracks);
+              newTracks.delete(track.kind);
+              const allTracks = Array.from(newTracks.values());
+              const newStream =
+                allTracks.length > 0 ? new MediaStream(allTracks) : undefined;
+              return { ...p, tracks: newTracks, stream: newStream };
+            })
+          );
         }
       });
     } catch (err) {
@@ -534,7 +683,14 @@ export function useMediasoup(roomId: string, userId: string) {
       setError(err instanceof Error ? err.message : "Failed to connect");
       throw err;
     }
-  }, [roomId, userId, initializeTransports, consume, consumeExistingProducers]);
+  }, [
+    roomId,
+    userId,
+    initializeTransports,
+    consume,
+    consumeExistingProducers,
+    updateParticipantStream,
+  ]);
 
   const disconnect = useCallback(() => {
     // Close all producers

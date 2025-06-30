@@ -49,7 +49,11 @@ app.route("/api", routes);
 
 // Add health check endpoint
 app.get("/health", (c) => {
-  return c.json({ status: "ok", timestamp: new Date().toISOString() });
+  return c.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    service: "mediasoup-server",
+  });
 });
 
 function incomingMessageToReadableStream(req: IncomingMessage): ReadableStream {
@@ -101,7 +105,8 @@ const server = createServer(async (req, res) => {
   }
 });
 
+// Initialize WebSocket server
 new WebSocketServer(server);
 
-console.log(`Server is running on port ${port}`);
+console.log(`🚀 Server running on http://localhost:${port}`);
 server.listen(port);
