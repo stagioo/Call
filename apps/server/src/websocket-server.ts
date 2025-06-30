@@ -20,7 +20,10 @@ export class WebSocketServer {
   constructor(httpServer: HTTPServer) {
     this.io = new SocketIOServer(httpServer, {
       cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:3000",
+        origin: [
+          process.env.FRONTEND_URL || "http://localhost:3000",
+          "http://localhost:3001",
+        ],
         methods: ["GET", "POST"],
         credentials: true,
       },

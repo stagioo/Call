@@ -49,10 +49,25 @@ export async function handleWebRtcRequest(
     "createWebRtcTransport",
     async (data: { producing: boolean; consuming: boolean }, callback) => {
       try {
+        console.log(`[WebRTC] Creating transport for peer ${userId}:`, data);
         const transport = await createWebRtcTransport(room!.router);
+
+        // Set appData to identify the transport purpose
+        transport.appData = {
+          producing: data.producing,
+          consuming: data.consuming,
+          peerId: socket.id,
+          userId: userId,
+        };
 
         // Store transport
         peer.transports.set(transport.id, transport);
+
+        console.log(`[WebRTC] Transport created successfully:`, {
+          transportId: transport.id,
+          producing: data.producing,
+          consuming: data.consuming,
+        });
 
         // Return transport parameters
         callback({
@@ -105,16 +120,34 @@ export async function handleWebRtcRequest(
       },
       callback
     ) => {
+      console.log(`[WebRTC] Produce request from ${userId}:`, {
+        transportId: data.transportId,
+        kind: data.kind,
+      });
+
       const transport = peer.transports.get(data.transportId);
       if (!transport) {
+        console.error(`[WebRTC] Transport not found: ${data.transportId}`);
         callback({ ok: false });
         return;
       }
+
+      console.log(`[WebRTC] Found transport:`, {
+        id: transport.id,
+        closed: transport.closed,
+        appData: transport.appData,
+      });
 
       try {
         const producer = await transport.produce({
           kind: data.kind,
           rtpParameters: data.rtpParameters,
+        });
+
+        console.log(`[WebRTC] Producer created successfully:`, {
+          producerId: producer.id,
+          kind: producer.kind,
+          paused: producer.paused,
         });
 
         // Store producer
@@ -126,9 +159,9 @@ export async function handleWebRtcRequest(
           userId: peer.userId,
         });
 
-        callback({ ok: true, id: producer.id });
+        callback({ ok: true, producerId: producer.id });
       } catch (error) {
-        console.error("Failed to create producer:", error);
+        console.error(`[WebRTC] Failed to create producer:`, error);
         callback({ ok: false });
       }
     }
@@ -157,7 +190,7 @@ export async function handleWebRtcRequest(
 
         // Get the transport
         const transport = Array.from(peer.transports.values()).find(
-          (t) => t.appData.consuming
+          (t) => t.appData.consuming === true
         );
         if (!transport) {
           callback({ ok: false });

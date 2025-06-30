@@ -95,6 +95,15 @@ export function useMediasoup(roomId: string, userId: string) {
                   dtlsParameters: response.params.dtlsParameters,
                 });
 
+            console.log(
+              `[useMediasoup] Created ${producing ? "send" : "recv"} transport:`,
+              {
+                id: transport.id,
+                closed: transport.closed,
+                connectionState: transport.connectionState,
+              }
+            );
+
             transport.on("connect", ({ dtlsParameters }, callback, errback) => {
               connectTransport(transport, dtlsParameters)
                 .then(callback)
@@ -114,8 +123,12 @@ export function useMediasoup(roomId: string, userId: string) {
                         rtpParameters,
                         appData,
                       },
-                      (response: { producerId: string }) => {
-                        callback({ id: response.producerId });
+                      (response: { ok: boolean; producerId?: string }) => {
+                        if (response.ok && response.producerId) {
+                          callback({ id: response.producerId });
+                        } else {
+                          errback(new Error("Failed to produce"));
+                        }
                       }
                     );
                   } catch (error) {
@@ -146,12 +159,23 @@ export function useMediasoup(roomId: string, userId: string) {
   }, [createTransport]);
 
   const produce = useCallback(async (track: MediaStreamTrack) => {
-    if (!stateRef.current.sendTransport) return null;
+    if (!stateRef.current.sendTransport) {
+      throw new Error("Send transport not available");
+    }
 
-    return new Promise<types.Producer>((resolve, reject) => {
-      stateRef.current
-        .sendTransport!.produce({
-          track,
+    console.log(`[useMediasoup] Attempting to produce ${track.kind} track:`, {
+      id: track.id,
+      kind: track.kind,
+      enabled: track.enabled,
+      readyState: track.readyState,
+      label: track.label,
+    });
+
+    try {
+      const producer = await stateRef.current.sendTransport.produce({
+        track,
+        // Only add encodings for video tracks
+        ...(track.kind === "video" && {
           encodings: [
             { maxBitrate: 100000 },
             { maxBitrate: 300000 },
@@ -160,13 +184,24 @@ export function useMediasoup(roomId: string, userId: string) {
           codecOptions: {
             videoGoogleStartBitrate: 1000,
           },
-        })
-        .then((producer) => {
-          stateRef.current.producers.set(producer.id, producer);
-          resolve(producer);
-        })
-        .catch(reject);
-    });
+        }),
+      });
+
+      console.log(`[useMediasoup] Successfully produced ${track.kind} track:`, {
+        producerId: producer.id,
+        kind: producer.kind,
+        paused: producer.paused,
+      });
+
+      stateRef.current.producers.set(producer.id, producer);
+      return producer;
+    } catch (error) {
+      console.error(
+        `[useMediasoup] Failed to produce ${track.kind} track:`,
+        error
+      );
+      throw error;
+    }
   }, []);
 
   const consume = useCallback(async (producerId: string, userId: string) => {
@@ -217,60 +252,99 @@ export function useMediasoup(roomId: string, userId: string) {
 
   const connect = useCallback(async () => {
     try {
+      console.log(
+        `[useMediasoup] Starting connection to http://localhost:1284 for room ${roomId}, user ${userId}`
+      );
+
       // Connect to signaling server
       socketRef.current = io("http://localhost:1284", {
         query: { roomId, userId },
       });
 
+      console.log(`[useMediasoup] Socket created, waiting for connection...`);
+
       // Wait for connection and room join
       await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error("Connection timeout after 10 seconds"));
+        }, 10000);
+
         socketRef.current!.on("connect", () => {
-          console.log("Socket connected, joining room...");
+          console.log(
+            `[useMediasoup] Socket connected successfully, joining room ${roomId}...`
+          );
           socketRef.current!.emit("join-room", { roomId, userId });
+        });
+
+        socketRef.current!.on("connect_error", (error) => {
+          console.error(`[useMediasoup] Socket connection error:`, error);
+          clearTimeout(timeout);
+          reject(new Error(`Connection failed: ${error.message}`));
         });
 
         socketRef.current!.on(
           "room-joined",
           async ({ participants, rtpCapabilities }) => {
             try {
-              console.log("Joined room, initializing device...");
+              clearTimeout(timeout);
+              console.log(
+                `[useMediasoup] Room joined successfully, participants:`,
+                participants
+              );
+              console.log(
+                `[useMediasoup] RTP capabilities received:`,
+                rtpCapabilities
+              );
+
               // Load device
+              console.log(`[useMediasoup] Loading mediasoup device...`);
               const device = new Device();
               await device.load({ routerRtpCapabilities: rtpCapabilities });
               stateRef.current.device = device;
+              console.log(`[useMediasoup] Device loaded successfully`);
 
               // Initialize transports
+              console.log(`[useMediasoup] Initializing transports...`);
               await initializeTransports();
+              console.log(`[useMediasoup] Transports initialized successfully`);
 
               // Add existing participants
               setParticipants(participants);
 
               setIsConnected(true);
+              console.log(
+                `[useMediasoup] Connection process completed successfully`
+              );
               resolve();
             } catch (err) {
+              clearTimeout(timeout);
+              console.error(`[useMediasoup] Error during room join:`, err);
               reject(err);
             }
           }
         );
 
         socketRef.current!.on("error", (error) => {
+          console.error(`[useMediasoup] Socket error:`, error);
+          clearTimeout(timeout);
           reject(new Error(error.message));
         });
       });
 
       // Handle participant events
       socketRef.current.on("user-joined", ({ socketId, userId, isHost }) => {
-        console.log(`New user joined: ${userId}`);
+        console.log(`[useMediasoup] New user joined: ${userId} (${socketId})`);
         setParticipants((prev) => [...prev, { socketId, userId, isHost }]);
       });
 
       socketRef.current.on("user-left", ({ socketId }) => {
-        console.log(`User left: ${socketId}`);
+        console.log(`[useMediasoup] User left: ${socketId}`);
         setParticipants((prev) => prev.filter((p) => p.socketId !== socketId));
       });
     } catch (err) {
-      console.error("Failed to connect:", err);
+      console.error(`[useMediasoup] Failed to connect:`, err);
       setError(err instanceof Error ? err.message : "Failed to connect");
+      throw err;
     }
   }, [roomId, userId, initializeTransports]);
 

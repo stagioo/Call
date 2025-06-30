@@ -91,6 +91,9 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
       await connect();
       console.log(`[handleJoinCall] Connected to mediasoup server`);
 
+      // Wait a moment for transports to be fully ready
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       const videoTrack = stream.getVideoTracks()[0];
       const audioTrack = stream.getAudioTracks()[0];
 
@@ -109,13 +112,18 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
           : null,
       });
 
-      if (videoTrack) {
-        await produce(videoTrack);
-        console.log(`[handleJoinCall] Video track produced`);
-      }
+      // Produce audio first (usually more reliable)
       if (audioTrack) {
+        console.log(`[handleJoinCall] Producing audio track...`);
         await produce(audioTrack);
-        console.log(`[handleJoinCall] Audio track produced`);
+        console.log(`[handleJoinCall] Audio track produced successfully`);
+      }
+
+      // Then produce video
+      if (videoTrack) {
+        console.log(`[handleJoinCall] Producing video track...`);
+        await produce(videoTrack);
+        console.log(`[handleJoinCall] Video track produced successfully`);
       }
 
       console.log(`[handleJoinCall] Setting hasJoined to true`);
@@ -353,7 +361,7 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
             {participants.map((participant) => (
               <div key={participant.userId} className="aspect-video">
                 <VideoPlayer
-                  stream={participant.stream}
+                  stream={participant.stream || null}
                   isLocal={false}
                   className="w-full h-full"
                 />
