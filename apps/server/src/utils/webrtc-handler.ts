@@ -153,10 +153,11 @@ export async function handleWebRtcRequest(
         // Store producer
         peer.producers.set(producer.id, producer);
 
-        // Notify other peers in the room
+        // Notify other peers in the room about the new producer
         socket.to(roomId).emit("newProducer", {
           producerId: producer.id,
           userId: peer.userId,
+          kind: producer.kind,
         });
 
         callback({ ok: true, producerId: producer.id });
@@ -184,15 +185,17 @@ export async function handleWebRtcRequest(
             rtpCapabilities: data.rtpCapabilities,
           })
         ) {
+          console.log(`[WebRTC] Cannot consume producer ${data.producerId}`);
           callback({ ok: false });
           return;
         }
 
-        // Get the transport
+        // Get the consuming transport
         const transport = Array.from(peer.transports.values()).find(
           (t) => t.appData.consuming === true
         );
         if (!transport) {
+          console.error(`[WebRTC] No consuming transport found`);
           callback({ ok: false });
           return;
         }
@@ -204,11 +207,18 @@ export async function handleWebRtcRequest(
           paused: true, // Start paused, client will request resumption
         });
 
+        console.log(`[WebRTC] Consumer created successfully:`, {
+          consumerId: consumer.id,
+          producerId: data.producerId,
+          kind: consumer.kind,
+        });
+
         // Store consumer
         peer.consumers.set(consumer.id, consumer);
 
         // Handle consumer events
         consumer.on("producerclose", () => {
+          console.log(`[WebRTC] Producer closed for consumer ${consumer.id}`);
           consumer.close();
           peer.consumers.delete(consumer.id);
           socket.emit("consumerClosed", { consumerId: consumer.id });
@@ -238,12 +248,14 @@ export async function handleWebRtcRequest(
     async (data: { consumerId: string }, callback) => {
       const consumer = peer.consumers.get(data.consumerId);
       if (!consumer) {
+        console.error(`[WebRTC] Consumer not found: ${data.consumerId}`);
         callback({ ok: false });
         return;
       }
 
       try {
         await consumer.resume();
+        console.log(`[WebRTC] Consumer resumed: ${consumer.id}`);
         callback({ ok: true });
       } catch (error) {
         console.error("Failed to resume consumer:", error);
@@ -252,8 +264,37 @@ export async function handleWebRtcRequest(
     }
   );
 
+  // Handle get existing producers request
+  socket.on("getProducers", (callback) => {
+    const producers: Array<{
+      producerId: string;
+      userId: string;
+      kind: types.MediaKind;
+    }> = [];
+
+    // Get all producers from other peers in the room
+    for (const [peerId, otherPeer] of room!.peers.entries()) {
+      if (peerId !== socket.id) {
+        for (const [producerId, producer] of otherPeer.producers.entries()) {
+          producers.push({
+            producerId,
+            userId: otherPeer.userId,
+            kind: producer.kind,
+          });
+        }
+      }
+    }
+
+    console.log(
+      `[WebRTC] Sending ${producers.length} existing producers to ${userId}`
+    );
+    callback({ ok: true, producers });
+  });
+
   // Handle disconnection
   socket.on("disconnect", () => {
+    console.log(`[WebRTC] Peer disconnecting: ${userId}`);
+
     // Close all transports, producers, and consumers
     for (const transport of peer.transports.values()) {
       transport.close();
@@ -264,6 +305,7 @@ export async function handleWebRtcRequest(
 
     // If room is empty, close router and remove room
     if (room?.peers.size === 0) {
+      console.log(`[WebRTC] Closing empty room: ${roomId}`);
       room.router.close();
       rooms.delete(roomId);
     }

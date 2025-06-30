@@ -163,6 +163,22 @@ export function useMediasoup(roomId: string, userId: string) {
       throw new Error("Send transport not available");
     }
 
+    if (!stateRef.current.device) {
+      throw new Error("Device not available");
+    }
+
+    // Check if device can produce this kind of media
+    const canProduce = stateRef.current.device.canProduce(
+      track.kind as types.MediaKind
+    );
+    console.log(`[useMediasoup] Device can produce ${track.kind}:`, canProduce);
+
+    if (!canProduce) {
+      throw new Error(
+        `Device cannot produce ${track.kind} media. Check codec configuration.`
+      );
+    }
+
     console.log(`[useMediasoup] Attempting to produce ${track.kind} track:`, {
       id: track.id,
       kind: track.kind,
@@ -200,16 +216,40 @@ export function useMediasoup(roomId: string, userId: string) {
         `[useMediasoup] Failed to produce ${track.kind} track:`,
         error
       );
+
+      if (error instanceof Error) {
+        console.error(`[useMediasoup] Error details:`, {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        });
+      }
+
       throw error;
     }
   }, []);
 
   const consume = useCallback(async (producerId: string, userId: string) => {
-    if (!socketRef.current || !stateRef.current.recvTransport) return;
+    if (
+      !socketRef.current ||
+      !stateRef.current.recvTransport ||
+      !stateRef.current.device
+    ) {
+      console.error(`[useMediasoup] Missing requirements for consuming:`, {
+        socket: !!socketRef.current,
+        recvTransport: !!stateRef.current.recvTransport,
+        device: !!stateRef.current.device,
+      });
+      return null;
+    }
 
-    const { rtpCapabilities } = stateRef.current.device!;
+    const { rtpCapabilities } = stateRef.current.device;
 
-    return new Promise<MediaStream>((resolve, reject) => {
+    console.log(
+      `[useMediasoup] Starting consume for producer ${producerId} from user ${userId}`
+    );
+
+    return new Promise<MediaStream | null>((resolve, reject) => {
       socketRef.current!.emit(
         "consume",
         {
@@ -218,37 +258,120 @@ export function useMediasoup(roomId: string, userId: string) {
         },
         async (response: {
           ok: boolean;
-          params: {
+          params?: {
             id: string;
             producerId: string;
             kind: types.MediaKind;
             rtpParameters: types.RtpParameters;
+            type: string;
+            producerPaused: boolean;
           };
         }) => {
-          if (!response.ok) {
-            reject(new Error("Failed to consume"));
+          if (!response.ok || !response.params) {
+            console.error(
+              `[useMediasoup] Failed to consume producer ${producerId}`
+            );
+            resolve(null);
             return;
           }
 
-          const consumer = await stateRef.current.recvTransport!.consume({
-            id: response.params.id,
-            producerId: response.params.producerId,
-            kind: response.params.kind,
-            rtpParameters: response.params.rtpParameters,
-          });
+          try {
+            console.log(
+              `[useMediasoup] Creating consumer for producer ${producerId}:`,
+              response.params
+            );
 
-          stateRef.current.consumers.set(consumer.id, consumer);
+            const consumer = await stateRef.current.recvTransport!.consume({
+              id: response.params.id,
+              producerId: response.params.producerId,
+              kind: response.params.kind,
+              rtpParameters: response.params.rtpParameters,
+            });
 
-          const stream = new MediaStream([consumer.track]);
-          setParticipants((prev) =>
-            prev.map((p) => (p.userId === userId ? { ...p, stream } : p))
-          );
+            console.log(`[useMediasoup] Consumer created:`, {
+              consumerId: consumer.id,
+              kind: consumer.kind,
+              paused: consumer.paused,
+            });
 
-          resolve(stream);
+            stateRef.current.consumers.set(consumer.id, consumer);
+
+            // Resume the consumer
+            console.log(`[useMediasoup] Resuming consumer ${consumer.id}`);
+            socketRef.current!.emit(
+              "resumeConsumer",
+              { consumerId: consumer.id },
+              (resumeResponse: { ok: boolean }) => {
+                if (resumeResponse.ok) {
+                  console.log(`[useMediasoup] Consumer resumed successfully`);
+                } else {
+                  console.error(`[useMediasoup] Failed to resume consumer`);
+                }
+              }
+            );
+
+            const stream = new MediaStream([consumer.track]);
+            console.log(`[useMediasoup] Created stream for user ${userId}:`, {
+              streamId: stream.id,
+              tracks: stream.getTracks().length,
+              active: stream.active,
+            });
+
+            setParticipants((prev) =>
+              prev.map((p) => (p.userId === userId ? { ...p, stream } : p))
+            );
+
+            resolve(stream);
+          } catch (error) {
+            console.error(`[useMediasoup] Error creating consumer:`, error);
+            reject(error);
+          }
         }
       );
     });
   }, []);
+
+  const consumeExistingProducers = useCallback(async () => {
+    if (!socketRef.current) return;
+
+    console.log(`[useMediasoup] Requesting existing producers...`);
+
+    return new Promise<void>((resolve) => {
+      socketRef.current!.emit(
+        "getProducers",
+        async (response: {
+          ok: boolean;
+          producers?: Array<{
+            producerId: string;
+            userId: string;
+            kind: types.MediaKind;
+          }>;
+        }) => {
+          if (response.ok && response.producers) {
+            console.log(
+              `[useMediasoup] Found ${response.producers.length} existing producers`
+            );
+
+            for (const producer of response.producers) {
+              console.log(
+                `[useMediasoup] Consuming existing producer:`,
+                producer
+              );
+              try {
+                await consume(producer.producerId, producer.userId);
+              } catch (error) {
+                console.error(
+                  `[useMediasoup] Failed to consume existing producer:`,
+                  error
+                );
+              }
+            }
+          }
+          resolve();
+        }
+      );
+    });
+  }, [consume]);
 
   const connect = useCallback(async () => {
     try {
@@ -299,9 +422,38 @@ export function useMediasoup(roomId: string, userId: string) {
               // Load device
               console.log(`[useMediasoup] Loading mediasoup device...`);
               const device = new Device();
+
+              console.log(`[useMediasoup] Router RTP capabilities:`, {
+                codecs: rtpCapabilities.codecs?.map((c: any) => ({
+                  kind: c.kind,
+                  mimeType: c.mimeType,
+                  clockRate: c.clockRate,
+                  channels: c.channels,
+                  parameters: c.parameters,
+                })),
+                headerExtensions: rtpCapabilities.headerExtensions?.length,
+              });
+
               await device.load({ routerRtpCapabilities: rtpCapabilities });
               stateRef.current.device = device;
-              console.log(`[useMediasoup] Device loaded successfully`);
+
+              console.log(
+                `[useMediasoup] Device loaded successfully. Capabilities:`,
+                {
+                  canProduce: {
+                    audio: device.canProduce("audio"),
+                    video: device.canProduce("video"),
+                  },
+                  rtpCapabilities: {
+                    codecs: device.rtpCapabilities.codecs?.map((c: any) => ({
+                      kind: c.kind,
+                      mimeType: c.mimeType,
+                      clockRate: c.clockRate,
+                      channels: c.channels,
+                    })),
+                  },
+                }
+              );
 
               // Initialize transports
               console.log(`[useMediasoup] Initializing transports...`);
@@ -315,6 +467,12 @@ export function useMediasoup(roomId: string, userId: string) {
               console.log(
                 `[useMediasoup] Connection process completed successfully`
               );
+
+              // Consume existing producers after a short delay to ensure transports are ready
+              setTimeout(async () => {
+                await consumeExistingProducers();
+              }, 500);
+
               resolve();
             } catch (err) {
               clearTimeout(timeout);
@@ -341,12 +499,42 @@ export function useMediasoup(roomId: string, userId: string) {
         console.log(`[useMediasoup] User left: ${socketId}`);
         setParticipants((prev) => prev.filter((p) => p.socketId !== socketId));
       });
+
+      // Handle new producers
+      socketRef.current.on(
+        "newProducer",
+        async ({ producerId, userId, kind }) => {
+          console.log(`[useMediasoup] New producer available:`, {
+            producerId,
+            userId,
+            kind,
+          });
+          try {
+            await consume(producerId, userId);
+          } catch (error) {
+            console.error(
+              `[useMediasoup] Failed to consume new producer:`,
+              error
+            );
+          }
+        }
+      );
+
+      // Handle consumer closed
+      socketRef.current.on("consumerClosed", ({ consumerId }) => {
+        console.log(`[useMediasoup] Consumer closed: ${consumerId}`);
+        const consumer = stateRef.current.consumers.get(consumerId);
+        if (consumer) {
+          consumer.close();
+          stateRef.current.consumers.delete(consumerId);
+        }
+      });
     } catch (err) {
       console.error(`[useMediasoup] Failed to connect:`, err);
       setError(err instanceof Error ? err.message : "Failed to connect");
       throw err;
     }
-  }, [roomId, userId, initializeTransports]);
+  }, [roomId, userId, initializeTransports, consume, consumeExistingProducers]);
 
   const disconnect = useCallback(() => {
     // Close all producers

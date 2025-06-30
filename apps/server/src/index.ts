@@ -47,6 +47,11 @@ app.use("*", async (c, next) => {
 
 app.route("/api", routes);
 
+// Add health check endpoint
+app.get("/health", (c) => {
+  return c.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 function incomingMessageToReadableStream(req: IncomingMessage): ReadableStream {
   return new ReadableStream({
     start(controller) {

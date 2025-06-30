@@ -92,7 +92,7 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
       console.log(`[handleJoinCall] Connected to mediasoup server`);
 
       // Wait a moment for transports to be fully ready
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const videoTrack = stream.getVideoTracks()[0];
       const audioTrack = stream.getAudioTracks()[0];
@@ -112,18 +112,34 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
           : null,
       });
 
-      // Produce audio first (usually more reliable)
-      if (audioTrack) {
-        console.log(`[handleJoinCall] Producing audio track...`);
-        await produce(audioTrack);
-        console.log(`[handleJoinCall] Audio track produced successfully`);
-      }
-
-      // Then produce video
+      // Produce video first (it's usually more forgiving)
       if (videoTrack) {
         console.log(`[handleJoinCall] Producing video track...`);
-        await produce(videoTrack);
-        console.log(`[handleJoinCall] Video track produced successfully`);
+        try {
+          await produce(videoTrack);
+          console.log(`[handleJoinCall] Video track produced successfully`);
+        } catch (error) {
+          console.error(
+            `[handleJoinCall] Failed to produce video track:`,
+            error
+          );
+          // Continue anyway, maybe audio will work
+        }
+      }
+
+      // Then produce audio
+      if (audioTrack) {
+        console.log(`[handleJoinCall] Producing audio track...`);
+        try {
+          await produce(audioTrack);
+          console.log(`[handleJoinCall] Audio track produced successfully`);
+        } catch (error) {
+          console.error(
+            `[handleJoinCall] Failed to produce audio track:`,
+            error
+          );
+          // Continue anyway, maybe video worked
+        }
       }
 
       console.log(`[handleJoinCall] Setting hasJoined to true`);
@@ -359,7 +375,7 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
             </div>
 
             {participants.map((participant) => (
-              <div key={participant.userId} className="aspect-video">
+              <div key={participant.userId} className="aspect-video relative">
                 <VideoPlayer
                   stream={participant.stream || null}
                   isLocal={false}
@@ -374,12 +390,28 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
 
           <div className="mb-4 p-4 bg-muted rounded-lg">
             <h3 className="font-semibold mb-2">Debug Info:</h3>
-            <p>Participants: {participants.length + 1}</p>
+            <p>Total participants: {participants.length + 1}</p>
             <p>Connected: {isConnected ? "Yes" : "No"}</p>
             <p>Local stream: {localStream ? "Yes" : "No"}</p>
-            <p>Remote streams: {participants.length}</p>
+            <p>Local stream active: {localStream?.active ? "Yes" : "No"}</p>
+            <p>Local tracks: {localStream?.getTracks().length || 0}</p>
+            <p>
+              Remote participants with streams:{" "}
+              {participants.filter((p) => p.stream).length}
+            </p>
+            <div className="mt-2">
+              <h4 className="font-medium">Remote streams:</h4>
+              {participants.map((participant) => (
+                <div key={participant.userId} className="ml-2 text-sm">
+                  {participant.userId}:{" "}
+                  {participant.stream
+                    ? `${participant.stream.getTracks().length} tracks, ${participant.stream.active ? "active" : "inactive"}`
+                    : "No stream"}
+                </div>
+              ))}
+            </div>
             {mediasoupError && (
-              <p className="text-red-500">Error: {mediasoupError}</p>
+              <p className="text-red-500 mt-2">Error: {mediasoupError}</p>
             )}
           </div>
 
