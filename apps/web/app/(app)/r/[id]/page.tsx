@@ -1,82 +1,61 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
-// LiveKit imports
-import { LiveKitRoom } from "livekit-react";
-// import { LiveKitRoom } from "@livekit/react-components"; // Use this if you upgrade to the new package
 
-// LiveKit Cloud URL
+import { useEffect, useState } from "react";
+import { VideoConference, RoomContext } from "@livekit/components-react";
+import { Room } from "livekit-client";
+import { useParams } from "next/navigation";
+
 const LIVEKIT_URL = "wss://call-z0ozwesk.livekit.cloud";
+
+function randomName() {
+  return "user-" + Math.random().toString(36).substring(2, 10);
+}
+
+async function fetchToken(roomName: string, participantName: string) {
+  const resp = await fetch(`/api/livekit-token?room=${roomName}&username=${participantName}`);
+  const data = await resp.json();
+  return data.token;
+}
 
 export default function RoomPage() {
   const params = useParams();
-  // Robustly extract id from params (handle string or array)
-  const id = useMemo(() => {
-    if (!params) return undefined;
-    if (typeof params === "object" && "id" in params) {
-      const value = (params as any).id;
-      if (typeof value === "string") return value;
-      if (Array.isArray(value)) return value[0];
+  const roomName = params?.id as string;
+  const [room, setRoom] = useState<Room | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [username] = useState(() => randomName());
+
+  useEffect(() => {
+    if (roomName && !token) {
+      fetchToken(roomName, username).then(setToken);
     }
-    return undefined;
-  }, [params]);
-
-  // Debug logs for params and id
-  useEffect(() => {
-    console.log("[LiveKit Debug] useParams() result:", params);
-    console.log("[LiveKit Debug] Extracted id:", id);
-  }, [params, id]);
-
-  const [token, setToken] = useState<string>("");
-  const [tokenError, setTokenError] = useState<string>("");
-
-  // For demo: use a random name
-  const userName = useMemo(() => `user-${Math.floor(Math.random() * 10000)}`,[id]);
+  }, [roomName, token, username]);
 
   useEffect(() => {
-    if (!id) return;
-    setToken("");
-    setTokenError("");
-    fetch(`/api/livekit-token?room=${id}&username=${userName}`)
-      .then(res => {
-        if (!res.ok) throw new Error(`Token fetch failed: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        if (typeof data.token === "string") {
-          setToken(data.token);
-        } else {
-          setTokenError("No token received from API");
-        }
-      })
-      .catch((err) => {
-        setTokenError(err.message || "Unknown error fetching token");
+    if (token && !room) {
+      const r = new Room();
+      r.connect(LIVEKIT_URL, token).then(() => {
+        setRoom(r);
+        r.localParticipant.enableCameraAndMicrophone().catch(() => {});
       });
-  }, [id, userName]);
+    }
+    // Cleanup
+    return () => {
+      if (room) {
+        room.disconnect();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, room]);
 
-  // Debug log for token and errors
-  useEffect(() => {
-    if (token) console.log("[LiveKit Debug] Got token:", token);
-    if (tokenError) console.error("[LiveKit Debug] Token error:", tokenError);
-  }, [token, tokenError]);
-
-  if (!id) return <div className="text-white">Invalid room link (no id param)</div>;
-  if (tokenError) return <div className="text-red-500">Token error: {tokenError}</div>;
-  if (!token) return <div className="text-white">Loading...</div>;
+  if (!token || !room) {
+    return <div className="min-h-screen flex items-center justify-center">Conectando...</div>;
+  }
 
   return (
-    <div className="w-screen min-h-screen bg-[#101010] flex items-center justify-center">
-      {/* LiveKitRoom provides the full video call UI out of the box */}
-      <LiveKitRoom
-        url={LIVEKIT_URL}
-        token={token}
-        // connect={true} // Removed: not a valid prop
-        // You can customize the UI or use your own components here
-      />
-      {/*
-        To customize the UI, see LiveKit docs:
-        https://docs.livekit.io/client-sdk/react/
-      */}
+    <div className="min-h-screen">
+      <RoomContext.Provider value={room}>
+        <VideoConference />
+      </RoomContext.Provider>
     </div>
   );
-} 
+}
