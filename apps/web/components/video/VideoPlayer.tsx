@@ -11,31 +11,127 @@ export const VideoPlayer = ({
   isLocal = false,
   className = "",
 }: VideoPlayerProps) => {
+  console.log({
+    stream,
+    isLocal,
+    className,
+  });
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    console.log(`VideoPlayer: ${isLocal ? "local" : "remote"} stream:`, stream);
-    console.log(`VideoPlayer: Stream active:`, stream?.active);
-    console.log(`VideoPlayer: Stream tracks:`, stream?.getTracks());
+    console.log(`[VideoPlayer] ${isLocal ? "Local" : "Remote"} stream:`, {
+      stream: stream,
+      active: stream?.active,
+      tracks: stream?.getTracks().map((track) => ({
+        kind: track.kind,
+        enabled: track.enabled,
+        readyState: track.readyState,
+        muted: track.muted,
+      })),
+    });
 
     if (videoRef.current && stream) {
-      // Solo asignar srcObject si realmente cambió
-      if (videoRef.current.srcObject !== stream) {
-        videoRef.current.srcObject = stream;
+      const videoElement = videoRef.current;
+
+      console.log(`[VideoPlayer] Current video element state:`, {
+        readyState: videoElement.readyState,
+        paused: videoElement.paused,
+        currentSrc: videoElement.currentSrc,
+        srcObject: videoElement.srcObject,
+        videoWidth: videoElement.videoWidth,
+        videoHeight: videoElement.videoHeight,
+      });
+
+      if (videoElement.srcObject) {
+        videoElement.srcObject = null;
       }
-      // play() solo cuando el video esté listo
-      const handleLoadedMetadata = () => {
-        videoRef.current?.play().catch(() => {});
+      videoElement.srcObject = stream;
+      console.log(`[VideoPlayer] Set new srcObject:`, {
+        srcObject: videoElement.srcObject,
+        streamActive: stream.active,
+        videoTracks: stream.getVideoTracks().length,
+        audioTracks: stream.getAudioTracks().length,
+      });
+
+      // Try to play immediately and also wait for metadata
+      const tryPlay = async () => {
+        try {
+          await videoElement.play();
+          console.log(`[VideoPlayer] Immediate playback started`);
+        } catch (error) {
+          console.error(`[VideoPlayer] Immediate playback failed:`, error);
+        }
       };
-      videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
+      tryPlay();
+
+      const handleLoadedMetadata = async () => {
+        console.log(`[VideoPlayer] Metadata loaded, attempting to play`);
+        console.log(
+          `[VideoPlayer] Video dimensions: ${videoElement.videoWidth}x${videoElement.videoHeight}`
+        );
+        try {
+          await videoElement.play();
+          console.log(
+            `[VideoPlayer] Playback after metadata started successfully`
+          );
+        } catch (error) {
+          console.error(`[VideoPlayer] Playback after metadata failed:`, error);
+        }
+      };
+
+      const handleCanPlay = async () => {
+        console.log(`[VideoPlayer] Can play event fired`);
+        try {
+          await videoElement.play();
+          console.log(`[VideoPlayer] Playback on canplay started successfully`);
+        } catch (error) {
+          console.error(`[VideoPlayer] Playback on canplay failed:`, error);
+        }
+      };
+
+      const handlePlay = () => {
+        console.log(`[VideoPlayer] Play event fired - video is now playing`);
+      };
+
+      const handlePause = () => {
+        console.log(`[VideoPlayer] Pause event fired - video is now paused`);
+      };
+
+      const handleError = (event: Event) => {
+        console.error(`[VideoPlayer] Video error:`, event);
+        const target = event.target as HTMLVideoElement;
+        if (target.error) {
+          console.error(`[VideoPlayer] Video error details:`, {
+            code: target.error.code,
+            message: target.error.message,
+          });
+        }
+      };
+
+      videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
+      videoElement.addEventListener("canplay", handleCanPlay);
+      videoElement.addEventListener("play", handlePlay);
+      videoElement.addEventListener("pause", handlePause);
+      videoElement.addEventListener("error", handleError);
+
       return () => {
-        videoRef.current?.removeEventListener(
+        const currentVideoElement = videoElement; // Store ref value
+        currentVideoElement.removeEventListener(
           "loadedmetadata",
           handleLoadedMetadata
         );
+        currentVideoElement.removeEventListener("canplay", handleCanPlay);
+        currentVideoElement.removeEventListener("play", handlePlay);
+        currentVideoElement.removeEventListener("pause", handlePause);
+        currentVideoElement.removeEventListener("error", handleError);
       };
+    } else if (videoRef.current && !stream) {
+      console.log(`[VideoPlayer] No stream provided, clearing video element`);
+      const videoElement = videoRef.current;
+      videoElement.srcObject = null;
     }
-  }, [stream]);
+  }, [stream, isLocal]);
+
   return (
     <div className={`relative ${className}`}>
       <video
@@ -43,6 +139,9 @@ export const VideoPlayer = ({
         autoPlay
         playsInline
         muted={isLocal}
+        width="100%"
+        height="100%"
+        style={{ backgroundColor: "#000" }}
         className="w-full h-full object-cover rounded-lg"
       />
       {isLocal && (

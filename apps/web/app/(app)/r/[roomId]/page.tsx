@@ -3,10 +3,10 @@
 import { useEffect, useState, use } from "react";
 import { Button } from "@call/ui/components/button";
 import { apiClient } from "@/lib/api-client";
-import { useWebRTC } from "@/hooks/useWebRTC";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
 import { VideoControls } from "@/components/video/VideoControls";
 import { useRouter } from "next/navigation";
+import { useMediasoup } from "@/hooks/useMediasoup";
 
 interface Room {
   id: string;
@@ -24,31 +24,25 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showShareModal, setShowShareModal] = useState(false);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [hasJoined, setHasJoined] = useState(false);
   const router = useRouter();
 
-  const {
-    localStream,
-    participants,
-    isConnected,
-    isHost,
-    joinRoom,
-    leaveRoom,
-    toggleMute,
-    toggleVideo,
-    isMuted,
-    isVideoEnabled,
-    reconnect,
-    isConnecting,
-  } = useWebRTC();
+  const userId = useState(
+    () => `user_${Math.random().toString(36).substr(2, 9)}`
+  )[0];
 
-  // Debug logs
-  useEffect(() => {
-    console.log("Participants updated:", participants);
-    console.log("Local stream:", localStream);
-    console.log("Is connected:", isConnected);
-  }, [participants, localStream, isConnected]);
+  const {
+    connect,
+    disconnect,
+    produce,
+    isConnected,
+    error: mediasoupError,
+    participants,
+  } = useMediasoup(roomId, userId);
+
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
 
   useEffect(() => {
     const fetchRoom = async () => {
@@ -60,6 +54,7 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
           setError("Could not load the room");
         }
       } catch (err) {
+        console.error("Error fetching room:", err);
         setError("Room not found");
       } finally {
         setLoading(false);
@@ -71,9 +66,85 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
 
   const handleJoinCall = async () => {
     try {
-      const userId = `user_${Math.random().toString(36).substr(2, 9)}`;
-      await joinRoom(roomId, userId);
+      console.log(
+        `[handleJoinCall] Starting join process. Current hasJoined:`,
+        hasJoined
+      );
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
+      console.log(`[handleJoinCall] Got media stream:`, {
+        active: stream.active,
+        tracks: stream.getTracks().map((track) => ({
+          kind: track.kind,
+          enabled: track.enabled,
+          readyState: track.readyState,
+        })),
+      });
+
+      setLocalStream(stream);
+      console.log(`[handleJoinCall] Set local stream state`);
+
+      console.log(`[handleJoinCall] Connecting to mediasoup server`);
+      await connect();
+      console.log(`[handleJoinCall] Connected to mediasoup server`);
+
+      // Wait a moment for transports to be fully ready
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const videoTrack = stream.getVideoTracks()[0];
+      const audioTrack = stream.getAudioTracks()[0];
+
+      console.log(`[handleJoinCall] Producing tracks:`, {
+        video: videoTrack
+          ? {
+              enabled: videoTrack.enabled,
+              readyState: videoTrack.readyState,
+            }
+          : null,
+        audio: audioTrack
+          ? {
+              enabled: audioTrack.enabled,
+              readyState: audioTrack.readyState,
+            }
+          : null,
+      });
+
+      // Produce video first (it's usually more forgiving)
+      if (videoTrack) {
+        console.log(`[handleJoinCall] Producing video track...`);
+        try {
+          await produce(videoTrack);
+          console.log(`[handleJoinCall] Video track produced successfully`);
+        } catch (error) {
+          console.error(
+            `[handleJoinCall] Failed to produce video track:`,
+            error
+          );
+          // Continue anyway, maybe audio will work
+        }
+      }
+
+      // Then produce audio
+      if (audioTrack) {
+        console.log(`[handleJoinCall] Producing audio track...`);
+        try {
+          await produce(audioTrack);
+          console.log(`[handleJoinCall] Audio track produced successfully`);
+        } catch (error) {
+          console.error(
+            `[handleJoinCall] Failed to produce audio track:`,
+            error
+          );
+          // Continue anyway, maybe video worked
+        }
+      }
+
+      console.log(`[handleJoinCall] Setting hasJoined to true`);
       setHasJoined(true);
+      console.log(`[handleJoinCall] Join process completed`);
     } catch (error) {
       console.error("Error joining call:", error);
       if (error instanceof Error) {
@@ -97,8 +168,32 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
   };
 
   const handleLeaveCall = () => {
-    leaveRoom();
+    if (localStream) {
+      localStream.getTracks().forEach((track) => track.stop());
+      setLocalStream(null);
+    }
+    disconnect();
     setHasJoined(false);
+  };
+
+  const toggleMute = () => {
+    if (localStream) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMuted(!audioTrack.enabled);
+      }
+    }
+  };
+
+  const toggleVideo = () => {
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setIsVideoEnabled(!isVideoEnabled);
+      }
+    }
   };
 
   const shareRoom = async () => {
@@ -111,16 +206,15 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
           text: `Join my video call room: ${room?.name}`,
           url: roomUrl,
         });
-      } catch (err) {
-        // User cancelled sharing
+      } catch (error) {
+        console.error("Error sharing link:", error);
       }
     } else {
-      // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(roomUrl);
         alert("Link copied to clipboard!");
       } catch (err) {
-        // Fallback for older browsers
+        console.error("Error copying link to clipboard:", err);
         const textArea = document.createElement("textarea");
         textArea.value = roomUrl;
         document.body.appendChild(textArea);
@@ -131,6 +225,7 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
       }
     }
   };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -159,7 +254,6 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
   if (!hasJoined) {
     return (
       <div className="min-h-screen bg-background">
-        {/* Header */}
         <div className="border-b p-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div>
@@ -189,7 +283,6 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
           </div>
         </div>
 
-        {/* Join Call Screen */}
         <div className="flex-1 p-4">
           <div className="max-w-7xl mx-auto">
             <div className="bg-muted rounded-lg h-96 flex items-center justify-center">
@@ -211,13 +304,10 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
                 </div>
                 <h2 className="text-lg font-semibold mb-2">Video Call</h2>
                 <p className="text-muted-foreground mb-4">
-                  Click "Join" to start the video call
+                  Click &quot;Join&quot; to start the video call.
                 </p>
                 <div className="flex gap-2 justify-center">
-                  <Button
-                    onClick={handleJoinCall}
-                    disabled={!isConnected && hasJoined}
-                  >
+                  <Button onClick={handleJoinCall} disabled={hasJoined}>
                     <svg
                       className="w-4 h-4 mr-2"
                       fill="none"
@@ -244,7 +334,6 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="border-b p-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
@@ -274,11 +363,9 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
         </div>
       </div>
 
-      {/* Video Call Area */}
       <div className="flex-1 p-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            {/* Local Video */}
             <div className="aspect-video">
               <VideoPlayer
                 stream={localStream}
@@ -287,9 +374,8 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
               />
             </div>
 
-            {/* Remote Videos */}
             {participants.map((participant) => (
-              <div key={participant.socketId} className="aspect-video">
+              <div key={participant.userId} className="aspect-video relative">
                 <VideoPlayer
                   stream={participant.stream || null}
                   isLocal={false}
@@ -302,30 +388,38 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
             ))}
           </div>
 
-          {/* Debug Info */}
           <div className="mb-4 p-4 bg-muted rounded-lg">
             <h3 className="font-semibold mb-2">Debug Info:</h3>
-            <p>Participants: {participants.length + 1}</p>
+            <p>Total participants: {participants.length + 1}</p>
             <p>Connected: {isConnected ? "Yes" : "No"}</p>
-            <p>Is host: {isHost ? "Yes" : "No"}</p>
             <p>Local stream: {localStream ? "Yes" : "No"}</p>
-            <p>Remote streams: {participants.filter((p) => p.stream).length}</p>
+            <p>Local stream active: {localStream?.active ? "Yes" : "No"}</p>
+            <p>Local tracks: {localStream?.getTracks().length || 0}</p>
+            <p>
+              Remote participants with streams:{" "}
+              {participants.filter((p) => p.stream).length}
+            </p>
             <div className="mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  console.log("=== DEBUG INFO ===");
-                  console.log("Local stream:", localStream);
-                  console.log("Participants:", participants);
-                }}
-              >
-                Debug Console
-              </Button>
+              <h4 className="font-medium">Remote streams:</h4>
+              {participants.map((participant) => (
+                <div key={participant.userId} className="ml-2 text-sm">
+                  {participant.userId}:{" "}
+                  {participant.stream
+                    ? `${participant.stream.getTracks().length} tracks, ${participant.stream.active ? "active" : "inactive"}`
+                    : "No stream"}
+                  {participant.tracks && participant.tracks.size > 0 && (
+                    <div className="ml-4 text-xs text-muted-foreground">
+                      Tracks: {Array.from(participant.tracks.keys()).join(", ")}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
+            {mediasoupError && (
+              <p className="text-red-500 mt-2">Error: {mediasoupError}</p>
+            )}
           </div>
 
-          {/* Controls */}
           <div className="flex justify-center">
             <VideoControls
               isMuted={isMuted}
@@ -333,8 +427,8 @@ const VideoCallPage = ({ params }: VideoCallPageProps) => {
               onToggleMute={toggleMute}
               onToggleVideo={toggleVideo}
               onLeaveCall={handleLeaveCall}
-              onReconnect={reconnect}
-              isConnecting={isConnecting}
+              onReconnect={connect}
+              isConnecting={!isConnected}
             />
           </div>
         </div>
