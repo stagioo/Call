@@ -8,8 +8,9 @@ const publicRoutes = new Set(["/", "/login"]);
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isProtected = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
+  const isProtected = protectedRoutes.some(
+    (route) => typeof route === "string" && pathname.startsWith(route)
+    // : route.test(pathname)
   );
   const isPublic = publicRoutes.has(pathname);
 

@@ -3,7 +3,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@call/auth/*": ["../../packages/auth/src/*"],
+      "@call/db": ["../../packages/db/src"],
+      "@call/db/*": ["../../packages/db/src/*"],
+      "@/*": ["src/*"]
     }
   }
 }

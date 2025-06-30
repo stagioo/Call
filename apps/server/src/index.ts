@@ -1,10 +1,14 @@
-import { auth } from "@call/auth/auth";
 import { env } from "@/config/env";
-import { cors } from "hono/cors";
-import { db } from "@call/db";
 import routes from "@/routes";
+import { auth } from "@call/auth/auth";
+import { db } from "@call/db";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { createServer, IncomingMessage } from "node:http";
+import { WebSocketServer } from "./websocket-server";
+
+process.env.PORT = "1284";
 
 export interface ReqVariables {
   user: typeof auth.$Infer.Session.user | null;
@@ -28,14 +32,14 @@ app.use(
 app.use("*", async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
 
+  c.set("db", db);
+
   if (!session) {
-    c.set("db", null);
     c.set("user", null);
     c.set("session", null);
     return next();
   }
 
-  c.set("db", db);
   c.set("user", session.user);
   c.set("session", session.session);
   return next();
@@ -43,7 +47,66 @@ app.use("*", async (c, next) => {
 
 app.route("/api", routes);
 
-export default {
-  port: 1284,
-  fetch: app.fetch,
-};
+// Add health check endpoint
+app.get("/health", (c) => {
+  return c.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    service: "mediasoup-server",
+  });
+});
+
+function incomingMessageToReadableStream(req: IncomingMessage): ReadableStream {
+  return new ReadableStream({
+    start(controller) {
+      req.on("data", (chunk) => {
+        controller.enqueue(chunk);
+      });
+      req.on("end", () => controller.close());
+      req.on("error", (err) => controller.error(err));
+    },
+  });
+}
+
+const port = 1284;
+const server = createServer(async (req, res) => {
+  try {
+    const url = new URL(
+      req.url || "",
+      `http://${req.headers.host || "localhost"}`
+    );
+    const request = new Request(url, {
+      method: req.method,
+      headers: req.headers as HeadersInit,
+      body:
+        req.method !== "GET" && req.method !== "HEAD"
+          ? incomingMessageToReadableStream(req)
+          : null,
+    });
+
+    const response = await app.fetch(request);
+
+    res.statusCode = response.status;
+    response.headers.forEach((value, key) => res.setHeader(key, value));
+
+    if (response.body) {
+      const reader = response.body.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(value);
+      }
+    }
+    res.end();
+  } catch (error) {
+    console.error("Error handling request:", error);
+    res.statusCode = 500;
+    res.end("Internal Server Error");
+  }
+});
+
+// Initialize WebSocket server
+new WebSocketServer(server);
+
+console.log(`🚀 Server running on http://localhost:${port}`);
+server.listen(port);
