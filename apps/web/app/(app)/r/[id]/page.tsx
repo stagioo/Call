@@ -70,10 +70,7 @@ export default function RoomPage() {
   return (
     <RoomContext.Provider value={room}>
       <div className="w-full min-h-screen bg-[#101010] flex">
-        {/* Sidebar */}
-        <aside className="w-1/6 bg-[#101010] border-r border-gray-700">
-          <SideBar />
-        </aside>
+
 
         {/* Main video area */}
         <main className="flex-1 flex flex-col">
