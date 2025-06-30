@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { AccessToken } from "livekit-server-sdk";
 
 // LiveKit credentials (keep these safe in env vars for production!)
-const LIVEKIT_API_KEY = "APIsZYZmwhmeLYw";
-const LIVEKIT_API_SECRET = "fOIcgwndr96F0m5ekisuaCpXUqpkhop9ZUgdzsA17hg";
+const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY!;
+const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET!;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

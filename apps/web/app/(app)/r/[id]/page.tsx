@@ -5,7 +5,7 @@ import { VideoConference, RoomContext } from "@livekit/components-react";
 import { Room } from "livekit-client";
 import { useParams } from "next/navigation";
 
-const LIVEKIT_URL = "wss://call-z0ozwesk.livekit.cloud";
+const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL!;
 
 function randomName() {
   return "user-" + Math.random().toString(36).substring(2, 10);
