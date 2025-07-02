@@ -73,7 +73,7 @@ export default function RoomPage() {
         {/* Main video area */}
         <main className="flex-1 flex flex-col">
           {/* Video Layout */}
-          <div className="flex-1 flex">
+          <div className="flex-1 flex justify-center items-center">
             <MyVideoConference />
           </div>
 
@@ -127,7 +127,6 @@ function MyVideoConference() {
   return (
     <GridLayout
       tracks={tracks}
-      
       style={{ height: "calc(100vh - var(--lk-control-bar-height))" }}
     >
       <ParticipantTile />
