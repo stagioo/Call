@@ -12,6 +12,7 @@ import {
 } from "@livekit/components-react";
 import { Room, Track } from "livekit-client";
 import { useParams } from "next/navigation";
+import { Button } from "@call/ui/components/button";
 import "@livekit/components-styles";
 
 // Set up LiveKit URL and helper function for token generation
@@ -68,17 +69,17 @@ export default function RoomPage() {
 
   return (
     <RoomContext.Provider value={room}>
-      <div className="w-full min-h-screen bg-[#101010] flex">
+      <div className="w-full min-h-screen  flex">
         {/* Main video area */}
         <main className="flex-1 flex flex-col">
           {/* Video Layout */}
-          <div className="flex-1 flex justify-center items-center">
+          <div className="flex-1 flex">
             <MyVideoConference />
           </div>
 
           {/* Bottom control bar */}
           <div className="absolute bottom-8 left-0 right-0 flex justify-center z-10">
-            <div className="flex gap-8 bg-[#101010] p-4 rounded-md shadow-lg">
+            <div className="flex gap-8 bg-[#202020] p-4 rounded-md shadow-lg">
               <TrackToggle
                 style={{ color: "#fff" }}
                 source={Track.Source.Microphone}
@@ -103,6 +104,7 @@ export default function RoomPage() {
               >
                 Leave
               </DisconnectButton>
+             
             </div>
           </div>
         </main>
@@ -125,6 +127,7 @@ function MyVideoConference() {
   return (
     <GridLayout
       tracks={tracks}
+      
       style={{ height: "calc(100vh - var(--lk-control-bar-height))" }}
     >
       <ParticipantTile />

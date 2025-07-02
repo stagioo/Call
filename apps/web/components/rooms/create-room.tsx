@@ -22,7 +22,7 @@ const CreateRoom = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <Button onClick={handleStartMeeting}>Start meeting</Button>
+      <Button onClick={handleStartMeeting}>Start Call</Button>
     </div>
   );
 };
