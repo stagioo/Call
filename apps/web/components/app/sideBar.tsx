@@ -14,7 +14,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@call/ui/components/dropdown-menu";
-
 import { Button } from "@call/ui/components/button";
 import { MoreHorizontal, LogOut } from "@geist-ui/icons";
 import { useSession } from "@/hooks/useSession";
