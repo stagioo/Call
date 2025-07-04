@@ -4,8 +4,7 @@ import { cors } from "hono/cors";
 import { db } from "@call/db";
 import routes from "@/routes";
 import { Hono } from "hono";
-import { logger } from "hono/logger";
-
+import { logger } from "hono/logger"; 
 export interface ReqVariables {
   user: typeof auth.$Infer.Session.user | null;
   session: typeof auth.$Infer.Session.session | null;

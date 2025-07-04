@@ -21,6 +21,13 @@ import { useSession } from "@/hooks/useSession";
 import { authClient } from "@call/auth/auth-client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  IconPhone,
+  IconCalendar,
+  IconUsers,
+  IconUser,
+  IconBrandDiscordFilled,
+} from "@tabler/icons-react";
 
 function Pfp({ user }: { user: { name: string; image?: string | null } }) {
   // Generate initials from user name
@@ -34,12 +41,43 @@ function Pfp({ user }: { user: { name: string; image?: string | null } }) {
   return (
     <Avatar className="rounded-sm w-[25px] h-[25px]">
       <AvatarImage src={user.image || undefined} />
-      <AvatarFallback className="rounded-sm w-[25px] h-[25px]" >{initials}</AvatarFallback>
+      <AvatarFallback className="rounded-sm w-[25px] h-[25px]">
+        {initials}
+      </AvatarFallback>
     </Avatar>
   );
 }
 
-export default function SideBar() {
+// Navigation item component
+interface NavItemProps {
+  icon?: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+  isActive?: boolean;
+}
+
+function NavItem({ icon, label, onClick, isActive = false }: NavItemProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex cursor-pointer items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+        isActive
+          ? "bg-[#202020] text-white"
+          : "text-[#d8d8d8] hover:bg-[#202020] hover:text-white"
+      }`}
+    >
+      <div className="w-5 h-5 flex items-center justify-center">{icon}</div>
+      <span className="text-sm">{label}</span>
+    </button>
+  );
+}
+
+interface SideBarProps {
+  section: string;
+  onSectionChange: (section: string) => void;
+}
+
+export default function SideBar({ section, onSectionChange }: SideBarProps) {
   const { session, isLoading, error } = useSession();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -47,10 +85,10 @@ export default function SideBar() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      
+
       // Call the logout endpoint
       await authClient.signOut();
-      
+
       // Redirect to login page
       router.push("/login");
     } catch (error) {
@@ -98,9 +136,9 @@ export default function SideBar() {
 
   return (
     <>
-      <div className="w-full min-h-screen">
+      <div className="w-full min-h-screen  flex flex-col">
         {/* container */}
-        <div className="w-full py-5 px-3">
+        <div className="w-full py-5 px-3  flex-1 flex flex-col">
           {/* user settings */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -114,7 +152,10 @@ export default function SideBar() {
                     <MoreHorizontal />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuContent
+                  className="w-56 bg-[#171717] border border-[#222]"
+                  align="end"
+                >
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <div className="flex items-center gap-2">
@@ -142,20 +183,68 @@ export default function SideBar() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                    <DropdownMenuItem 
-                      className="cursor-pointer" 
+                    <DropdownMenuItem
+                      className="cursor-pointer"
                       variant="default"
                       onClick={handleLogout}
                       disabled={isLoggingOut}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
-                      <span>{isLoggingOut ? "Cerrando sesión..." : "Cerrar sesión"}</span>
+                      <span>
+                        {isLoggingOut ? "Signing out..." : "Sign out"}
+                      </span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
+
+          {/* App navigation */}
+
+          <div className="flex flex-col flex-1  h-full mt-10">
+            {/* CTA Button */}
+            <div>
+              <button className="w-full cursor-pointer py-2 rounded-lg flex gap-2 items-center justify-center   bg-[#272727]  text-[#d8d8d8]">
+                <span className="text-sm text-[#fff]">Start Call</span>
+              </button>
+            </div>
+            {/* App sections */}
+            <div className="flex flex-col gap-2 mt-10">
+              <NavItem
+                icon={<IconPhone size={18} />}
+                label="Calls"
+                isActive={section === "calls"}
+                onClick={() => onSectionChange("calls")}
+              />
+              <NavItem
+                icon={<IconCalendar size={18} />}
+                label="Schedule"
+                isActive={section === "schedule"}
+                onClick={() => onSectionChange("schedule")}
+              />
+              <NavItem
+                icon={<IconUsers size={18} />}
+                label="Teams"
+                isActive={section === "teams"}
+                onClick={() => onSectionChange("teams")}
+              />
+              <NavItem
+                icon={<IconUser size={18} />}
+                label="Friends"
+                isActive={section === "friends"}
+                onClick={() => onSectionChange("friends")}
+              />
+            </div>
+          </div>
+        </div>
+        {/* Support Section - sticky bottom */}
+        <div className="w-full px-3 pb-5 mt-auto">
+          <NavItem
+            icon={<IconBrandDiscordFilled size={18} />}
+            label="Join our discord"
+            onClick={() => console.log("Eg 4")}
+          />
         </div>
       </div>
     </>
