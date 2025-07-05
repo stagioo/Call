@@ -20,13 +20,9 @@ import { useSession } from "@/hooks/useSession";
 import { authClient } from "@call/auth/auth-client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  IconPhone,
-  IconCalendar,
-  IconUsers,
-  IconUser,
-  IconBrandDiscordFilled,
-} from "@tabler/icons-react";
+import { IconPhone, IconCalendar, IconUsers } from "@tabler/icons-react";
+import { Icons } from "@call/ui/components/icons";
+import type { NavItemProps, SideBarProps } from "@/lib/types";
 
 function Pfp({ user }: { user: { name: string; image?: string | null } }) {
   // Generate initials from user name
@@ -47,14 +43,6 @@ function Pfp({ user }: { user: { name: string; image?: string | null } }) {
   );
 }
 
-// Navigation item component
-interface NavItemProps {
-  icon?: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-  isActive?: boolean;
-}
-
 function NavItem({ icon, label, onClick, isActive = false }: NavItemProps) {
   return (
     <button
@@ -71,11 +59,6 @@ function NavItem({ icon, label, onClick, isActive = false }: NavItemProps) {
   );
 }
 
-interface SideBarProps {
-  section: string;
-  onSectionChange: (section: string) => void;
-}
-
 export default function SideBar({ section, onSectionChange }: SideBarProps) {
   const { session, isLoading, error } = useSession();
   const router = useRouter();
@@ -85,14 +68,12 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
     try {
       setIsLoggingOut(true);
 
-      // Call the logout endpoint
       await authClient.signOut();
 
-      // Redirect to login page
       router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
-      // Even if logout fails, redirect to login page
+
       router.push("/login");
     } finally {
       setIsLoggingOut(false);
@@ -223,16 +204,20 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
                 onClick={() => onSectionChange("schedule")}
               />
               <NavItem
-                icon={<IconUsers size={18} />}
+                icon={
+                  <span className="w-[18px] h-[18px] flex items-center justify-center">
+                    <Icons.teams className="w-[18px] h-[18px]" />
+                  </span>
+                }
                 label="Teams"
                 isActive={section === "teams"}
                 onClick={() => onSectionChange("teams")}
               />
               <NavItem
-                icon={<IconUser size={18} />}
-                label="Friends"
-                isActive={section === "friends"}
-                onClick={() => onSectionChange("friends")}
+                icon={<IconUsers size={18} />}
+                label="Contacts"
+                isActive={section === "contacts"}
+                onClick={() => onSectionChange("contacts")}
               />
             </div>
           </div>
@@ -240,9 +225,13 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
         {/* Support Section - sticky bottom */}
         <div className="w-full px-3 pb-5 mt-auto">
           <NavItem
-            icon={<IconBrandDiscordFilled size={18} />}
+            icon={
+              <span className="w-[18px] h-[18px] flex items-center justify-center">
+                <Icons.discord className="w-[18px] h-[18px]" />
+              </span>
+            }
             label="Join our discord"
-            onClick={() => console.log("Eg 4")}
+            onClick={() => window.open("https://discord.com/invite/bre4echNxB")}
           />
         </div>
       </div>
