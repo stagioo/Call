@@ -114,6 +114,14 @@ interface WaitlistFormProps {
   className?: string;
 }
 
+function BlinkingDot() {
+      return (
+      <div className="relative">
+        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse  shadow-green-500/50"></div>
+      </div>
+    );
+}
+
 export function WaitlistForm({ className }: WaitlistFormProps) {
   const { register, handleSubmit } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -180,11 +188,13 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
           <Button type="submit">Join Waitlist</Button>
         </form>
       )}
-      <div className="relative flex flex-row items-center justify-center gap-3">
+      <div className="relative flex flex-row items-center justify-center gap-2">
+      <BlinkingDot />
         <span className="text-sm text-primary/80 sm:text-base">
           <NumberFlow value={waitlist.count} /> people already joined the
           waitlist
         </span>
+      
       </div>
     </div>
   );

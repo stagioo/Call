@@ -1,5 +1,4 @@
 "use client"
-import type { Metadata } from "next";
 import SideBar from "@/components/app/sideBar";
 import CallsSection from "@/components/app/sections/CallSection";
 import TeamsSection from "@/components/app/sections/TeamsSection";
@@ -11,7 +10,7 @@ import { useState } from "react";
 const SECTION_COMPONENTS: Record<string, React.ComponentType> = {
   calls: CallsSection,
   teams: TeamsSection,
-  friends: FriendsSection,
+  contacts: FriendsSection,
   schedule: ScheduleSection,
 };
 
