@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@databuddy/sdk':
+        specifier: ^1.4.0
+        version: 1.4.0
       '@geist-ui/icons':
         specifier: ^1.0.2
         version: 1.0.2(@geist-ui/core@2.3.8(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)
@@ -504,6 +507,9 @@ packages:
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
+
+  '@databuddy/sdk@1.4.0':
+    resolution: {integrity: sha512-D942LEorC1W6vp2qDK8LSJYAlLOW3CUo4RDihTx+V6KfmhdOB7JqltZbHAnneB9G91z7gMT0kj2Cu2BWcrPu4A==}
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
@@ -4649,6 +4655,8 @@ snapshots:
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
+
+  '@databuddy/sdk@1.4.0': {}
 
   '@drizzle-team/brocli@0.10.2': {}
 
