@@ -96,7 +96,7 @@ export default function RootLayout({
         async
       ></script>
       <body
-        className={`${fontSans.variable} ${fontLora.variable} ${fontMono.variable} font-sans antialiased transition-all duration-300 custom_scrollbar`}
+        className={`${fontSans.variable} ${fontLora.variable} ${fontMono.variable} custom_scrollbar font-sans antialiased transition-all duration-300`}
       >
         <Providers>{children}</Providers>
       </body>

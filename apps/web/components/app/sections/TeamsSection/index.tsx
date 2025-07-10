@@ -3,9 +3,9 @@ import { Icons } from "@call/ui/components/icons";
 
 const TeamsSection = () => {
   return (
-    <div className="w-full h-full bg-[#171717] rounded-l-lg p-5 border border-[#222]">
+    <div className="h-full w-full rounded-l-lg border border-[#222] bg-[#171717] p-5">
       {/* content */}
-      <div className="w-full h-full flex flex-col">
+      <div className="flex h-full w-full flex-col">
         {/* header */}
         <Header
           icon={<Icons.teams />}

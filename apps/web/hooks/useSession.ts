@@ -37,7 +37,9 @@ export function useSession() {
         const { data } = await authClient.getSession();
         setSession(data);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to get session"));
+        setError(
+          err instanceof Error ? err : new Error("Failed to get session")
+        );
       } finally {
         setIsLoading(false);
       }
@@ -47,4 +49,4 @@ export function useSession() {
   }, []);
 
   return { session, isLoading, error };
-} 
+}

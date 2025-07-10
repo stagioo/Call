@@ -26,9 +26,9 @@ const CallsSection = () => {
   };
 
   return (
-    <div className="w-full h-full bg-[#171717] rounded-l-lg  p-5 border border-[#222]">
+    <div className="h-full w-full rounded-l-lg border border-[#222] bg-[#171717] p-5">
       {/* content */}
-      <div className="w-full h-full flex flex-col">
+      <div className="flex h-full w-full flex-col">
         {/* header */}
         <Header
           icon={<IconPhone size={18} />}
@@ -38,9 +38,9 @@ const CallsSection = () => {
           onNotificationClick={() => console.log("Notification clicked")}
         />
         {/* Actions */}
-        <div className="h-20  flex  ">
+        <div className="flex h-20">
           <Button
-            className={`rounded-none bg-inherit h-full border-b text-sm hover:bg-inherit ${
+            className={`h-full rounded-none border-b bg-inherit text-sm hover:bg-inherit ${
               activeTab === "join"
                 ? "border-[#252525] text-[#fff]"
                 : "border-transparent text-[#aaa]"
@@ -50,7 +50,7 @@ const CallsSection = () => {
             Join call
           </Button>
           <Button
-            className={`rounded-none bg-inherit h-full border-b text-sm hover:bg-inherit ${
+            className={`h-full rounded-none border-b bg-inherit text-sm hover:bg-inherit ${
               activeTab === "my"
                 ? "border-[#252525] text-[#fff]"
                 : "border-transparent text-[#aaa]"
@@ -60,7 +60,7 @@ const CallsSection = () => {
             My calls
           </Button>
           <Button
-            className={`rounded-none bg-inherit h-full border-b text-sm hover:bg-inherit ${
+            className={`h-full rounded-none border-b bg-inherit text-sm hover:bg-inherit ${
               activeTab === "shared"
                 ? "border-[#252525] text-[#fff]"
                 : "border-transparent text-[#aaa]"
@@ -70,7 +70,7 @@ const CallsSection = () => {
             Shared with me
           </Button>
           <Button
-            className={`rounded-none bg-inherit h-full border-b text-sm hover:bg-inherit ${
+            className={`h-full rounded-none border-b bg-inherit text-sm hover:bg-inherit ${
               activeTab === "all"
                 ? "border-[#252525] text-[#fff]"
                 : "border-transparent text-[#aaa]"
@@ -81,7 +81,7 @@ const CallsSection = () => {
           </Button>
         </div>
         {/* Content based on selected tab */}
-        <div className="w-full h-full">{renderContent()}</div>
+        <div className="h-full w-full">{renderContent()}</div>
       </div>
     </div>
   );

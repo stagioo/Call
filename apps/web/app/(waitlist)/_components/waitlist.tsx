@@ -117,8 +117,8 @@ interface WaitlistFormProps {
 function BlinkingDot() {
   return (
     <span className="relative flex size-2">
-      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
-      <span className="relative inline-flex rounded-full h-full w-full bg-green-500"></span>
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"></span>
+      <span className="relative inline-flex h-full w-full rounded-full bg-green-500"></span>
     </span>
   );
 }
@@ -158,7 +158,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
   }
 
   if (!isClient) {
-    return <div className="h-[72.6536px] w-full pointer-events-none" />;
+    return <div className="pointer-events-none h-[72.6536px] w-full" />;
   }
 
   return (
@@ -183,7 +183,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         >
           <Input
             placeholder="example@0.email"
-            className="placeholder:text-muted-foreground w-full rounded-lg bg-background px-4 text-base font-medium outline outline-neutral-200 placeholder:font-medium md:text-base"
+            className="placeholder:text-muted-foreground bg-background w-full rounded-lg px-4 text-base font-medium outline outline-neutral-200 placeholder:font-medium md:text-base"
             {...register("email")}
           />
           <Button type="submit">Join Waitlist</Button>
@@ -191,7 +191,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
       )}
       <div className="relative flex flex-row items-center justify-center gap-2">
         <BlinkingDot />
-        <span className="text-sm text-primary/80 sm:text-base">
+        <span className="text-primary/80 text-sm sm:text-base">
           <NumberFlow value={waitlist.count} /> people already joined the
           waitlist
         </span>

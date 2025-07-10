@@ -15,8 +15,8 @@ const DemoDashboard = () => {
 
   if (!mounted) {
     return (
-      <div className="max-w-5xl w-full mx-auto px-6 flex items-center justify-center flex-col relative gap-6">
-        <div className="h-px w-full bg-border dark:bg-white/5 max-w-lg mx-auto flex items-center justify-center gap-2 relative">
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-6 px-6">
+        <div className="bg-border relative mx-auto flex h-px w-full max-w-lg items-center justify-center gap-2 dark:bg-white/5">
           <SquareDot />
           <SquareDot position="bottomRight" />
         </div>
@@ -26,8 +26,8 @@ const DemoDashboard = () => {
   }
 
   return (
-    <div className="max-w-5xl w-full mx-auto px-6 flex items-center justify-center flex-col relative gap-6">
-      <div className="h-px w-full bg-border dark:bg-white/5 max-w-lg mx-auto flex items-center justify-center gap-2 relative">
+    <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-6 px-6">
+      <div className="bg-border relative mx-auto flex h-px w-full max-w-lg items-center justify-center gap-2 dark:bg-white/5">
         <SquareDot />
         <SquareDot position="bottomRight" />
       </div>
@@ -45,7 +45,7 @@ const DashboardImage = () => {
           alt="Dashboard preview"
           width={1400}
           height={900}
-          className="w-full h-auto object-cover block dark:hidden"
+          className="block h-auto w-full object-cover dark:hidden"
           placeholder="blur"
           priority
         />
@@ -54,7 +54,7 @@ const DashboardImage = () => {
           alt="Dashboard preview"
           width={1400}
           height={900}
-          className="w-full h-auto object-cover hidden dark:block"
+          className="hidden h-auto w-full object-cover dark:block"
           placeholder="blur"
           priority
         />

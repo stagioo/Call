@@ -12,14 +12,14 @@ const Footer = () => {
   }, []);
 
   return (
-    <div className="max-w-5xl w-full mx-auto px-6 py-10 flex items-center justify-center flex-col relative gap-5 mt-auto">
-      <div className="h-px w-full bg-border dark:bg-white/5 max-w-lg mx-auto flex items-center justify-center gap-2 relative">
+    <div className="relative mx-auto mt-auto flex w-full max-w-5xl flex-col items-center justify-center gap-5 px-6 py-10">
+      <div className="bg-border relative mx-auto flex h-px w-full max-w-lg items-center justify-center gap-2 dark:bg-white/5">
         <SquareDot />
         <SquareDot position="bottomRight" />
       </div>
       <div className="flex items-center justify-center gap-2">
         <Link href="/privacy">Privacy Policy</Link>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           &copy; {currentYear} Call. All rights reserved.
         </p>
       </div>

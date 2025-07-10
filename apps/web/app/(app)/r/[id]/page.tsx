@@ -61,7 +61,7 @@ export default function RoomPage() {
 
   if (!token || !room) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         Connecting...
       </div>
     );
@@ -69,17 +69,17 @@ export default function RoomPage() {
 
   return (
     <RoomContext.Provider value={room}>
-      <div className="w-full min-h-screen  flex">
+      <div className="flex min-h-screen w-full">
         {/* Main video area */}
-        <main className="flex-1 flex flex-col">
+        <main className="flex flex-1 flex-col">
           {/* Video Layout */}
-          <div className="flex-1 flex justify-center items-center">
+          <div className="flex flex-1 items-center justify-center">
             <MyVideoConference />
           </div>
 
           {/* Bottom control bar */}
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center z-10">
-            <div className="flex gap-8 bg-[#202020] p-4 rounded-md shadow-lg">
+          <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center">
+            <div className="flex gap-8 rounded-md bg-[#202020] p-4 shadow-lg">
               <TrackToggle
                 style={{ color: "#fff" }}
                 source={Track.Source.Microphone}
@@ -104,7 +104,6 @@ export default function RoomPage() {
               >
                 Leave
               </DisconnectButton>
-             
             </div>
           </div>
         </main>

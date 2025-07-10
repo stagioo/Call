@@ -49,9 +49,7 @@ async function checkRateLimitDB(ip: string, limit = 3, windowMs = 120000) {
 }
 
 const emailSchema = z.object({
-  email: z
-    .string()
-    .email("Please enter a valid email address"),
+  email: z.string().email("Please enter a valid email address"),
 });
 
 export async function POST(request: NextRequest) {
