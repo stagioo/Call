@@ -4,8 +4,10 @@ import { Button } from "@call/ui/components/button";
 import { JoinCall, MyCalls, SharedWithMe, AllCalls } from "./_components/page";
 import { Header } from "../_components/page";
 import { useState } from "react";
+import CallModal from "../callModal";
 
 const CallsSection = () => {
+  const [showCallModal, setShowCallModal] = useState(false)
   const [activeTab, setActiveTab] = useState<"join" | "my" | "shared" | "all">(
     "join"
   );
@@ -34,7 +36,7 @@ const CallsSection = () => {
           icon={<IconPhone size={18} />}
           title="Calls"
           ctaText="Start Call"
-          onCtaClick={() => console.log("Start Call clicked")}
+          onCtaClick={() => setShowCallModal(true)}
           onNotificationClick={() => console.log("Notification clicked")}
         />
         {/* Actions */}
@@ -83,6 +85,7 @@ const CallsSection = () => {
         {/* Content based on selected tab */}
         <div className="w-full h-full">{renderContent()}</div>
       </div>
+      <CallModal open={showCallModal} onClose={() => setShowCallModal(false)} />
     </div>
   );
 };

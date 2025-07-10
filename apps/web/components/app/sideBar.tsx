@@ -23,6 +23,7 @@ import { useState } from "react";
 import { IconPhone, IconCalendar, IconUsers } from "@tabler/icons-react";
 import { Icons } from "@call/ui/components/icons";
 import type { NavItemProps, SideBarProps } from "@/lib/types";
+import CallModal from "./sections/callModal";
 
 function Pfp({ user }: { user: { name: string; image?: string | null } }) {
   // Generate initials from user name
@@ -63,6 +64,7 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
   const { session, isLoading, error } = useSession();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showCallModal, setShowCallModal] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -185,7 +187,10 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
           <div className="flex flex-col flex-1  h-full mt-10">
             {/* CTA Button */}
             <div>
-              <button className="w-full cursor-pointer py-2 rounded-lg flex gap-2 items-center justify-center   bg-[#272727]  text-[#d8d8d8]">
+              <button
+                className="w-full cursor-pointer py-2 rounded-lg flex gap-2 items-center justify-center   bg-[#272727]  text-[#d8d8d8]"
+                onClick={() => setShowCallModal(true)}
+              >
                 <span className="text-sm text-[#fff]">Start Call</span>
               </button>
             </div>
@@ -235,6 +240,7 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
           />
         </div>
       </div>
+      <CallModal open={showCallModal} onClose={() => setShowCallModal(false)} />
     </>
   );
 }

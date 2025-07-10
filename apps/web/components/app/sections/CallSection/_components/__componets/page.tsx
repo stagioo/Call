@@ -1,6 +1,15 @@
 import { IconPhone, IconUser } from "@tabler/icons-react";
 import { MoreHorizontal } from "@geist-ui/icons";
-
+import { Button } from "@call/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@call/ui/components/dropdown-menu";
 // Stacked Avatars Component
 const StackedAvatars = ({
   avatars = [],
@@ -65,9 +74,23 @@ export const CallCard = () => {
             </div>
           </div>
           <div>
-            <button className="text-[#aaa] cursor-pointer">
-              <MoreHorizontal size={18} />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="w-8 h-8 text-[#d8d8d8]" variant={"ghost"}>
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <p>Invitar a otra llamada </p>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <p>Eliminar del historial</p>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
