@@ -8,6 +8,6 @@ export const siteConfig = {
     author: "Call",
     authorSite: "https://call0.co",
     discord: "https://discord.com/invite/bre4echNxB",
-    x: "https://x.com/call0dotco",
+    x: "https://x.com/joincalldotco",
   },
 };
