@@ -5,12 +5,12 @@ import Footer from "./_components/footer";
 
 export default function Page() {
   return (
-    <main className="min-h-screen flex flex-col bg-muted dark:bg-background relative z-0">
+    <main className="bg-muted dark:bg-background relative z-0 flex min-h-screen flex-col">
       <Navbar />
       <HeroWithForm />
       <DemoDashboard />
       <Footer />
-      <div className="absolute inset-0 max-w-5xl w-full mx-auto bg-transparent pointer-events-none -z-10 border-x border-border dark:border-white/5" />
+      <div className="border-border pointer-events-none absolute inset-0 -z-10 mx-auto w-full max-w-5xl border-x bg-transparent dark:border-white/5" />
     </main>
   );
 }

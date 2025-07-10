@@ -5,8 +5,8 @@ import { WaitlistForm } from "./waitlist";
 
 const HeroWithForm = () => {
   return (
-    <div className="max-w-5xl w-full mx-auto px-6 py-30 flex items-center justify-center flex-col relative gap-5">
-      <h1 className="text-3xl font-bold font-lora max-w-lg text-center text-primary/80">
+    <div className="py-30 relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-5 px-6">
+      <h1 className="font-lora text-primary/80 max-w-lg text-center text-3xl font-bold">
         {siteConfig.description}
       </h1>
       <WaitlistForm />

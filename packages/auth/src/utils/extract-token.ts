@@ -8,17 +8,20 @@
  */
 
 export function extractTokenFromUrl(url: string): string | null {
-	const urlObj = new URL(url);
+  const urlObj = new URL(url);
 
-	// Try different possible parameter names
-	let token =
-		urlObj.searchParams.get("token") || urlObj.searchParams.get("resetToken") || urlObj.searchParams.get("t") || null;
+  // Try different possible parameter names
+  let token =
+    urlObj.searchParams.get("token") ||
+    urlObj.searchParams.get("resetToken") ||
+    urlObj.searchParams.get("t") ||
+    null;
 
-	if (!token) {
-		const pathParts = urlObj.pathname.split("/");
-		const lastPart = pathParts[pathParts.length - 1];
-		token = lastPart && lastPart !== "reset-password" ? lastPart : null;
-	}
+  if (!token) {
+    const pathParts = urlObj.pathname.split("/");
+    const lastPart = pathParts[pathParts.length - 1];
+    token = lastPart && lastPart !== "reset-password" ? lastPart : null;
+  }
 
-	return token;
+  return token;
 }

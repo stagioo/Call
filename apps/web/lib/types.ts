@@ -30,5 +30,3 @@ export interface SideBarProps {
   section: string;
   onSectionChange: (section: string) => void;
 }
-
-

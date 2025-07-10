@@ -3,7 +3,7 @@ import { Input } from "@call/ui/components/input";
 import { CallCard } from "./__componets/page";
 export const JoinCall = () => {
   return (
-    <div className="w-full h-full flex items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center">
       <div className="flex flex-col items-center gap-5">
         <div>
           <h1 className="text-2xl font-medium">Join call or create one</h1>
@@ -16,7 +16,7 @@ export const JoinCall = () => {
             </Button>
           </div>
           <div>
-            <Button className="bg-[#262626] w-full text-[#d8d8d8] hover:bg-[#262626]">
+            <Button className="w-full bg-[#262626] text-[#d8d8d8] hover:bg-[#262626]">
               Create one
             </Button>
           </div>
@@ -28,7 +28,7 @@ export const JoinCall = () => {
 
 export const MyCalls = () => {
   return (
-    <div className="w-full h-full flex py-5">
+    <div className="flex h-full w-full py-5">
       <div>
         <CallCard />
       </div>
@@ -38,7 +38,7 @@ export const MyCalls = () => {
 
 export const SharedWithMe = () => {
   return (
-    <div className="w-full h-full flex py-5">
+    <div className="flex h-full w-full py-5">
       <div>
         <CallCard />
       </div>
@@ -48,7 +48,7 @@ export const SharedWithMe = () => {
 
 export const AllCalls = () => {
   return (
-    <div className="w-full h-full flex py-5">
+    <div className="flex h-full w-full py-5">
       <div>
         <CallCard />
       </div>
