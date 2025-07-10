@@ -20,18 +20,7 @@ const DemoDashboard = () => {
           <SquareDot />
           <SquareDot position="bottomRight" />
         </div>
-        <div className="relative w-full max-w-6xl">
-          <div className="relative overflow-hidden dark:border-white/10">
-            <Image
-              src="/dashboard-light.png"
-              alt="Dashboard preview"
-              width={1400}
-              height={900}
-              className="w-full h-auto object-cover"
-              priority
-            />
-          </div>
-        </div>
+        <DashboardImage />
       </div>
     );
   }
@@ -42,27 +31,33 @@ const DemoDashboard = () => {
         <SquareDot />
         <SquareDot position="bottomRight" />
       </div>
-      <div className="relative w-full max-w-6xl">
-        <div className="relative overflow-hidden dark:border-white/10">
-          <Image
-            src={dashboardLight}
-            alt="Dashboard preview"
-            width={1400}
-            height={900}
-            className="w-full h-auto object-cover block dark:hidden"
-            placeholder="blur"
-            priority
-          />
-          <Image
-            src={dashboardDark}
-            alt="Dashboard preview"
-            width={1400}
-            height={900}
-            className="w-full h-auto object-cover hidden dark:block"
-            placeholder="blur"
-            priority
-          />
-        </div>
+      <DashboardImage />
+    </div>
+  );
+};
+
+const DashboardImage = () => {
+  return (
+    <div className="relative w-full max-w-6xl">
+      <div className="relative overflow-hidden dark:border-white/10">
+        <Image
+          src={dashboardLight}
+          alt="Dashboard preview"
+          width={1400}
+          height={900}
+          className="w-full h-auto object-cover block dark:hidden"
+          placeholder="blur"
+          priority
+        />
+        <Image
+          src={dashboardDark}
+          alt="Dashboard preview"
+          width={1400}
+          height={900}
+          className="w-full h-auto object-cover hidden dark:block"
+          placeholder="blur"
+          priority
+        />
       </div>
     </div>
   );
