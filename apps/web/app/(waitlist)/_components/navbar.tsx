@@ -59,7 +59,7 @@ const Navbar = () => {
               </Link>
             </Button>
           ))}
-          {mounted && (
+          {mounted ? (
             <Button
               size="icon"
               variant="ghost"
@@ -72,6 +72,8 @@ const Navbar = () => {
                 <Moon className="size-4" />
               )}
             </Button>
+          ) : (
+            <div className="size-9 pointer-events-none" />
           )}
         </div>
         <SquareDot position="bottomLeft" />
