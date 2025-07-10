@@ -115,11 +115,12 @@ interface WaitlistFormProps {
 }
 
 function BlinkingDot() {
-      return (
-      <div className="relative">
-        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse  shadow-green-500/50"></div>
-      </div>
-    );
+  return (
+    <span className="relative flex size-2">
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+      <span className="relative inline-flex rounded-full h-full w-full bg-green-500"></span>
+    </span>
+  );
 }
 
 export function WaitlistForm({ className }: WaitlistFormProps) {
@@ -157,7 +158,7 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
   }
 
   if (!isClient) {
-    return null;
+    return <div className="h-[72.6536px] w-full pointer-events-none" />;
   }
 
   return (
@@ -189,12 +190,11 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
         </form>
       )}
       <div className="relative flex flex-row items-center justify-center gap-2">
-      <BlinkingDot />
+        <BlinkingDot />
         <span className="text-sm text-primary/80 sm:text-base">
           <NumberFlow value={waitlist.count} /> people already joined the
           waitlist
         </span>
-      
       </div>
     </div>
   );

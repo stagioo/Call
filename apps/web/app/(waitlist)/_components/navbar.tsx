@@ -43,7 +43,7 @@ const Navbar = () => {
           <span className="text-primary font-lora">Call</span>
         </h1>
         <div className="flex items-center gap-2">
-          <Button className=" bg-[#202020] text-white hover:bg-muted-foreground/10">
+          <Button className="bg-primary dark:bg-[#202020] text-white dark:hover:bg-muted-foreground/10">
             <Link href="/r">Demo</Link>
           </Button>
           {links.map((link) => (
@@ -59,7 +59,7 @@ const Navbar = () => {
               </Link>
             </Button>
           ))}
-          {mounted && (
+          {mounted ? (
             <Button
               size="icon"
               variant="ghost"
@@ -72,6 +72,8 @@ const Navbar = () => {
                 <Moon className="size-4" />
               )}
             </Button>
+          ) : (
+            <div className="size-9 pointer-events-none" />
           )}
         </div>
         <SquareDot position="bottomLeft" />

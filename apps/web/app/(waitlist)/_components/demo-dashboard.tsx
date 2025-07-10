@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
+import dashboardDark from "@/public/dashboard-dark.png";
+import dashboardLight from "@/public/dashboard-light.png";
 import { SquareDot } from "@call/ui/components/square-dot";
-import { useTheme } from "next-themes";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 const DemoDashboard = () => {
-  const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -45,11 +45,21 @@ const DemoDashboard = () => {
       <div className="relative w-full max-w-6xl">
         <div className="relative overflow-hidden dark:border-white/10">
           <Image
-            src={theme === "dark" ? "/dashboard-dark.png" : "/dashboard-light.png"}
+            src={dashboardLight}
             alt="Dashboard preview"
             width={1400}
             height={900}
-            className="w-full h-auto object-cover"
+            className="w-full h-auto object-cover block dark:hidden"
+            placeholder="blur"
+            priority
+          />
+          <Image
+            src={dashboardDark}
+            alt="Dashboard preview"
+            width={1400}
+            height={900}
+            className="w-full h-auto object-cover hidden dark:block"
+            placeholder="blur"
             priority
           />
         </div>
