@@ -32,3 +32,7 @@ export interface SideBarProps {
 }
 
 
+export interface SendInvitationContactsProps {
+  open: boolean;
+  onClose: () => void;
+}

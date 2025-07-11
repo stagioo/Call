@@ -202,12 +202,12 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
                 isActive={section === "calls"}
                 onClick={() => onSectionChange("calls")}
               />
-              <NavItem
+              {/* <NavItem
                 icon={<IconCalendar size={18} />}
                 label="Schedule"
                 isActive={section === "schedule"}
                 onClick={() => onSectionChange("schedule")}
-              />
+              /> */}
               <NavItem
                 icon={
                   <span className="w-[18px] h-[18px] flex items-center justify-center">
