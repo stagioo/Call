@@ -24,8 +24,7 @@ const FriendsSection = () => {
         {/* Friend section */}
         <div className="w-full h-full flex flex-col ">
           <Contact />
-          <Contact />
-          <Contact />
+    
         </div>
       </div>
       {/* Invite Modal */}
