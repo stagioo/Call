@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@call/ui/lib/utils";
 
 const squareDotVariants = cva(
-  "rounded-[1px] size-[10px] bg-background border border-border absolute",
+  "rounded-[1px] size-[10px] bg-background border border-border dark:border-white/5 absolute z-50",
   {
     variants: {
       position: {
