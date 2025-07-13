@@ -95,6 +95,7 @@ pnpm add @call/<package-name> --filter <workspace-name> --workspace
    chore: update dependencies
    refactor: improve code structure
    test: add tests
+   ui: for ui changes
    ```
 
 ## 🏗 Package Organization
