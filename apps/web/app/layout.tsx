@@ -106,7 +106,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <Databuddy
-            clientId={process.env.NEXT_PUBLIC_DATABUDDY_CLIENT_ID!}
+            clientId="ciU4COouaNeeu56duBjT7"
             trackHashChanges={true}
             trackAttributes={true}
             trackOutgoingLinks={true}
