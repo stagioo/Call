@@ -276,7 +276,6 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
           <Icons.settings className="h-[20px] w-[20px] text-neutral-500 active:animate-[spin-once_0.7s_ease-out_1]" />
         </div>
       </div>
-      <CallModal open={showCallModal} onClose={() => setShowCallModal(false)} />
-    </>
+    </div>
   );
 }

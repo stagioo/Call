@@ -9,7 +9,7 @@ import {
 import { Separator } from "@call/ui/components/separator";
 import { CallCard } from "./__componets/page";
 import CallModal from "../../callModal";
-import { useState } from "react";
+// import { useState } from "react";
 
 import React, { useRef, useState } from "react";
 
@@ -149,7 +149,7 @@ export const JoinCall = () => {
           </TabsContent>
         </Tabs>
       </div>
-      <CallModal open={showCallModal} onClose={() => setShowCallModal(false)} />
+      {/* <CallModal open={CallModal} onClose={() => setShowCallModal(false)} /> */}
     </div>
   );
 };
