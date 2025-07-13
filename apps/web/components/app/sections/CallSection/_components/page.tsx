@@ -8,6 +8,9 @@ import {
 } from "@call/ui/components/tabs";
 import { Separator } from "@call/ui/components/separator";
 import { CallCard } from "./__componets/page";
+import CallModal from "../../callModal";
+import { useState } from "react";
+
 import React, { useRef, useState } from "react";
 
 export const JoinCall = () => {
@@ -146,6 +149,7 @@ export const JoinCall = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <CallModal open={showCallModal} onClose={() => setShowCallModal(false)} />
     </div>
   );
 };
