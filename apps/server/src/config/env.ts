@@ -48,13 +48,11 @@ export const env = createEnv({
 
     FRONTEND_URL: z
       .string({ message: "The FRONTEND_URL environment variable is required." })
-      .url("FRONTEND_URL must be a valid URL (e.g., https://yourdomain.com)."),
+      .url("FRONTEND_URL must be a valid URL (e.g., http://localhost:3000)."),
 
     BACKEND_URL: z
       .string({ message: "The BACKEND_URL environment variable is required." })
-      .url(
-        "BACKEND_URL must be a valid URL (e.g., https://api.yourdomain.com)."
-      ),
+      .url("BACKEND_URL must be a valid URL (e.g., http://localhost:4000)."),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,
