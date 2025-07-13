@@ -4,6 +4,7 @@ import CallsSection from "@/components/app/sections/CallSection";
 import TeamsSection from "@/components/app/sections/TeamsSection";
 import FriendsSection from "@/components/app/sections/FriendsSection";
 import ScheduleSection from "@/components/app/sections/ScheduleSection";
+import { SidebarInset, SidebarProvider } from "@call/ui/components/sidebar";
 import { useState } from "react";
 
 const SECTION_COMPONENTS: Record<string, React.ComponentType> = {
@@ -26,16 +27,12 @@ const Page = () => {
     SECTION_COMPONENTS[section] || CallsSection;
 
   return (
-    <div className="flex min-h-screen w-full bg-[#111111]">
-      {/* Sidebar */}
-      <aside className="w-1/5 bg-[#111111]">
-        <SideBar section={section} onSectionChange={handleSectionChange} />
-      </aside>
-      {/* Dashboard */}
-      <main className="w-1/1 py-3">
+    <SidebarProvider>
+      <SideBar section={section} onSectionChange={handleSectionChange} />
+      <SidebarInset className="bg-[#111111] py-3">
         <SectionComponent />
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 };
 

@@ -19,18 +19,10 @@ export interface UseRequestReturn<ResponseBody> {
   refetch: () => Promise<void>;
 }
 
-export interface NavItemProps {
-  icon?: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-  isActive?: boolean;
-}
-
 export interface SideBarProps {
   section: string;
   onSectionChange: (section: string) => void;
 }
-
 
 export interface SendInvitationContactsProps {
   open: boolean;
