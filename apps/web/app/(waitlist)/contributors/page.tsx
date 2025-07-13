@@ -71,7 +71,7 @@ export default async function Contributors() {
                 href={contributor.html_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center gap-6 w-full max-w-sm rounded-3xl bg-background px-8 py-8 shadow-sm border border-border hover:border-ring dark:border-white/5 dark:hover:border-white/10 transition-all duration-300 hover:shadow-md"
+                className="flex flex-col items-center gap-6 w-full max-w-sm rounded-3xl bg-background px-8 py-8  border border-border hover:border-ring dark:border-white/10 dark:hover:border-white/10 transition-all duration-300 "
               >
                 <Avatar className="h-20 w-20">
                   <AvatarImage
@@ -105,7 +105,7 @@ export default async function Contributors() {
       {/* Other Contributors */}
       <div className="max-w-6xl w-full mx-auto px-6 flex items-center justify-center flex-col relative gap-12">
         <div className="flex flex-col items-center justify-center gap-4 text-center">
-          <h2 className="text-3xl font-bold font-lora text-primary/90">The Call Community</h2>
+          <h2 className="text-3xl font-bold font-lora text-primary/90">Call Community</h2>
           <p className="text-base text-muted-foreground max-w-md">
             Every contribution matters. Meet the community behind Call.
           </p>

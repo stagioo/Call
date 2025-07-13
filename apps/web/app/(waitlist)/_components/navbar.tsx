@@ -6,7 +6,7 @@ import { Icons } from "@call/ui/components/icons";
 import { siteConfig } from "@/lib/site";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const links = [
@@ -44,13 +44,18 @@ const Navbar = () => {
         </h1>
         <div className="flex items-center gap-2">
 
-        <Button className="bg-primary dark:hover:bg-muted-foreground/10 text-white dark:bg-[#202020]">
 
+        <Button className="bg-primary dark:hover:bg-muted-foreground/10 text-white dark:bg-[#202020]">
             <Link href="/r">Demo</Link>
           </Button>
-          <Button className="bg-[#202020] text-white hover:bg-muted-foreground/10">
-            <Link href="/contributors">Contributors</Link>
-          </Button>
+          
+          <Link
+            href="/contributors"
+            className="flex items-center gap-1 px-3 py-2 rounded-md text-primary hover:bg-muted-foreground/10 transition-colors"
+          >
+            <Users className="size-4" />
+         
+          </Link>
         
           {links.map((link) => (
             <Button
