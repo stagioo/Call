@@ -6,10 +6,16 @@ import { Icons } from "@call/ui/components/icons";
 import { siteConfig } from "@/lib/site";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Users } from "lucide-react";
+import { Sun, Moon, Users, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const links = [
+  {
+    label: "Contributors",
+    href: "/contributors",
+    icon: Users,
+    target: "_self",
+  },
   {
     label: "Github",
     href: siteConfig.links.github,
@@ -35,28 +41,20 @@ const Navbar = () => {
     setMounted(true);
   }, []);
   return (
-    <header className="border-border border-b dark:border-white/5">
-      <div className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-2">
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Icons.logoDark className="block size-6 dark:hidden" />
-          <Icons.logo className="hidden size-6 dark:block" />
-          <span className="text-primary font-lora">Call</span>
-        </h1>
+    <header className="border-border border-b dark:border-white/5 sticky top-0 z-50 bg-background/50 backdrop-blur-sm">
+      <div className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-2 border-x dark:border-white/5">
+        <Link href="/">
+          <h1 className="flex items-center gap-2 text-2xl font-bold">
+            <Icons.logoDark className="block size-6 dark:hidden" />
+            <Icons.logo className="hidden size-6 dark:block" />
+            <span className="text-primary font-lora">Call</span>
+          </h1>
+        </Link>
         <div className="flex items-center gap-2">
-
-
-        <Button className="bg-primary dark:hover:bg-muted-foreground/10 text-white dark:bg-[#202020]">
+          <Button className="bg-primary dark:hover:bg-muted-foreground/10 text-white dark:bg-[#202020]">
             <Link href="/r">Demo</Link>
           </Button>
-          
-          <Link
-            href="/contributors"
-            className="flex items-center gap-1 px-3 py-2 rounded-md text-primary hover:bg-muted-foreground/10 transition-colors"
-          >
-            <Users className="size-4" />
-         
-          </Link>
-        
+
           {links.map((link) => (
             <Button
               size="icon"
@@ -65,7 +63,7 @@ const Navbar = () => {
               key={link.label}
               asChild
             >
-              <Link href={link.href} target="_blank">
+              <Link href={link.href} target={link.target ?? "_blank"}>
                 <link.icon className="size-4" />
               </Link>
             </Button>
@@ -84,7 +82,9 @@ const Navbar = () => {
               )}
             </Button>
           ) : (
-            <div className="pointer-events-none size-9" />
+            <div className="pointer-events-none size-9 flex items-center justify-center">
+              <Loader2 className="size-4 animate-spin" />
+            </div>
           )}
         </div>
         <SquareDot position="bottomLeft" />
