@@ -31,6 +31,7 @@ export interface SideBarProps {
   onSectionChange: (section: string) => void;
 }
 
+
 export interface SendInvitationContactsProps {
   open: boolean;
   onClose: () => void;
@@ -44,3 +45,4 @@ export interface Contributor {
   contributions: number;
   type: string;
 }
+

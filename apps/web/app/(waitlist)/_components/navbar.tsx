@@ -35,15 +35,17 @@ const Navbar = () => {
     setMounted(true);
   }, []);
   return (
-    <header className="border-b border-border dark:border-white/5">
-      <div className="max-w-5xl w-full mx-auto px-6 py-2 flex items-center justify-between relative">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Icons.logoDark className="size-6 block dark:hidden" />
-          <Icons.logo className="size-6 hidden dark:block" />
+    <header className="border-border border-b dark:border-white/5">
+      <div className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-2">
+        <h1 className="flex items-center gap-2 text-2xl font-bold">
+          <Icons.logoDark className="block size-6 dark:hidden" />
+          <Icons.logo className="hidden size-6 dark:block" />
           <span className="text-primary font-lora">Call</span>
         </h1>
         <div className="flex items-center gap-2">
-        <Button className=" bg-[#202020] text-white hover:bg-muted-foreground/10">
+
+        <Button className="bg-primary dark:hover:bg-muted-foreground/10 text-white dark:bg-[#202020]">
+
             <Link href="/r">Demo</Link>
           </Button>
           <Button className="bg-[#202020] text-white hover:bg-muted-foreground/10">
@@ -63,7 +65,7 @@ const Navbar = () => {
               </Link>
             </Button>
           ))}
-          {mounted && (
+          {mounted ? (
             <Button
               size="icon"
               variant="ghost"
@@ -76,6 +78,8 @@ const Navbar = () => {
                 <Moon className="size-4" />
               )}
             </Button>
+          ) : (
+            <div className="pointer-events-none size-9" />
           )}
         </div>
         <SquareDot position="bottomLeft" />

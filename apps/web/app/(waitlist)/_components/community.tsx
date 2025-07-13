@@ -27,32 +27,32 @@ const links = [
 
 const Community = () => {
   return (
-    <div className="max-w-5xl w-full mx-auto px-6 flex items-center justify-center flex-col relative gap-10">
-      <div className="h-px w-full bg-border dark:bg-white/5 max-w-lg mx-auto flex items-center justify-center gap-2 relative">
+    <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-10 px-6">
+      <div className="bg-border relative mx-auto flex h-px w-full max-w-lg items-center justify-center gap-2 dark:bg-white/5">
         <SquareDot />
         <SquareDot position="bottomRight" />
       </div>
       <div className="flex flex-col items-center justify-center gap-2">
-        <h2 className="text-3xl font-bold font-lora max-w-lg text-center text-primary/80">
+        <h2 className="font-lora text-primary/80 max-w-lg text-center text-3xl font-bold">
           Join the community
         </h2>
-        <p className="text-sm text-muted-foreground max-w-lg text-center">
+        <p className="text-muted-foreground max-w-lg text-center text-sm">
           Connect with other users and get support.
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         {links.map((link) => (
           <Link
             key={link.label}
             href={link.href}
-            className="flex w-full flex-col items-center gap-4 rounded-2xl bg-background px-4 py-3 shadow-xs  md:p-7 md:text-center xl:gap-6 xl:rounded-3xl xl:p-8 border border-border hover:border-ring dark:border-white/5 dark:hover:border-white/10 transition-all duration-300 hover:contrast-125 dark:hover:brightness-125"
+            className="bg-background shadow-xs border-border hover:border-ring flex w-full flex-col items-center gap-4 rounded-2xl border px-4 py-3 transition-all duration-300 hover:contrast-125 md:p-7 md:text-center xl:gap-6 xl:rounded-3xl xl:p-8 dark:border-white/5 dark:hover:border-white/10 dark:hover:brightness-125"
           >
-            <link.icon className="md:size-14 size-8 text-primary/50" />
+            <link.icon className="text-primary/50 size-8 md:size-14" />
             <div className="flex flex-col items-center justify-center gap-2">
-              <p className="text-sm font-medium text-primary/80">
+              <p className="text-primary/80 text-sm font-medium">
                 {link.label}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {link.description}
               </p>
             </div>

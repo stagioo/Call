@@ -1,11 +1,10 @@
-"use client"
+"use client";
 import SideBar from "@/components/app/sideBar";
 import CallsSection from "@/components/app/sections/CallSection";
 import TeamsSection from "@/components/app/sections/TeamsSection";
 import FriendsSection from "@/components/app/sections/FriendsSection";
 import ScheduleSection from "@/components/app/sections/ScheduleSection";
 import { useState } from "react";
-
 
 const SECTION_COMPONENTS: Record<string, React.ComponentType> = {
   calls: CallsSection,
@@ -23,10 +22,11 @@ const Page = () => {
     setSection(newSection);
   };
 
-  const SectionComponent: React.ComponentType = SECTION_COMPONENTS[section] || CallsSection;
+  const SectionComponent: React.ComponentType =
+    SECTION_COMPONENTS[section] || CallsSection;
 
   return (
-    <div className="w-full min-h-screen bg-[#111111] flex">
+    <div className="flex min-h-screen w-full bg-[#111111]">
       {/* Sidebar */}
       <aside className="w-1/5 bg-[#111111]">
         <SideBar section={section} onSectionChange={handleSectionChange} />
