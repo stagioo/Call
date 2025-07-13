@@ -45,7 +45,7 @@
 
 .dark {
   --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --foreground: oklch(100.00% 0.000 0);
   --card: oklch(0.145 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);
@@ -141,4 +141,20 @@
 .custom_scrollbar::-webkit-scrollbar-thumb {
   background-color: oklch(0.556 0 0);
   border-radius: 0;
+}
+
+@keyframes spin-once {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin-once {
+  animation: spin-once 2s linear 1;
+}
+
+.ring-animate-pulse {
+  animation: ring-pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
