@@ -253,9 +253,9 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
           isCollapsed={isCollapsed}
         />
         <NavItem
-          isActive={section === "contacts"}
+          isActive={section === "contact"}
           onClick={() => onSectionChange("contacts")}
-          icon={<Icons.contactsIcon className="h-[18px] w-[18px]" />}
+          icon={<Icons.friends className="h-[18px] w-[18px]" />}
           label="Contacts"
           isCollapsed={isCollapsed}
         />
