@@ -4,8 +4,8 @@ import { Button } from "@call/ui/components/button";
 import { useRouter } from "next/navigation";
 
 function generateRoomId() {
-  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
+  const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
   for (let i = 0; i < 8; i++) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
@@ -21,7 +21,7 @@ const CreateRoom = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center">
       <Button onClick={handleStartMeeting}>Start Call</Button>
     </div>
   );

@@ -21,11 +21,15 @@ wss.on("connection", (ws: WebSocket) => {
         if (currentRoom) {
           if (!rooms.has(currentRoom)) rooms.set(currentRoom, new Set());
           rooms.get(currentRoom)!.add(ws);
-          console.log(`[WS] Usuario ${data.userId} se unió a la sala: ${currentRoom}`);
+          console.log(
+            `[WS] Usuario ${data.userId} se unió a la sala: ${currentRoom}`
+          );
           // Notificar a los demás usuarios de la sala
           rooms.get(currentRoom)?.forEach((client) => {
             if (client !== ws && client.readyState === 1) {
-              client.send(JSON.stringify({ type: "user-joined", userId: data.userId }));
+              client.send(
+                JSON.stringify({ type: "user-joined", userId: data.userId })
+              );
             }
           });
         }
@@ -54,4 +58,4 @@ wss.on("connection", (ws: WebSocket) => {
 
 server.listen(PORT, () => {
   console.log(`WebSocket signaling server running on ws://localhost:${PORT}`);
-}); 
+});

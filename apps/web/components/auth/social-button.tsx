@@ -20,7 +20,7 @@ const SocialButton = () => {
       size="lg"
       className="px-10!"
     >
-      <Icons.google className="w-4 h-4" />
+      <Icons.google className="h-4 w-4" />
       Continue with Google
     </Button>
   );
