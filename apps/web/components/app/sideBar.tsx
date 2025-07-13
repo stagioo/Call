@@ -23,6 +23,7 @@ import { useState } from "react";
 import { IconPhone, IconCalendar, IconUsers } from "@tabler/icons-react";
 import { Icons } from "@call/ui/components/icons";
 import type { NavItemProps, SideBarProps } from "@/lib/types";
+import CallModal from "./sections/callModal";
 
 function Pfp({ user }: { user: { name: string; image?: string | null } }) {
   // Generate initials from user name
@@ -63,6 +64,7 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
   const { session, isLoading, error } = useSession();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showCallModal, setShowCallModal] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -185,6 +187,7 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
           <div className="mt-10 flex h-full flex-1 flex-col">
             {/* CTA Button */}
             <div>
+
               <button className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#272727] py-2 text-[#d8d8d8]">
                 <span className="text-sm text-[#fff]">Start Call</span>
               </button>
@@ -197,12 +200,12 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
                 isActive={section === "calls"}
                 onClick={() => onSectionChange("calls")}
               />
-              <NavItem
+              {/* <NavItem
                 icon={<IconCalendar size={18} />}
                 label="Schedule"
                 isActive={section === "schedule"}
                 onClick={() => onSectionChange("schedule")}
-              />
+              /> */}
               <NavItem
                 icon={
                   <span className="flex h-[18px] w-[18px] items-center justify-center">
@@ -235,6 +238,7 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
           />
         </div>
       </div>
+      <CallModal open={showCallModal} onClose={() => setShowCallModal(false)} />
     </>
   );
 }
