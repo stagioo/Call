@@ -4,6 +4,8 @@ import {
   timestamp,
   boolean,
   integer,
+  pgEnum,
+  index,
 } from "drizzle-orm/pg-core";
 
 // Auth schema
@@ -102,6 +104,56 @@ export const room = pgTable("room", {
     .default(false),
 });
 
+// Contact Request Status Enum
+export const contactRequestStatusEnum = pgEnum("contact_request_status", [
+  "pending",
+  "accepted",
+  "rejected",
+]);
+
+export const contactRequests = pgTable(
+  "contact_requests",
+  {
+    id: text("id").primaryKey(),
+    senderId: text("sender_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    receiverEmail: text("receiver_email").notNull(),
+    receiverId: text("receiver_id")
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: contactRequestStatusEnum("status").notNull(),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    // Indexes for fast lookup
+    index("contact_requests_sender_id_idx").on(table.senderId),
+    index("contact_requests_receiver_email_idx").on(table.receiverEmail),
+    index("contact_requests_receiver_id_idx").on(table.receiverId),
+  ]
+);
+
+export const contacts = pgTable(
+  "contacts",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    // Composite primary key for uniqueness
+    index("contacts_user_id_idx").on(table.userId),
+    index("contacts_contact_id_idx").on(table.contactId),
+  ]
+);
+
 const schema = {
   user,
   session,
@@ -110,6 +162,8 @@ const schema = {
   waitlist,
   rateLimitAttempts,
   room,
+  contactRequests,
+  contacts,
 };
 
 export default schema;
