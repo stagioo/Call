@@ -1,10 +1,8 @@
 "use client";
-
+import Link from "next/link";
 import * as React from "react";
 import { Phone, Calendar, Users, Contact } from "lucide-react";
-
 import { NavMain } from "./nav-main";
-
 import { NavUser } from "./nav-user";
 import {
   Sidebar,
@@ -43,9 +41,15 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ selectedSection, onSectionSelect, ...props }: React.ComponentProps<typeof Sidebar> & { selectedSection: string, onSectionSelect: (title: string) => void }) {
   const { session, isLoading } = useSession();
   const router = useRouter();
+
+ 
+  const navItems = data.navMain.map((item) => ({
+    ...item,
+    isActive: item.title === selectedSection,
+  }));
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -68,7 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         )}
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navItems} onSelect={onSectionSelect} />
       </SidebarContent>
       <SidebarRail />
     </Sidebar>
