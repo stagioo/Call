@@ -102,4 +102,25 @@ contactsRoutes.patch("/requests/:id/accept", async (c) => {
   return c.json({ message: "Application accepted" });
 });
 
+contactsRoutes.patch("/requests/:id/reject", async (c) => {
+  const requestId = c.req.param("id");
+  // Simulate authenticated user (replace with real user ID in production)
+  const userId = "test-sender-id";
+
+  // Find the pending request
+  const [request] = await db.select().from(contactRequests)
+    .where(eq(contactRequests.id, requestId));
+
+  if (!request || request.status !== "pending") {
+    return c.json({ message: "Request not found or already managed" }, 404);
+  }
+
+  // Update status to rejected
+  await db.update(contactRequests)
+    .set({ status: "rejected" })
+    .where(eq(contactRequests.id, requestId));
+
+  return c.json({ message: "Application rejected" });
+});
+
 export default contactsRoutes; 
