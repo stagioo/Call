@@ -121,7 +121,7 @@ export default async function Contributors() {
                 href={contributor.html_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center gap-3 p-4 rounded-xl  transition-colors duration-200 group"
+                className="flex flex-col items-center gap-3 p-4 rounded-xl  hover:border-ring  transition-colors duration-200 group"
               >
                 <Avatar className="h-14 w-14">
                   <AvatarImage

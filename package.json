@@ -41,6 +41,7 @@
   "dependencies": {
     "@databuddy/sdk": "^1.4.0",
     "@geist-ui/icons": "^1.0.2",
+    "@radix-ui/react-tabs": "^1.1.12",
     "dotenv": "^16.5.0",
     "zod": "^3.25.67"
   },

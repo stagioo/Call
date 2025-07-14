@@ -136,7 +136,7 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
   return (
     <div
       className={`flex min-h-screen flex-col bg-[#131313] transition-all duration-300 ${
-        isCollapsed ? "w-[64px] px-2 pb-4 pt-4" : "w-[320px] px-6 pb-4 pt-6"
+        isCollapsed ? "w-[64px] px-2 pt-4 pb-4" : "w-[320px] px-6 pt-6 pb-4"
       }`}
     >
       {/* Profile Section */}
@@ -149,131 +149,6 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
           {!isCollapsed && (
             <p className="text-sm font-medium">{session.user.name}</p>
           )}
-        </div>
-        {/* Right: DropdownMenu and sidebar close icon */}
-        {!isCollapsed && (
-          <div className="flex items-center gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="h-8 w-8 text-[#d8d8d8]" variant={"ghost"}>
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-54 border border-[#2D2D2D] bg-[#171717]"
-                align="end"
-              >
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8 rounded-md">
-                        <AvatarImage src={session.user.image || undefined} />
-                        <AvatarFallback>
-                          {session.user.name
-                            .split(" ")
-                            .map((n: string) => n[0])
-                            .join("")
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {session.user.name}
-                        </p>
-                        <p className="text-muted-foreground text-xs leading-none">
-                          {session.user.email}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    variant="default"
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>{isLoggingOut ? "Signing out..." : "Sign out"}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Icons.sidebarClose
-              className="h-[20px] w-[20px] cursor-pointer text-neutral-500"
-              onClick={() => setIsCollapsed((v: boolean) => !v)}
-            />
-          </div>
-        )}
-        {/* If collapsed, show only the close icon */}
-        {isCollapsed && (
-          <Icons.sidebarClose
-            className="h-[20px] w-[20px] cursor-pointer text-neutral-500"
-            onClick={() => setIsCollapsed((v: boolean) => !v)}
-          />
-        )}
-      </div>
-      {/* New Call Button */}
-      {!isCollapsed && (
-        <div className="mb-6">
-          <button className="flex inline-flex h-10 w-full cursor-pointer items-center justify-start gap-2 rounded-[14px] bg-[#1D1D1D] px-5 py-2 text-[#757575] shadow-[inset_0px_0px_1px_0px_rgba(45,45,45,1.00)] transition-all duration-200 hover:rounded-lg hover:bg-[#2D2D2D] hover:text-white">
-            <span className="flex h-[16px] w-[16px] items-center justify-center">
-              <Icons.plus className="h-[16px] w-[16px] rounded" />
-            </span>
-            <span className="text-md font-['Geist'] font-medium text-neutral-500">
-              New Call
-            </span>
-          </button>
-        </div>
-      )}
-      {/* Navigation */}
-      <nav className="flex flex-col gap-2">
-        <NavItem
-          isActive={section === "calls"}
-          onClick={() => onSectionChange("calls")}
-          icon={<Icons.phoneIcon className="h-[18px] w-[18px]" />}
-          label="Call"
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          isActive={section === "schedule"}
-          onClick={() => onSectionChange("schedule")}
-          icon={<Icons.scheduleIcon className="h-[18px] w-[18px]" />}
-          label="Schedule"
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          isActive={section === "teams"}
-          onClick={() => onSectionChange("teams")}
-          icon={<Icons.peopleIcon className="h-[18px] w-[18px]" />}
-          label="Teams"
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          isActive={section === "contact"}
-          onClick={() => onSectionChange("contacts")}
-          icon={<Icons.friends className="h-[18px] w-[18px]" />}
-          label="Contacts"
-          isCollapsed={isCollapsed}
-        />
-      </nav>
-      {/* Support Section */}
-      <div className="mt-auto flex items-center gap-x-2">
-        <NavItem
-          icon={
-            <span className="flex h-[18px] w-[18px] items-center justify-center">
-              <Icons.discord className="h-[18px] w-[18px]" />
-            </span>
-          }
-          label="Join our discord"
-          onClick={() => window.open("https://discord.com/invite/bre4echNxB")}
-          isCollapsed={isCollapsed}
-        />
-        <div className="flex h-[20px] w-[20px] items-center justify-center">
-          <Icons.settings className="h-[20px] w-[20px] text-neutral-500 active:animate-[spin-once_0.7s_ease-out_1]" />
         </div>
       </div>
     </div>

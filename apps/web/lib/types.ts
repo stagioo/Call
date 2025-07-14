@@ -27,10 +27,9 @@ export interface NavItemProps {
 }
 
 export interface SideBarProps {
-  section: string;
-  onSectionChange: (section: string) => void;
+  section?: string;
+  onSectionChange?: (section: string) => void;
 }
-
 
 export interface SendInvitationContactsProps {
   open: boolean;
@@ -45,4 +44,3 @@ export interface Contributor {
   contributions: number;
   type: string;
 }
-

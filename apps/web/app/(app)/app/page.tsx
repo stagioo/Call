@@ -1,42 +1,56 @@
 "use client";
-import SideBar from "@/components/app/sideBar";
-import CallsSection from "@/components/app/sections/CallSection";
-import TeamsSection from "@/components/app/sections/TeamsSection";
-import FriendsSection from "@/components/app/sections/FriendsSection";
-import ScheduleSection from "@/components/app/sections/ScheduleSection";
-import { useState } from "react";
+import { AppSidebar } from "@/components/app/section/_components/app-sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@call/ui/components/breadcrumb";
+import { Separator } from "@call/ui/components/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@call/ui/components/sidebar";
 
-const SECTION_COMPONENTS: Record<string, React.ComponentType> = {
-  calls: CallsSection,
-  teams: TeamsSection,
-  contacts: FriendsSection,
-  schedule: ScheduleSection,
-};
-
-const DEFAULT_SECTION = "calls";
-
-const Page = () => {
-  const [section, setSection] = useState<string>(DEFAULT_SECTION);
-
-  const handleSectionChange = (newSection: string) => {
-    setSection(newSection);
-  };
-
-  const SectionComponent: React.ComponentType =
-    SECTION_COMPONENTS[section] || CallsSection;
-
+export default function Page() {
   return (
-    <div className="flex min-h-screen w-full bg-[#111111]">
-      {/* Sidebar */}
-      <aside className="w-1/5 bg-[#111111]">
-        <SideBar section={section} onSectionChange={handleSectionChange} />
-      </aside>
-      {/* Dashboard */}
-      <main className="w-1/1 py-3">
-        <SectionComponent />
-      </main>
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="#">
+                    Building Your Application
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+            <div className="bg-muted/50 aspect-video rounded-xl" />
+            <div className="bg-muted/50 aspect-video rounded-xl" />
+            <div className="bg-muted/50 aspect-video rounded-xl" />
+          </div>
+          <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
-};
-
-export default Page;
+}
