@@ -47,4 +47,23 @@ contactsRoutes.post("/invite", async (c) => {
   return c.json({ message: "Solicitud enviada" });
 });
 
+contactsRoutes.get("/requests", async (c) => {
+  // Simulate authenticated user (replace with real user ID in production)
+  const receiverId = "test-sender-id";
+
+  // Query pending requests for this user
+  const requests = await db.select().from(contactRequests)
+    .where(
+      eq(contactRequests.receiverId, receiverId),
+      // If you want to be strict, you can also add status check:
+      // eq(contactRequests.status, "pending")
+    );
+
+  // Filter only pending requests
+  const pending = requests.filter(r => r.status === "pending");
+
+  // Return the list (or empty array)
+  return c.json({ requests: pending });
+});
+
 export default contactsRoutes; 
