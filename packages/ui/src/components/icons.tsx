@@ -55,7 +55,7 @@ export const Icons = {
   ),
 
   // discord icon
-  discord: (props: IconProps) => (
+  discord: () => (
     <svg
       height="17"
       width="22"
