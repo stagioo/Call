@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { db } from "@call/db";
 import { contactRequests } from "@call/db/schema";
+import { contacts } from "@call/db/schema";
 import {user as userTable} from "@call/db/schema"
 import { createId } from "@paralleldrive/cuid2";
 import { eq } from "drizzle-orm";
@@ -64,6 +65,41 @@ contactsRoutes.get("/requests", async (c) => {
 
   // Return the list (or empty array)
   return c.json({ requests: pending });
+});
+
+contactsRoutes.patch("/requests/:id/accept", async (c) => {
+  const requestId = c.req.param("id");
+  // Simulate authenticated user (replace with real user ID in production)
+  const userId = "test-sender-id";
+
+  // Find the pending request
+  const [request] = await db.select().from(contactRequests)
+    .where(eq(contactRequests.id, requestId));
+
+  if (!request || request.status !== "pending") {
+    return c.json({ message: "Request not found or already managed" }, 404);
+  }
+
+  // Update status to accepted
+  await db.update(contactRequests)
+    .set({ status: "accepted" })
+    .where(eq(contactRequests.id, requestId));
+
+  // Create bidirectional contacts
+  await db.insert(contacts).values([
+    {
+      userId: request.receiverId || userId,
+      contactId: request.senderId,
+      createdAt: new Date(),
+    },
+    {
+      userId: request.senderId,
+      contactId: request.receiverId || userId,
+      createdAt: new Date(),
+    },
+  ]);
+
+  return c.json({ message: "Application accepted" });
 });
 
 export default contactsRoutes; 
