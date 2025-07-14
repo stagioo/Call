@@ -252,7 +252,7 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
               onClick={() => window.open("https://discord.com/invite/bre4echNxB")}
               tooltip="Join our discord"
             >
-              <Icons.discord className="h-[18px] w-[18px]" />
+              <Icons.discord />
               <span>Join our discord</span>
             </SidebarMenuButton>
           )}
