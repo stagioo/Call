@@ -1,3 +1,4 @@
+// This file defines the team switcher section in the sidebar, allowing the user to switch between teams or add a new one.
 "use client";
 
 import * as React from "react";
@@ -19,6 +20,7 @@ import {
   useSidebar,
 } from "@call/ui/components/sidebar";
 
+// TeamSwitcher receives an array of teams and manages the active team state.
 export function TeamSwitcher({
   teams,
 }: {
@@ -36,14 +38,17 @@ export function TeamSwitcher({
   }
 
   return (
+    // SidebarMenu for team selection
     <SidebarMenu>
       <SidebarMenuItem>
+        {/* Dropdown menu trigger is the team button */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
+              {/* Team logo and info */}
               <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                 <activeTeam.logo className="size-4" />
               </div>
@@ -54,12 +59,14 @@ export function TeamSwitcher({
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
+          {/* Dropdown menu content with team options */}
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
+            {/* List all teams as selectable items */}
             <DropdownMenuLabel className="text-muted-foreground text-xs">
               Teams
             </DropdownMenuLabel>
@@ -73,10 +80,12 @@ export function TeamSwitcher({
                   <team.logo className="size-3.5 shrink-0" />
                 </div>
                 {team.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                {/* Keyboard shortcut for quick switching */}
+                <DropdownMenuShortcut> 318{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
+            {/* Option to add a new team */}
             <DropdownMenuItem className="gap-2 p-2">
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <Plus className="size-4" />

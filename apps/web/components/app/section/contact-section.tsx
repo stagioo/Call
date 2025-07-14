@@ -1,0 +1,9 @@
+export const ContactSection = () => {
+  return (
+    <div>
+      <h1>Contacts</h1>
+    </div>
+  );
+};
+
+export default ContactSection;
