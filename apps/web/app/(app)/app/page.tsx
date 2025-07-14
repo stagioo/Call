@@ -18,10 +18,26 @@ export default function Page() {
   const [selectedSection, setSelectedSection] = useState("Call");
 
   let SectionComponent = null;
-  if (selectedSection === "Call") SectionComponent = <CallSection />;
-  else if (selectedSection === "Teams") SectionComponent = <TeamSection />;
-  else if (selectedSection === "Contact") SectionComponent = <ContactSection />;
-  else if (selectedSection === "Schedule") SectionComponent = <ScheduleSection />;
+  let buttonText = "";
+  let buttonAction = () => {};
+
+  if (selectedSection === "Call") {
+    SectionComponent = <CallSection />;
+    buttonText = "Start Call";
+    buttonAction = () => alert("Iniciar llamada");
+  } else if (selectedSection === "Teams") {
+    SectionComponent = <TeamSection />;
+    buttonText = "Create Team";
+    buttonAction = () => alert("Crear equipo");
+  } else if (selectedSection === "Contact") {
+    SectionComponent = <ContactSection />;
+    buttonText = "Add Contact";
+    buttonAction = () => alert("Agregar contacto");
+  } else if (selectedSection === "Schedule") {
+    SectionComponent = <ScheduleSection />;
+    buttonText = "New Event";
+    buttonAction = () => alert("Nuevo evento");
+  }
 
   return (
     // SidebarProvider manages sidebar state for the layout
@@ -47,14 +63,12 @@ export default function Page() {
               <p>{selectedSection}</p>
             </div>
             <div>
-              <Button>Start Call</Button>
+              <Button onClick={buttonAction}>{buttonText}</Button>
             </div>
           </div>
         </header>
         {/* Main content area with two sections: a grid and a flexible content box */}
-        <div className="flex flex-1 flex-col gap-4 border p-4">
-          {SectionComponent}
-        </div>
+        <div className="flex flex-1 flex-col gap-4 p-4">{SectionComponent}</div>
       </SidebarInset>
     </SidebarProvider>
   );

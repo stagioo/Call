@@ -9,6 +9,7 @@ import {
   SidebarContent,
   SidebarHeader,
   SidebarRail,
+  SidebarFooter
 } from "@call/ui/components/sidebar";
 // Importar useSession y useRouter
 import { useSession } from "@/hooks/useSession";
@@ -74,6 +75,9 @@ export function AppSidebar({ selectedSection, onSectionSelect, ...props }: React
       <SidebarContent>
         <NavMain items={navItems} onSelect={onSectionSelect} />
       </SidebarContent>
+      <SidebarFooter>
+        sidebar footer
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
