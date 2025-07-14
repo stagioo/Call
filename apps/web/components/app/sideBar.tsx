@@ -108,6 +108,7 @@ export default function SideBar({ section, onSectionChange }: SideBarProps) {
   }
 
   return (
+
     <Sidebar className="bg-[#131313]" collapsible="icon">
       <SidebarHeader className={`mb-6 flex items-center justify-between ${state === "expanded" ? "px-6 pt-6" : "px-2 pt-6 justify-center"}`}>
         {/* Left: Pfp, name, and dropdown menu */}
