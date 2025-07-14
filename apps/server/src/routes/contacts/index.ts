@@ -123,4 +123,23 @@ contactsRoutes.patch("/requests/:id/reject", async (c) => {
   return c.json({ message: "Application rejected" });
 });
 
+contactsRoutes.get("/", async (c) => {
+  // Simulate authenticated user (replace with real user ID in production)
+  const userId = "test-sender-id";
+
+  // Query contacts for this user
+  const results = await db
+    .select({
+      contactId: contacts.contactId,
+      createdAt: contacts.createdAt,
+      name: userTable.name,
+      email: userTable.email,
+    })
+    .from(contacts)
+    .leftJoin(userTable, eq(contacts.contactId, userTable.id))
+    .where(eq(contacts.userId, userId));
+
+  return c.json({ contacts: results });
+});
+
 export default contactsRoutes; 
