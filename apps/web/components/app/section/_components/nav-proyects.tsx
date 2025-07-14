@@ -1,3 +1,4 @@
+// This file defines the projects section in the sidebar, listing projects and providing a dropdown menu for each.
 "use client";
 
 import {
@@ -25,6 +26,7 @@ import {
   useSidebar,
 } from "@call/ui/components/sidebar";
 
+// NavProjects receives an array of project objects to display in the sidebar.
 export function NavProjects({
   projects,
 }: {
@@ -37,9 +39,11 @@ export function NavProjects({
   const { isMobile } = useSidebar();
 
   return (
+    // SidebarGroup groups the projects section
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
+        {/* Render each project as a menu item with a dropdown for actions */}
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
@@ -48,6 +52,7 @@ export function NavProjects({
                 <span>{item.name}</span>
               </a>
             </SidebarMenuButton>
+            {/* Dropdown menu for project actions */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction showOnHover>
@@ -77,6 +82,7 @@ export function NavProjects({
             </DropdownMenu>
           </SidebarMenuItem>
         ))}
+        {/* Button for more projects or actions */}
         <SidebarMenuItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">
             <MoreHorizontal className="text-sidebar-foreground/70" />

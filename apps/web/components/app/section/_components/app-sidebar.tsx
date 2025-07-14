@@ -25,6 +25,9 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@call/ui/components/sidebar";
+// Importar useSession y useRouter
+import { useSession } from "@/hooks/useSession";
+import { useRouter } from "next/navigation";
 
 // This is sample data.
 const data = {
@@ -157,18 +160,32 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { session, isLoading } = useSession();
+  const router = useRouter();
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        {session?.user ? (
+          <NavUser
+            user={{
+              name: session.user.name,
+              email: session.user.email,
+              avatar: session.user.image || "/avatars/default.jpg",
+            }}
+          />
+        ) : (
+          <button
+            className="bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-md px-4 py-2 transition"
+            onClick={() => router.push("/login")}
+          >
+            Iniciar sesión
+          </button>
+        )}
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavProjects projects={data.projects} />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
