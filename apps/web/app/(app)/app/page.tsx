@@ -12,13 +12,25 @@ import CallSection from "@/components/app/section/call-section";
 import TeamSection from "@/components/app/section/team-section";
 import ContactSection from "@/components/app/section/contact-section";
 import ScheduleSection from "@/components/app/section/schedule-section";
+import { useState } from "react";
 
 export default function Page() {
+  const [selectedSection, setSelectedSection] = useState("Call");
+
+  let SectionComponent = null;
+  if (selectedSection === "Call") SectionComponent = <CallSection />;
+  else if (selectedSection === "Teams") SectionComponent = <TeamSection />;
+  else if (selectedSection === "Contact") SectionComponent = <ContactSection />;
+  else if (selectedSection === "Schedule") SectionComponent = <ScheduleSection />;
+
   return (
     // SidebarProvider manages sidebar state for the layout
     <SidebarProvider>
       {/* Main sidebar for navigation and user info */}
-      <AppSidebar />
+      <AppSidebar
+        selectedSection={selectedSection}
+        onSectionSelect={setSelectedSection}
+      />
       {/* SidebarInset wraps the main content area, including header and page content */}
       <SidebarInset>
         {/* Header with sidebar trigger, separator, and breadcrumbs */}
@@ -32,7 +44,7 @@ export default function Page() {
                 className="mr-2 data-[orientation=vertical]:h-4"
               />
 
-              <p>Calls</p>
+              <p>{selectedSection}</p>
             </div>
             <div>
               <Button>Start Call</Button>
@@ -40,7 +52,9 @@ export default function Page() {
           </div>
         </header>
         {/* Main content area with two sections: a grid and a flexible content box */}
-        <div className="flex flex-1 flex-col gap-4 border p-4"></div>
+        <div className="flex flex-1 flex-col gap-4 border p-4">
+          {SectionComponent}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

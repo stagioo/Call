@@ -22,6 +22,7 @@ import {
 // NavMain receives an array of navigation items, each with optional sub-items.
 export function NavMain({
   items,
+  onSelect,
 }: {
   items: {
     title: string;
@@ -33,6 +34,7 @@ export function NavMain({
       url: string;
     }[];
   }[];
+  onSelect?: (title: string) => void;
 }) {
   return (
     // SidebarGroup groups the navigation section
@@ -48,7 +50,10 @@ export function NavMain({
             className="group/collapsible"
           >
             <SidebarMenuItem>
-              <SidebarMenuButton tooltip={item.title}>
+              <SidebarMenuButton
+                tooltip={item.title}
+                onClick={() => onSelect?.(item.title)}
+              >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
               </SidebarMenuButton>
