@@ -11,7 +11,12 @@ if (!process.env.FRONTEND_URL || !process.env.BACKEND_URL) {
   );
 }
 
+if (!process.env.BETTER_AUTH_SECRET) {
+  throw new Error("Missing BETTER_AUTH_SECRET in environment variables. Please set it in your .env file.");
+}
+
 export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {

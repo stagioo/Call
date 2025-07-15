@@ -3,11 +3,12 @@ import { z } from "zod";
 import { db } from "@call/db";
 import { contactRequests } from "@call/db/schema";
 import { contacts } from "@call/db/schema";
-import {user as userTable} from "@call/db/schema"
+import { user as userTable } from "@call/db/schema";
 import { createId } from "@paralleldrive/cuid2";
 import { eq } from "drizzle-orm";
+import type { ReqVariables } from "../../index";
 
-const contactsRoutes = new Hono();
+const contactsRoutes = new Hono<{ Variables: ReqVariables }>();
 
 // Simple email validation schema
 const inviteSchema = z.object({
@@ -15,50 +16,67 @@ const inviteSchema = z.object({
 });
 
 contactsRoutes.post("/invite", async (c) => {
-  // Parse and validate input
+  // Log start of request
+  console.log("[POST /invite] Incoming request");
   let body;
   try {
     body = await c.req.json();
-  } catch {
+    console.log("[POST /invite] Body:", body);
+  } catch (e) {
+    console.log("[POST /invite] Invalid JSON body", e);
     return c.json({ message: "Invalid JSON body" }, 400);
   }
   const result = inviteSchema.safeParse(body);
   if (!result.success) {
+    console.log("[POST /invite] Invalid input:", result.error.errors);
     return c.json({ message: result.error.errors[0]?.message || "Invalid input" }, 400);
   }
   const { receiverEmail } = result.data;
 
-  // Simulate senderId (replace with real user ID in production)
-  const senderId = "test-sender-id";
+  // Log user from context
+  const user = c.get("user");
+  console.log("[POST /invite] user from context:", user);
+  if (!user || !user.id) {
+    console.log("[POST /invite] Unauthorized: user missing or has no id");
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+  const senderId = user.id;
+  console.log("[POST /invite] senderId:", senderId);
 
-  // Check if the receiver exists
+  // Look up receiverId by email (if exists)
   const [receiver] = await db.select().from(userTable).where(eq(userTable.email, receiverEmail));
   const receiverId = receiver ? receiver.id : null;
+  console.log("[POST /invite] receiverEmail:", receiverEmail, "receiverId:", receiverId);
 
-  // Insert into contact_requests
-  await db.insert(contactRequests).values({
-    id: createId(),
-    senderId,
-    receiverEmail,
-    receiverId,
-    status: "pending",
-    createdAt: new Date(),
-  });
-
-  return c.json({ message: "Solicitud enviada" });
+  try {
+    await db.insert(contactRequests).values({
+      id: createId(),
+      senderId,
+      receiverEmail,
+      receiverId,
+      status: "pending",
+      createdAt: new Date(),
+    });
+    console.log("[POST /invite] Contact request inserted successfully");
+    return c.json({ message: "Solicitud enviada" });
+  } catch (err) {
+    console.log("[POST /invite] Error inserting contact request:", err);
+    return c.json({ message: "Error inserting contact request", error: String(err) }, 500);
+  }
 });
 
 contactsRoutes.get("/requests", async (c) => {
-  // Simulate authenticated user (replace with real user ID in production)
-  const receiverId = "test-sender-id";
+  // Use authenticated user
+  const user = c.get("user");
+  console.log("[GET /requests] user from context:", user);
+  if (!user || !user.id) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+  const receiverId = user.id;
 
   // Query pending requests for this user
   const requests = await db.select().from(contactRequests)
-    .where(
-      eq(contactRequests.receiverId, receiverId),
-      // If you want to be strict, you can also add status check:
-      // eq(contactRequests.status, "pending")
-    );
+    .where(eq(contactRequests.receiverId, receiverId));
 
   // Filter only pending requests
   const pending = requests.filter(r => r.status === "pending");
@@ -69,8 +87,13 @@ contactsRoutes.get("/requests", async (c) => {
 
 contactsRoutes.patch("/requests/:id/accept", async (c) => {
   const requestId = c.req.param("id");
-  // Simulate authenticated user (replace with real user ID in production)
-  const userId = "test-sender-id";
+  // Use authenticated user
+  const user = c.get("user");
+  console.log("[PATCH /requests/:id/accept] user from context:", user);
+  if (!user || !user.id) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+  const userId = user.id;
 
   // Find the pending request
   const [request] = await db.select().from(contactRequests)
@@ -104,8 +127,13 @@ contactsRoutes.patch("/requests/:id/accept", async (c) => {
 
 contactsRoutes.patch("/requests/:id/reject", async (c) => {
   const requestId = c.req.param("id");
-  // Simulate authenticated user (replace with real user ID in production)
-  const userId = "test-sender-id";
+  // Use authenticated user
+  const user = c.get("user");
+  console.log("[PATCH /requests/:id/reject] user from context:", user);
+  if (!user || !user.id) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+  const userId = user.id;
 
   // Find the pending request
   const [request] = await db.select().from(contactRequests)
@@ -124,8 +152,13 @@ contactsRoutes.patch("/requests/:id/reject", async (c) => {
 });
 
 contactsRoutes.get("/", async (c) => {
-  // Simulate authenticated user (replace with real user ID in production)
-  const userId = "test-sender-id";
+  // Use authenticated user
+  const user = c.get("user");
+  console.log("[GET /contacts] user from context:", user);
+  if (!user || !user.id) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+  const userId = user.id;
 
   // Query contacts for this user
   const results = await db
