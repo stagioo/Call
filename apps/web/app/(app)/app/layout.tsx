@@ -61,7 +61,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 border p-4">{children}</div>
+        <div className="flex flex-1 flex-col gap-4  p-4">{children}</div>
         {showContactModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="relative">
