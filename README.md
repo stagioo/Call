@@ -12,7 +12,7 @@
     <a href="https://joincall.co">
       <img src="https://img.shields.io/badge/Website-call0.co-blue?style=for-the-badge&logo=globe" alt="Website">
     </a>
-    <a href="https://github.com/Call0dotco/call">
+    <a href="https://github.com/joincalldotco/call">
       <img src="https://img.shields.io/badge/GitHub-Call0dotco/call-black?style=for-the-badge&logo=github" alt="GitHub">
     </a>
     <a href="https://discord.com/invite/bre4echNxB">
