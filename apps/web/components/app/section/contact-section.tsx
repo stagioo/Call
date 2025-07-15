@@ -1,7 +1,9 @@
+import ContactPage from "@/app/(app)/contact/page";
+
 export const ContactSection = () => {
   return (
     <div>
-      <h1>Contacts</h1>
+      <ContactPage />
     </div>
   );
 };

@@ -19,11 +19,11 @@ export function ModalContact({ onClose }: { onClose?: () => void }) {
     e.preventDefault();
     setError(null);
     if (!email.includes("@")) {
-      setError("Introduce un email válido.");
+      setError("Add a valid email");
       return;
     }
     if (!session?.session?.token) {
-      setError("No hay sesión activa. Inicia sesión para enviar solicitudes.");
+      setError("sign in to send invi");
       return;
     }
     setLoading(true);
