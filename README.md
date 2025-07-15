@@ -9,7 +9,7 @@
   </p>
   
   <div align="center">
-    <a href="https://call0.co">
+    <a href="https://joincall.co">
       <img src="https://img.shields.io/badge/Website-call0.co-blue?style=for-the-badge&logo=globe" alt="Website">
     </a>
     <a href="https://github.com/Call0dotco/call">
