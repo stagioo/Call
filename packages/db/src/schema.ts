@@ -154,6 +154,46 @@ export const contacts = pgTable(
   ]
 );
 
+// Team Schema
+export const teams = pgTable(
+  "teams",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    creatorId: text("creator_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("teams_creator_id_idx").on(table.creatorId),
+  ]
+);
+
+
+export const teamMembers = pgTable(
+  "team_members",
+  {
+    teamId: text("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+
+    index("team_members_team_id_idx").on(table.teamId),
+    index("team_members_user_id_idx").on(table.userId),
+    index("team_members_team_user_idx").on(table.teamId, table.userId),
+  ]
+);
+
 const schema = {
   user,
   session,
@@ -164,6 +204,8 @@ const schema = {
   room,
   contactRequests,
   contacts,
+  teams,
+  teamMembers,
 };
 
 export default schema;
