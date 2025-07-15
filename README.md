@@ -136,8 +136,9 @@ BACKEND_URL=http://localhost:1284
 # App Configuration
 NODE_ENV=development
 
-# Better Auth Secret (required for authentication)
-# You must set BETTER_AUTH_SECRET. To generate a secure secret, go to https://www.better-auth.com/docs/installation and click on 'Generate Secret'.
+
+go to https://www.better-auth.com/docs/installation and click on 'Generate Secret'.
+
 BETTER_AUTH_SECRET=your_generated_secret
 ```
 
