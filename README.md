@@ -13,7 +13,7 @@
       <img src="https://img.shields.io/badge/Website-joincall.co-blue?style=for-the-badge&logo=globe" alt="Website">
     </a>
     <a href="https://github.com/joincalldotco/call">
-      <img src="https://img.shields.io/badge/GitHub-Call/call-black?style=for-the-badge&logo=github" alt="GitHub">
+      <img src="https://img.shields.io/badge/GitHub-joincalldotco/call-black?style=for-the-badge&logo=github" alt="GitHub">
     </a>
     <a href="https://discord.com/invite/bre4echNxB">
       <img src="https://img.shields.io/badge/Discord-Join%20Community-blue?style=for-the-badge&logo=discord" alt="Discord">
