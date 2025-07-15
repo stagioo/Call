@@ -57,11 +57,10 @@ export default async function Contributors() {
         <div className="max-w-5xl w-full mx-auto px-6 flex items-center justify-center flex-col relative gap-12 pt-20">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             <h1 className="text-4xl font-bold font-lora text-primary/90">
-              Top Contributors
+              Top Aura farmers 😎
             </h1>
             <p className="text-lg text-muted-foreground max-w-md">
-              The developers who have made the most significant contributions to
-              Call
+              The devs who farmed the most Aura by contributing to Call
             </p>
           </div>
           <div className="flex flex-row gap-8 w-full justify-center">
@@ -87,7 +86,7 @@ export default async function Contributors() {
                     {contributor.login}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {contributor.contributions} contributions
+                    {contributor.contributions} Aura
                   </p>
                 </div>
               </Link>
@@ -109,7 +108,7 @@ export default async function Contributors() {
             Call Community
           </h2>
           <p className="text-base text-muted-foreground max-w-md">
-            Every contribution matters. Meet the community behind Call.
+            Every Aura matters. Meet the community behind Call.
           </p>
         </div>
 
@@ -137,7 +136,7 @@ export default async function Contributors() {
                     {contributor.login}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {contributor.contributions}
+                    {contributor.contributions} Aura
                   </p>
                 </div>
               </Link>
@@ -150,7 +149,7 @@ export default async function Contributors() {
       <div className="max-w-2xl w-full mx-auto px-6 flex items-center justify-center flex-col relative gap-8 pb-20">
         <div className="flex flex-col items-center justify-center gap-4 text-center">
           <h3 className="text-2xl font-bold font-lora text-primary/90">
-            Ready to Contribute?
+            Ready to Farm Aura?????
           </h3>
           <p className="text-base text-muted-foreground max-w-md">
             Start building the future of meetings with us.
