@@ -136,7 +136,7 @@ BACKEND_URL=http://localhost:1284
 # App Configuration
 NODE_ENV=development
 
-go to <a target="_blank" href="https://www.better-auth.com/docs/installation" >Better auth installation</a> and click on 'Generate Secret'.
+go to https://www.better-auth.com/docs/installation and click on 'Generate Secret'.
 BETTER_AUTH_SECRET=your_generated_secret
 ```
 
