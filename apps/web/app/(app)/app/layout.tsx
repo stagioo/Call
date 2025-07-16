@@ -9,6 +9,7 @@ import { Separator } from "@call/ui/components/separator";
 import { Button } from "@call/ui/components/button";
 import { usePathname, useRouter } from "next/navigation";
 import { ModalContact } from "@/components/app/section/_components/modal-contact";
+import { CreateTeamModal } from "@/components/app/section/_components/create-team-modal";
 import { useState } from "react";
 const sectionMap = [
   { path: "/app/call", title: "Call" },
@@ -21,6 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
   // Find the section that matches the current path
   const selectedSection =
     sectionMap.find((s) => pathname?.startsWith(s.path))?.title || "Call";
@@ -30,6 +32,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (section) {
       router.push(section.path);
     }
+  };
+
+  const handleTeamCreated = () => {
+    // Refresh the page to show the new team
+    window.location.reload();
   };
 
   return (
@@ -51,7 +58,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div>
               {selectedSection === "Call" && <Button>Start Call</Button>}
-              {selectedSection === "Teams" && <Button>Create Team</Button>}
+              {selectedSection === "Teams" && (
+                <Button onClick={() => setShowCreateTeamModal(true)}>
+                  Create Team
+                </Button>
+              )}
               {selectedSection === "Contact" && (
                 <Button onClick={() => setShowContactModal(true)}>
                   Add Contact
@@ -65,8 +76,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {showContactModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="relative">
-          
               <ModalContact onClose={() => setShowContactModal(false)} />
+            </div>
+          </div>
+        )}
+        {showCreateTeamModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="relative">
+              <CreateTeamModal 
+                onClose={() => setShowCreateTeamModal(false)}
+                onTeamCreated={handleTeamCreated}
+              />
             </div>
           </div>
         )}
