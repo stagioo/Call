@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { db } from '@call/db';
 import { calls, callInvitations, notifications, user } from '@call/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, and } from 'drizzle-orm';
 import { initMediasoup, createRouterForCall } from '../../config/mediasoup';
 import { auth } from '@call/auth/auth';
 import { getRouter } from '../../config/mediasoup';
@@ -148,6 +148,76 @@ callsRoutes.get('/:id/router-capabilities', async (c) => {
 
 
   return c.json(router.rtpCapabilities);
+});
+
+
+callsRoutes.post('/:id/join', async (c) => {
+  const callId = c.req.param('id');
+  if (!callId) return c.json({ error: 'Missing call id' }, 400);
+
+
+  const { rtpCapabilities } = await c.req.json();
+  if (!rtpCapabilities) return c.json({ error: 'Missing rtpCapabilities' }, 400);
+
+
+  const session = await auth.handler(c.req.raw);
+  const user = (session as any)?.user;
+  if (!user?.id) return c.json({ error: 'Unauthorized' }, 401);
+
+
+  const [call] = await db.select().from(calls).where(eq(calls.id, callId));
+  if (!call) return c.json({ error: 'Call not found' }, 404);
+
+ 
+  const invited = call.creatorId === user.id ||
+    (await db.select().from(callInvitations)
+      .where(
+        and(
+          eq(callInvitations.callId, callId),
+          eq(callInvitations.inviteeId, user.id)
+        )
+      )).length > 0;
+  if (!invited) return c.json({ error: 'Not invited' }, 403);
+
+ 
+  const router = await getRouter(callId);
+  if (!router) return c.json({ error: 'Router not found' }, 404);
+
+
+  const sendTransport = await router.createWebRtcTransport({
+    listenIps: [{ ip: '0.0.0.0', announcedIp: null }], // TODO: set announcedIp if behind NAT
+    enableUdp: true,
+    enableTcp: true,
+    preferUdp: true,
+    enableSctp: false,
+    initialAvailableOutgoingBitrate: 800000,
+  });
+
+
+  const recvTransport = await router.createWebRtcTransport({
+    listenIps: [{ ip: '0.0.0.0', announcedIp: null }],
+    enableUdp: true,
+    enableTcp: true,
+    preferUdp: true,
+    enableSctp: false,
+    initialAvailableOutgoingBitrate: 800000,
+  });
+
+
+  return c.json({
+    sendTransport: {
+      id: sendTransport.id,
+      iceParameters: sendTransport.iceParameters,
+      iceCandidates: sendTransport.iceCandidates,
+      dtlsParameters: sendTransport.dtlsParameters,
+    },
+    recvTransport: {
+      id: recvTransport.id,
+      iceParameters: recvTransport.iceParameters,
+      iceCandidates: recvTransport.iceCandidates,
+      dtlsParameters: recvTransport.dtlsParameters,
+    },
+  });
 });
 
 export default callsRoutes; 
