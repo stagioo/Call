@@ -132,7 +132,7 @@ export const TeamSection = () => {
 
                 {/* Action Button */}
                 <Button className="w-full" variant="outline">
-                  <Play className="h-4 w-4 mr-2" />
+            
                   Start Meeting
                 </Button>
               </CardContent>
