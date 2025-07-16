@@ -8,6 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@call/ui/components/card";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from "@call/ui/components/alert-dialog";
+import { Input } from "@call/ui/components/input";
+import { Label } from "@call/ui/components/label";
 import { useSession } from "@/hooks/useSession";
 import type { Team } from "@/lib/types";
 import { Users, Play, MoreHorizontal } from "lucide-react";
@@ -32,6 +35,11 @@ export const TeamSection = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [addUsersOpen, setAddUsersOpen] = useState<string | null>(null); // teamId or null
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -63,6 +71,42 @@ export const TeamSection = () => {
       fetchTeams();
     }
   }, [mounted, session?.user, sessionLoading]);
+
+  // Fetch contacts only when modal opens
+  useEffect(() => {
+    if (addUsersOpen) {
+      fetch("http://localhost:1284/api/contacts", { credentials: "include" })
+        .then(res => res.json())
+        .then(data => setContacts(data.contacts || []));
+    }
+  }, [addUsersOpen]);
+
+  const handleAddUsers = async () => {
+    if (!addUsersOpen) return;
+    setAddLoading(true);
+    setAddError(null);
+    try {
+      const res = await fetch(`http://localhost:1284/api/teams/${addUsersOpen}/add-members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ emails: selectedContacts }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAddError(data.message || "Failed to add users");
+      } else {
+        // Refetch teams to update members
+        await fetchTeams();
+        setAddUsersOpen(null);
+        setSelectedContacts([]);
+      }
+    } catch (err) {
+      setAddError("Network error adding users");
+    } finally {
+      setAddLoading(false);
+    }
+  };
 
   // Show loading state during initial mount to prevent hydration mismatch
   if (!mounted || sessionLoading) {
@@ -164,7 +208,11 @@ export const TeamSection = () => {
                         >
                           Leave
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Add users</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setAddUsersOpen(team.id)}
+                        >
+                          Add users
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -208,6 +256,47 @@ export const TeamSection = () => {
           ))}
         </div>
       )}
+
+      {/* Modal for adding users to team */}
+      <AlertDialog open={!!addUsersOpen} onOpenChange={(open: boolean) => { if (!open) setAddUsersOpen(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Add users to team</AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="max-h-64 overflow-y-auto border rounded-md p-2 space-y-2">
+            {contacts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No contacts available</p>
+            ) : (
+              contacts.map((contact, idx) => (
+                <div key={contact.id || contact.email || idx} className="flex items-center justify-between p-2 hover:bg-muted rounded">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{contact.name || contact.email}</p>
+                    <p className="text-xs text-muted-foreground">{contact.email}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={selectedContacts.includes(contact.email) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedContacts(prev => prev.includes(contact.email) ? prev.filter(e => e !== contact.email) : [...prev, contact.email])}
+                    disabled={addLoading}
+                  >
+                    {selectedContacts.includes(contact.email) ? "Added" : "Add"}
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+          {addError && <div className="text-red-500 text-sm mt-2">{addError}</div>}
+          <div className="mt-4 flex flex-col gap-3">
+            <Button onClick={handleAddUsers} disabled={addLoading || selectedContacts.length === 0} className="w-full">
+              {addLoading ? "Adding..." : "Add Selected"}
+            </Button>
+            <Button variant="outline" onClick={() => setAddUsersOpen(null)} className="w-full" type="button" disabled={addLoading}>
+              Cancel
+            </Button>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
