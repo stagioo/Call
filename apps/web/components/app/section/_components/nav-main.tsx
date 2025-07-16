@@ -19,6 +19,7 @@ import {
   SidebarMenuSubItem,
 } from "@call/ui/components/sidebar";
 
+
 // NavMain receives an array of navigation items, each with optional sub-items.
 export function NavMain({
   items,
