@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@call/ui/components/ca
 interface Request {
   id: string;
   senderId: string;
-  receiverEmail: string;
-  senderName?: string;
+  senderName: string;
+  senderEmail: string;
 }
 
 export default function RequestsDashboard() {
@@ -70,12 +70,10 @@ export default function RequestsDashboard() {
         ) : (
           <ul className="space-y-4">
             {requests.map((req) => (
-              <li key={req.id} className="flex items-center justify-between border-b pb-2">
+              <li key={`${req.id}-${req.senderId}`} className="flex items-center justify-between border-b pb-2">
                 <div>
-                  <div className="font-medium">
-                    {req.senderName || req.senderId}
-                  </div>
-                  <div className="text-xs text-muted-foreground">{req.receiverEmail}</div>
+                  <div className="font-medium">{req.senderName || req.senderId}</div>
+                  <div className="text-xs text-muted-foreground">{req.senderEmail}</div>
                 </div>
                 <div className="flex gap-2">
                   <Button

@@ -19,6 +19,7 @@ import {
   SidebarMenuSubItem,
 } from "@call/ui/components/sidebar";
 
+
 // NavMain receives an array of navigation items, each with optional sub-items.
 export function NavMain({
   items,
@@ -52,6 +53,7 @@ export function NavMain({
             <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip={item.title}
+                isActive={item.isActive}
                 onClick={() => onSelect?.(item.title)}
               >
                 {item.icon && <item.icon />}
