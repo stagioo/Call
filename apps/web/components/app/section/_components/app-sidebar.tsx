@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import * as React from "react";
-import { Phone, Calendar, Users, Contact } from "lucide-react";
+import { Phone, Calendar, Users, Contact, Bell } from "lucide-react";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 import {
@@ -9,7 +9,7 @@ import {
   SidebarContent,
   SidebarHeader,
   SidebarRail,
-  SidebarFooter
+  SidebarFooter,
 } from "@call/ui/components/sidebar";
 
 // Importar useSession y useRouter
@@ -40,14 +40,25 @@ const data = {
       url: "#",
       icon: Contact,
     },
+    {
+      title: "Notifications",
+      url: "#",
+      icon: Bell,
+    },
   ],
 };
 
-export function AppSidebar({ selectedSection, onSectionSelect, ...props }: React.ComponentProps<typeof Sidebar> & { selectedSection: string, onSectionSelect: (title: string) => void }) {
+export function AppSidebar({
+  selectedSection,
+  onSectionSelect,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  selectedSection: string;
+  onSectionSelect: (title: string) => void;
+}) {
   const { session, isLoading } = useSession();
   const router = useRouter();
 
- 
   const navItems = data.navMain.map((item) => ({
     ...item,
     isActive: item.title === selectedSection,
@@ -76,9 +87,7 @@ export function AppSidebar({ selectedSection, onSectionSelect, ...props }: React
       <SidebarContent>
         <NavMain items={navItems} onSelect={onSectionSelect} />
       </SidebarContent>
-      <SidebarFooter>
-        sidebar footer
-      </SidebarFooter>
+      <SidebarFooter>sidebar footer</SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
