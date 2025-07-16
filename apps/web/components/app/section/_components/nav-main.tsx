@@ -52,6 +52,7 @@ export function NavMain({
             <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip={item.title}
+                isActive={item.isActive}
                 onClick={() => onSelect?.(item.title)}
               >
                 {item.icon && <item.icon />}
