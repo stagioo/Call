@@ -1,54 +1,69 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { db } from "@call/db";
-import { contactRequests } from "@call/db/schema";
-import { contacts } from "@call/db/schema";
-import { user as userTable } from "@call/db/schema";
+import { contactRequests, contacts, user as userTable } from "@call/db/schema";
 import { createId } from "@paralleldrive/cuid2";
-import { eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import type { ReqVariables } from "../../index";
 
 const contactsRoutes = new Hono<{ Variables: ReqVariables }>();
 
-// Simple email validation schema
 const inviteSchema = z.object({
-  receiverEmail: z.string().email("Invalid email format")
+  receiverEmail: z.string().email("Invalid email format"),
+});
+
+const requestIdSchema = z.object({
+  id: z.string().cuid2("Invalid request ID format"),
 });
 
 contactsRoutes.post("/invite", async (c) => {
-  // Log start of request
-  console.log("[POST /invite] Incoming request");
-  let body;
-  try {
-    body = await c.req.json();
-    console.log("[POST /invite] Body:", body);
-  } catch (e) {
-    console.log("[POST /invite] Invalid JSON body", e);
-    return c.json({ message: "Invalid JSON body" }, 400);
-  }
-  const result = inviteSchema.safeParse(body);
-  if (!result.success) {
-    console.log("[POST /invite] Invalid input:", result.error.errors);
-    return c.json({ message: result.error.errors[0]?.message || "Invalid input" }, 400);
-  }
-  const { receiverEmail } = result.data;
-
-  // Log user from context
-  const user = c.get("user");
-  console.log("[POST /invite] user from context:", user);
-  if (!user || !user.id) {
-    console.log("[POST /invite] Unauthorized: user missing or has no id");
-    return c.json({ message: "Unauthorized" }, 401);
-  }
+  const user = c.get("user")!; // Middleware ensures user exists
   const senderId = user.id;
-  console.log("[POST /invite] senderId:", senderId);
-
-  // Look up receiverId by email (if exists)
-  const [receiver] = await db.select().from(userTable).where(eq(userTable.email, receiverEmail));
-  const receiverId = receiver ? receiver.id : null;
-  console.log("[POST /invite] receiverEmail:", receiverEmail, "receiverId:", receiverId);
 
   try {
+    const body = await c.req.json();
+    const result = inviteSchema.safeParse(body);
+
+    if (!result.success) {
+      return c.json({ message: result.error.errors[0]?.message || "Invalid input" }, 400);
+    }
+    const { receiverEmail } = result.data;
+
+    if (receiverEmail === user.email) {
+      return c.json({ message: "You cannot send a contact request to yourself." }, 400);
+    }
+
+    const [receiver] = await db.select({ id: userTable.id }).from(userTable).where(eq(userTable.email, receiverEmail));
+    const receiverId = receiver ? receiver.id : null;
+
+    if (receiverId) {
+      const [existingRelation] = await db
+        .select({ check: contacts.userId })
+        .from(contacts)
+        .where(and(eq(contacts.userId, senderId), eq(contacts.contactId, receiverId)))
+        .limit(1);
+    
+      if (existingRelation) {
+        return c.json({ message: "You are already contacts with this user." }, 409);
+      }
+    }
+    
+    const [existingRequest] = await db
+      .select({ id: contactRequests.id })
+      .from(contactRequests)
+      .where(
+        and(
+          eq(contactRequests.senderId, senderId),
+          eq(contactRequests.receiverEmail, receiverEmail),
+          eq(contactRequests.status, "pending")
+        )
+      )
+      .limit(1);
+
+    if (existingRequest) {
+      return c.json({ message: "A pending request to this user already exists." }, 409);
+    }
+
     await db.insert(contactRequests).values({
       id: createId(),
       senderId,
@@ -57,122 +72,116 @@ contactsRoutes.post("/invite", async (c) => {
       status: "pending",
       createdAt: new Date(),
     });
-    console.log("[POST /invite] Contact request inserted successfully");
-    return c.json({ message: "Solicitud enviada" });
+
+    return c.json({ message: "Contact request sent successfully." }, 201);
   } catch (err) {
-    console.log("[POST /invite] Error inserting contact request:", err);
-    return c.json({ message: "Error inserting contact request", error: String(err) }, 500);
+    console.error("[POST /invite] Error:", err);
+    return c.json({ message: "An unexpected error occurred." }, 500);
   }
 });
 
 contactsRoutes.get("/requests", async (c) => {
-  // Use authenticated user
-  const user = c.get("user");
-  console.log("[GET /requests] user from context:", user);
-  if (!user || !user.id) {
-    return c.json({ message: "Unauthorized" }, 401);
+  const user = c.get("user")!;
+  const userId = user.id;
+
+  try {
+    const pendingRequests = await db
+      .select({
+        requestId: contactRequests.id,
+        createdAt: contactRequests.createdAt,
+        sender: {
+          id: userTable.id,
+          name: userTable.name,
+          email: userTable.email,
+        },
+      })
+      .from(contactRequests)
+      .leftJoin(userTable, eq(contactRequests.senderId, userTable.id))
+      .where(and(eq(contactRequests.receiverId, userId), eq(contactRequests.status, "pending")));
+
+    return c.json({ requests: pendingRequests });
+  } catch (err) {
+    console.error("[GET /requests] Error:", err);
+    return c.json({ message: "An unexpected error occurred." }, 500);
   }
-  const receiverId = user.id;
-
-  // Query pending requests for this user
-  const requests = await db.select().from(contactRequests)
-    .where(eq(contactRequests.receiverId, receiverId));
-
-  // Filter only pending requests
-  const pending = requests.filter(r => r.status === "pending");
-
-  // Return the list (or empty array)
-  return c.json({ requests: pending });
 });
 
 contactsRoutes.patch("/requests/:id/accept", async (c) => {
-  const requestId = c.req.param("id");
-  // Use authenticated user
-  const user = c.get("user");
-  console.log("[PATCH /requests/:id/accept] user from context:", user);
-  if (!user || !user.id) {
-    return c.json({ message: "Unauthorized" }, 401);
-  }
+  const user = c.get("user")!;
   const userId = user.id;
+  const { id: requestId } = requestIdSchema.parse(c.req.param());
 
-  // Find the pending request
-  const [request] = await db.select().from(contactRequests)
-    .where(eq(contactRequests.id, requestId));
+  try {
+    await db.transaction(async (tx) => {
+      const [request] = await tx
+        .select()
+        .from(contactRequests)
+        .where(and(eq(contactRequests.id, requestId), eq(contactRequests.receiverId, userId), eq(contactRequests.status, "pending")));
 
-  if (!request || request.status !== "pending") {
-    return c.json({ message: "Request not found or already managed" }, 404);
+      if (!request) {
+        return c.json({ message: "Request not found, already handled, or you are not the recipient." }, 404);
+      }
+      
+      const senderId = request.senderId;
+
+      await tx.update(contactRequests).set({ status: "accepted" }).where(eq(contactRequests.id, requestId));
+
+      await tx.insert(contacts).values([
+        { userId: userId, contactId: senderId, createdAt: new Date() },
+        { userId: senderId, contactId: userId, createdAt: new Date() },
+      ]);
+    });
+
+    return c.json({ message: "Contact request accepted." });
+  } catch (err) {
+    console.error("[PATCH /requests/:id/accept] Error:", err);
+    return c.json({ message: "An unexpected error occurred." }, 500);
   }
-
-  // Update status to accepted
-  await db.update(contactRequests)
-    .set({ status: "accepted" })
-    .where(eq(contactRequests.id, requestId));
-
-  // Create bidirectional contacts
-  await db.insert(contacts).values([
-    {
-      userId: request.receiverId || userId,
-      contactId: request.senderId,
-      createdAt: new Date(),
-    },
-    {
-      userId: request.senderId,
-      contactId: request.receiverId || userId,
-      createdAt: new Date(),
-    },
-  ]);
-
-  return c.json({ message: "Application accepted" });
 });
 
 contactsRoutes.patch("/requests/:id/reject", async (c) => {
-  const requestId = c.req.param("id");
-  // Use authenticated user
-  const user = c.get("user");
-  console.log("[PATCH /requests/:id/reject] user from context:", user);
-  if (!user || !user.id) {
-    return c.json({ message: "Unauthorized" }, 401);
-  }
+  const user = c.get("user")!;
   const userId = user.id;
+  const { id: requestId } = requestIdSchema.parse(c.req.param());
 
-  // Find the pending request
-  const [request] = await db.select().from(contactRequests)
-    .where(eq(contactRequests.id, requestId));
+  try {
+    const { rowCount } = await db
+      .update(contactRequests)
+      .set({ status: "rejected" })
+      .where(and(eq(contactRequests.id, requestId), eq(contactRequests.receiverId, userId), eq(contactRequests.status, "pending")));
 
-  if (!request || request.status !== "pending") {
-    return c.json({ message: "Request not found or already managed" }, 404);
+    if (rowCount === 0) {
+      return c.json({ message: "Request not found, already handled, or you are not the recipient." }, 404);
+    }
+
+    return c.json({ message: "Contact request rejected." });
+  } catch (err) {
+    console.error("[PATCH /requests/:id/reject] Error:", err);
+    return c.json({ message: "An unexpected error occurred." }, 500);
   }
-
-  // Update status to rejected
-  await db.update(contactRequests)
-    .set({ status: "rejected" })
-    .where(eq(contactRequests.id, requestId));
-
-  return c.json({ message: "Application rejected" });
 });
 
 contactsRoutes.get("/", async (c) => {
-  // Use authenticated user
-  const user = c.get("user");
-  console.log("[GET /contacts] user from context:", user);
-  if (!user || !user.id) {
-    return c.json({ message: "Unauthorized" }, 401);
-  }
+  const user = c.get("user")!;
   const userId = user.id;
 
-  // Query contacts for this user
-  const results = await db
-    .select({
-      contactId: contacts.contactId,
-      createdAt: contacts.createdAt,
-      name: userTable.name,
-      email: userTable.email,
-    })
-    .from(contacts)
-    .leftJoin(userTable, eq(contacts.contactId, userTable.id))
-    .where(eq(contacts.userId, userId));
+  try {
+    const userContacts = await db
+      .select({
+        id: userTable.id,
+        name: userTable.name,
+        email: userTable.email,
+        createdAt: contacts.createdAt,
+      })
+      .from(contacts)
+      .leftJoin(userTable, eq(contacts.contactId, userTable.id))
+      .where(eq(contacts.userId, userId));
 
-  return c.json({ contacts: results });
+    return c.json({ contacts: userContacts });
+  } catch (err) {
+    console.error("[GET /] Error:", err);
+    return c.json({ message: "An unexpected error occurred." }, 500);
+  }
 });
 
-export default contactsRoutes; 
+export default contactsRoutes;
