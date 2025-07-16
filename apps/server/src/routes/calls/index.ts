@@ -5,6 +5,7 @@ import { calls, callInvitations, notifications, user } from '@call/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { initMediasoup, createRouterForCall } from '../../config/mediasoup';
 import { auth } from '@call/auth/auth';
+import { getRouter } from '../../config/mediasoup';
 const callsRoutes = new Hono();
 
 const createCallSchema = z.object({
@@ -134,6 +135,19 @@ callsRoutes.patch('/invitations/:id/reject', async (c) => {
     .where(eq(callInvitations.id, invitationId));
 
   return c.json({ message: 'Invitation rejected' });
+});
+
+
+callsRoutes.get('/:id/router-capabilities', async (c) => {
+  const callId = c.req.param('id');
+  if (!callId) return c.json({ error: 'Missing call id' }, 400);
+
+
+  const router = await getRouter(callId);
+  if (!router) return c.json({ error: 'Router not found' }, 404);
+
+
+  return c.json(router.rtpCapabilities);
 });
 
 export default callsRoutes; 
