@@ -15,12 +15,36 @@ const app = new Hono<{ Variables: ReqVariables }>();
 
 app.use("*", logger());
 
+// Configuración de CORS mejorada
+const allowedOrigins = [
+  env.FRONTEND_URL,
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001",
+];
+
 app.use(
+  "*",
   cors({
-    origin: env.FRONTEND_URL,
+    origin: (origin) => {
+      // Permitir requests sin origin (como mobile apps o Postman)
+      if (!origin) return "*";
+      
+      // Verificar si el origin está en la lista de permitidos
+      return allowedOrigins.includes(origin) ? origin : null;
+    },
     credentials: true,
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: [
+      "Content-Type", 
+      "Authorization", 
+      "X-Requested-With",
+      "Accept",
+      "Origin"
+    ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    exposeHeaders: ["Set-Cookie"],
+    maxAge: 86400, // 24 horas
   })
 );
 
