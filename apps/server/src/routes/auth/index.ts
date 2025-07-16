@@ -14,7 +14,7 @@ authRouter.post(
   zValidator("json", emailSchema),
   async (c: Context) => {
     try {
-      const { email } = await c.req.json();
+      const { email } = await c.req.json<{ email: string }>();
 
       const existingUser = await db
         .select({ id: user.id })
