@@ -139,4 +139,49 @@ teamsRoutes.post(":teamId/leave", async (c) => {
   return c.json({ message: "Left team successfully" });
 });
 
+// POST /api/teams/:teamId/add-members - Add users to a team
+teamsRoutes.post(":teamId/add-members", async (c) => {
+  const user = c.get("user");
+  if (!user || !user.id) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+  const teamId = c.req.param("teamId");
+  if (!teamId) {
+    return c.json({ message: "Team ID is required" }, 400);
+  }
+  let body;
+  try {
+    body = await c.req.json();
+  } catch (e) {
+    return c.json({ message: "Invalid JSON body" }, 400);
+  }
+  const addMembersSchema = z.object({ emails: z.array(z.string().email("Invalid email format")).min(1) });
+  const result = addMembersSchema.safeParse(body);
+  if (!result.success) {
+    return c.json({ message: result.error.errors[0]?.message || "Invalid input" }, 400);
+  }
+  const { emails } = result.data;
+  // Find users by email
+  const users = await db.select().from(userTable).where(inArray(userTable.email, emails));
+  if (users.length !== emails.length) {
+    // Find which emails are missing
+    const foundEmails = users.map(u => u.email);
+    const missing = emails.filter(email => !foundEmails.includes(email));
+    return c.json({ message: `Email(s) not registered: ${missing.join(", ")}` }, 400);
+  }
+  // Check which users are already members
+  const userIds = users.map(u => u.id);
+  const existingMembers = await db.select({ userId: teamMembers.userId }).from(teamMembers).where(and(eq(teamMembers.teamId, teamId), inArray(teamMembers.userId, userIds)));
+  const alreadyMemberIds = new Set(existingMembers.map(m => m.userId));
+  const newMemberIds = userIds.filter(uid => !alreadyMemberIds.has(uid));
+  if (newMemberIds.length === 0) {
+    return c.json({ message: "All users are already members of this team" }, 400);
+  }
+  // Insert new members
+  const now = new Date();
+  const rows = newMemberIds.map(uid => ({ teamId, userId: uid, createdAt: now }));
+  await db.insert(teamMembers).values(rows);
+  return c.json({ message: "Users added to team" });
+});
+
 export default teamsRoutes; 
