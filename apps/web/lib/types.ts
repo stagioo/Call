@@ -37,3 +37,22 @@ export interface Contributor {
   contributions: number;
   type: string;
 }
+
+// Team types
+export interface TeamMember {
+  user_id: string;
+  name: string;
+  email: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  creator_id: string;
+  members: TeamMember[];
+}
+
+export interface CreateTeamRequest {
+  name: string;
+  members: string[];
+}

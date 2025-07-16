@@ -79,7 +79,7 @@ export function ModalContact({ onClose }: { onClose?: () => void }) {
               {loading ? "sending..." : success ? "sent" : "send"}
             </Button>
             <Button variant="outline" className="w-full" onClick={onClose} type="button" disabled={loading}>
-              Cerrar
+              Close
             </Button>
           </CardFooter>
         </form>
