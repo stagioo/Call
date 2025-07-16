@@ -104,46 +104,46 @@ export function TeamSwitcher() {
   return (
     <>
       {/* SidebarMenu for team selection */}
-      <SidebarMenu>
-        <SidebarMenuItem>
-          {/* Dropdown menu trigger is the team button */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <SidebarMenuButton
-                size="lg"
-                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-              >
-                {/* Team logo and info */}
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+    <SidebarMenu>
+      <SidebarMenuItem>
+        {/* Dropdown menu trigger is the team button */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            >
+              {/* Team logo and info */}
+              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <span className="text-sm font-medium">
                     {activeTeam.name.charAt(0).toUpperCase()}
                   </span>
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{activeTeam.name}</span>
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">{activeTeam.name}</span>
                   <span className="truncate text-xs">{activeTeam.members.length} members</span>
-                </div>
-                <ChevronsUpDown className="ml-auto" />
-              </SidebarMenuButton>
-            </DropdownMenuTrigger>
-            {/* Dropdown menu content with team options */}
-            <DropdownMenuContent
-              className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-              align="start"
-              side={isMobile ? "bottom" : "right"}
-              sideOffset={4}
-            >
-              {/* List all teams as selectable items */}
-              <DropdownMenuLabel className="text-muted-foreground text-xs">
-                Teams
-              </DropdownMenuLabel>
-              {teams.map((team, index) => (
-                <DropdownMenuItem
+              </div>
+              <ChevronsUpDown className="ml-auto" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          {/* Dropdown menu content with team options */}
+          <DropdownMenuContent
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            align="start"
+            side={isMobile ? "bottom" : "right"}
+            sideOffset={4}
+          >
+            {/* List all teams as selectable items */}
+            <DropdownMenuLabel className="text-muted-foreground text-xs">
+              Teams
+            </DropdownMenuLabel>
+            {teams.map((team, index) => (
+              <DropdownMenuItem
                   key={`${team.id}-${index}`}
-                  onClick={() => setActiveTeam(team)}
-                  className="gap-2 p-2"
-                >
-                  <div className="flex size-6 items-center justify-center rounded-md border">
+                onClick={() => setActiveTeam(team)}
+                className="gap-2 p-2"
+              >
+                <div className="flex size-6 items-center justify-center rounded-md border">
                     <span className="text-xs font-medium">
                       {team.name.charAt(0).toUpperCase()}
                     </span>
@@ -153,26 +153,26 @@ export function TeamSwitcher() {
                     <p className="text-xs text-muted-foreground truncate">
                       {team.members.length} members
                     </p>
-                  </div>
-                  {/* Keyboard shortcut for quick switching */}
+                </div>
+                {/* Keyboard shortcut for quick switching */}
                   <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              {/* Option to add a new team */}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            {/* Option to add a new team */}
               <DropdownMenuItem 
                 className="gap-2 p-2"
                 onClick={() => setShowCreateModal(true)}
               >
-                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                  <Plus className="size-4" />
-                </div>
-                <div className="text-muted-foreground font-medium">Add team</div>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </SidebarMenuItem>
-      </SidebarMenu>
+              <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                <Plus className="size-4" />
+              </div>
+              <div className="text-muted-foreground font-medium">Add team</div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
 
       {/* Create Team Modal */}
       {showCreateModal && (
