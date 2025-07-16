@@ -144,7 +144,7 @@ export const TeamSection = () => {
                       <DropdownMenuContent className="w-56" align="start">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
+                        <DropdownMenuItem>Leave</DropdownMenuItem>
                         <DropdownMenuItem>Add users</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

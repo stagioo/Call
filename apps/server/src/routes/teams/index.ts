@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@call/db";
 import { teams, teamMembers, user as userTable } from "@call/db/schema";
 import { createId } from "@paralleldrive/cuid2";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
 import type { ReqVariables } from "../../index";
 
 const teamsRoutes = new Hono<{ Variables: ReqVariables }>();
@@ -113,6 +113,30 @@ teamsRoutes.get("/", async (c) => {
     members: teamMembersMap?.[team.id] || [],
   }));
   return c.json({ teams: response });
+});
+
+// POST /api/teams/:teamId/leave - Leave a team
+teamsRoutes.post(":teamId/leave", async (c) => {
+  const user = c.get("user");
+  if (!user || !user.id) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+  const teamId = c.req.param("teamId");
+  if (!teamId) {
+    return c.json({ message: "Team ID is required" }, 400);
+  }
+  // Check if user is a member of the team
+  const [membership] = await db
+    .select()
+    .from(teamMembers)
+    .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, user.id)));
+  if (!membership) {
+    return c.json({ message: "You are not a member of this team" }, 404);
+  }
+  // Remove user from team_members
+  await db.delete(teamMembers)
+    .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, user.id)));
+  return c.json({ message: "Left team successfully" });
 });
 
 export default teamsRoutes; 
