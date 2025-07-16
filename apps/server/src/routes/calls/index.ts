@@ -90,4 +90,28 @@ callsRoutes.post('/create', async (c) => {
   return c.json({ callId });
 });
 
+
+callsRoutes.patch('/invitations/:id/accept', async (c) => {
+  
+  const invitationId = c.req.param('id');
+  if (!invitationId) return c.json({ error: 'Missing invitation id' }, 400);
+
+ 
+  const [invitation] = await db
+    .select()
+    .from(callInvitations)
+    .where(eq(callInvitations.id, invitationId));
+  if (!invitation) return c.json({ error: 'Invitation not found' }, 404);
+  if (invitation.status !== 'pending') return c.json({ error: 'Already handled' }, 400);
+
+  
+  await db
+    .update(callInvitations)
+    .set({ status: 'accepted' })
+    .where(eq(callInvitations.id, invitationId));
+
+  
+  return c.json({ callId: invitation.callId });
+});
+
 export default callsRoutes; 
