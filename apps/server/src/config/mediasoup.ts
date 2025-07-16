@@ -1,13 +1,9 @@
-import Worker from 'mediasoup/lib/Worker';
-import type * as types from 'mediasoup/lib/types';
-
+import * as mediasoup from 'mediasoup';
 
 const RTC_MIN_PORT = 10000;
 const RTC_MAX_PORT = 20000;
-const numWorkers = 1;
 
-
-const mediaCodecs: types.RtpCodecCapability[] = [
+const mediaCodecs = [
   {
     kind: 'audio',
     mimeType: 'audio/opus',
@@ -22,14 +18,12 @@ const mediaCodecs: types.RtpCodecCapability[] = [
   },
 ];
 
-
-let worker: types.Worker | null = null;
-
-const routers: Map<string, types.Router> = new Map();
+let worker: any = null;
+const routers: Map<string, any> = new Map();
 
 export async function initMediasoup() {
-  if (worker) return; 
-  worker = await Worker.create({
+  if (worker) return;
+  worker = await mediasoup.createWorker({
     rtcMinPort: RTC_MIN_PORT,
     rtcMaxPort: RTC_MAX_PORT,
     logLevel: 'warn',
@@ -37,7 +31,7 @@ export async function initMediasoup() {
   });
 }
 
-export async function createRouterForCall(callId: string): Promise<types.Router> {
+export async function createRouterForCall(callId: string) {
   if (!worker) throw new Error('Mediasoup worker not initialized');
   if (routers.has(callId)) return routers.get(callId)!;
   const router = await worker.createRouter({ mediaCodecs });
@@ -45,10 +39,10 @@ export async function createRouterForCall(callId: string): Promise<types.Router>
   return router;
 }
 
-export function getRouter(callId: string): types.Router | undefined {
+export function getRouter(callId: string) {
   return routers.get(callId);
 }
 
-export function getMediasoupWorker(): types.Worker | null {
+export function getMediasoupWorker() {
   return worker;
 } 
