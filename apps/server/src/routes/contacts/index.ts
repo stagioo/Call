@@ -87,19 +87,24 @@ contactsRoutes.get("/requests", async (c) => {
   try {
     const pendingRequests = await db
       .select({
-        requestId: contactRequests.id,
+        id: contactRequests.id,
+        senderId: contactRequests.senderId,
+        senderName: userTable.name,
+        senderEmail: userTable.email,
         createdAt: contactRequests.createdAt,
-        sender: {
-          id: userTable.id,
-          name: userTable.name,
-          email: userTable.email,
-        },
       })
       .from(contactRequests)
       .leftJoin(userTable, eq(contactRequests.senderId, userTable.id))
       .where(and(eq(contactRequests.receiverId, userId), eq(contactRequests.status, "pending")));
 
-    return c.json({ requests: pendingRequests });
+    // Ensure senderName and senderEmail are always present (fallback to empty string if null)
+    const requests = pendingRequests.map(r => ({
+      ...r,
+      senderName: r.senderName || "",
+      senderEmail: r.senderEmail || "",
+    }));
+
+    return c.json({ requests });
   } catch (err) {
     console.error("[GET /requests] Error:", err);
     return c.json({ message: "An unexpected error occurred." }, 500);
