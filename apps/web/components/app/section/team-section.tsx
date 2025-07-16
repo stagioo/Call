@@ -144,7 +144,26 @@ export const TeamSection = () => {
                       <DropdownMenuContent className="w-56" align="start">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>Leave</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`http://localhost:1284/api/teams/${team.id}/leave`, {
+                                method: "POST",
+                                credentials: "include",
+                              });
+                              if (res.ok) {
+                                setTeams((prev) => prev.filter((t) => t.id !== team.id));
+                              } else {
+                                const data = await res.json();
+                                alert(data.message || "Failed to leave team");
+                              }
+                            } catch (err) {
+                              alert("Network error leaving team");
+                            }
+                          }}
+                        >
+                          Leave
+                        </DropdownMenuItem>
                         <DropdownMenuItem>Add users</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
