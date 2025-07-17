@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "bun --watch src/index.ts",
+    "yassr": "bun src/ws-signaling.ts",
     "dev:hot": "bun --hot src/index.ts",
     "build": "bun build src/index.ts --target bun --outdir dist",
     "start": "bun dist/index.js"
