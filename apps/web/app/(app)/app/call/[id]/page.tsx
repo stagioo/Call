@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/hooks/useSession";
 import type { Device } from "mediasoup-client";
@@ -12,6 +12,9 @@ export default function CallRoomPage() {
   const [rtpCapabilities, setRtpCapabilities] = useState<any>(null);
   const [device, setDevice] = useState<Device | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (!isLoading && !session?.user) {
@@ -59,6 +62,37 @@ export default function CallRoomPage() {
     };
   }, [callId, session?.user]);
 
+  // Captura y previsualización del stream local
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    setMediaError(null);
+    const getMedia = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        setLocalStream(stream);
+      } catch (err: any) {
+        if (err && err.name === "NotAllowedError") {
+          setMediaError("Permiso denegado para acceder a la cámara o micrófono");
+        } else {
+          setMediaError("No se pudo acceder a la cámara o micrófono");
+        }
+      }
+    };
+    getMedia();
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  // Asignar el stream al elemento <video>
+  useEffect(() => {
+    if (videoRef.current && localStream) {
+      videoRef.current.srcObject = localStream;
+    }
+  }, [localStream]);
+
   if (isLoading) {
     return (
       <div className="flex h-32 items-center justify-center">
@@ -81,17 +115,31 @@ export default function CallRoomPage() {
   }
 
   return (
-    <div>
-      <h1>Call Room</h1>
-      <p>Call ID: {callId}</p>
+    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+      <h1 className="text-2xl font-bold mb-2">Call Room</h1>
+      <p className="mb-4 text-muted-foreground">Call ID: {callId}</p>
       {rtpCapabilities && (
-        <pre className="bg-muted p-2 rounded text-xs mt-4 overflow-x-auto">
+        <pre className="bg-muted p-2 rounded text-xs mt-2 overflow-x-auto max-w-xl">
           {JSON.stringify(rtpCapabilities, null, 2)}
         </pre>
       )}
       {device && (
         <div className="mt-2 text-green-600">Mediasoup Device inicializado correctamente.</div>
       )}
+      <div className="mt-8 flex flex-col items-center">
+        {mediaError ? (
+          <div className="text-red-500 font-medium">{mediaError}</div>
+        ) : (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="rounded-lg border border-gray-300 shadow-md w-[320px] h-[240px] bg-black object-cover"
+          />
+        )}
+        <div className="mt-2 text-xs text-muted-foreground">Previsualización de tu cámara y micrófono</div>
+      </div>
     </div>
   );
 } 
