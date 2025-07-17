@@ -9,11 +9,21 @@ import {
   DisconnectButton,
   RoomAudioRenderer,
   useTracks,
+  useLocalParticipant,
 } from "@livekit/components-react";
 import { Room, Track } from "livekit-client";
 import { useParams } from "next/navigation";
 import { Button } from "@call/ui/components/button";
 import "@livekit/components-styles";
+import {
+  LucideAudioLines,
+  LucideMic,
+  LucideMicOff,
+  LucidePhone,
+  LucideScreenShare,
+  LucideVideo,
+} from "lucide-react";
+import RoomControls from "@/components/rooms/room-controls";
 
 // Set up LiveKit URL and helper function for token generation
 const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL!;
@@ -78,34 +88,7 @@ export default function RoomPage() {
           </div>
 
           {/* Bottom control bar */}
-          <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center">
-            <div className="flex gap-8 rounded-md bg-[#202020] p-4 shadow-lg">
-              <TrackToggle
-                style={{ color: "#fff" }}
-                source={Track.Source.Microphone}
-              />
-              <TrackToggle
-                style={{ color: "#fff" }}
-                source={Track.Source.Camera}
-              />
-              <TrackToggle
-                style={{ color: "#fff" }}
-                source={Track.Source.ScreenShare}
-              />
-
-              <DisconnectButton
-                style={{
-                  background: "var(--primary)",
-                  borderRadius: "var(--radius-md)",
-                  paddingTop: "3px",
-                  paddingBottom: "3px",
-                  color: "var(--primary-foreground)",
-                }}
-              >
-                Leave
-              </DisconnectButton>
-            </div>
-          </div>
+          <RoomControls />
         </main>
 
         <RoomAudioRenderer />
