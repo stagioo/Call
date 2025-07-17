@@ -11,11 +11,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { ModalContact } from "@/components/app/section/_components/modal-contact";
 import { CreateTeamModal } from "@/components/app/section/_components/create-team-modal";
 import { useState } from "react";
+import { CreateCallModal } from "@/components/app/section/_components/create-call-modal";
 const sectionMap = [
   { path: "/app/call", title: "Call" },
   { path: "/app/teams", title: "Teams" },
   { path: "/app/contact", title: "Contact" },
   { path: "/app/schedule", title: "Schedule" },
+  { path: "/app/notifications", title: "Notifications" },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -23,6 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [showContactModal, setShowContactModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+  const [showCallModal, setShowCallModal] = useState(false);
   // Find the section that matches the current path
   const selectedSection =
     sectionMap.find((s) => pathname?.startsWith(s.path))?.title || "Call";
@@ -57,7 +60,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {/* Section title can be rendered by each page */}
             </div>
             <div>
-              {selectedSection === "Call" && <Button>Start Call</Button>}
+              {selectedSection === "Call" && <Button onClick={() => setShowCallModal(true)}>Start Call</Button>}
               {selectedSection === "Teams" && (
                 <Button onClick={() => setShowCreateTeamModal(true)}>
                   Create Team
@@ -87,6 +90,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 onClose={() => setShowCreateTeamModal(false)}
                 onTeamCreated={handleTeamCreated}
               />
+            </div>
+          </div>
+        )}
+        {showCallModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="relative">
+              <CreateCallModal onClose={() => setShowCallModal(false)} />
             </div>
           </div>
         )}

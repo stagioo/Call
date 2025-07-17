@@ -194,6 +194,73 @@ export const teamMembers = pgTable(
   ]
 );
 
+// Call Invitation Status Enum
+export const callInvitationStatusEnum = pgEnum("call_invitation_status", [
+  "pending",
+  "accepted",
+  "rejected",
+]);
+
+// Calls Table
+export const calls = pgTable(
+  "calls",
+  {
+    id: text("id").primaryKey(), // 6-char code generado manualmente
+    name: text("name").notNull(),
+    creatorId: text("creator_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("calls_creator_id_idx").on(table.creatorId),
+  ]
+);
+
+// Call Invitations Table
+export const callInvitations = pgTable(
+  "call_invitations",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    callId: text("call_id")
+      .notNull()
+      .references(() => calls.id, { onDelete: "cascade" }),
+    inviteeId: text("invitee_id")
+      .references(() => user.id, { onDelete: "set null" }),
+    inviteeEmail: text("invitee_email").notNull(),
+    status: callInvitationStatusEnum("status").notNull(),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("call_invitations_call_id_idx").on(table.callId),
+    index("call_invitations_invitee_id_idx").on(table.inviteeId),
+  ]
+);
+
+// Notifications Table
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    message: text("message").notNull(),
+    callId: text("call_id")
+      .references(() => calls.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("notifications_user_id_idx").on(table.userId),
+  ]
+);
+
 const schema = {
   user,
   session,
@@ -206,6 +273,9 @@ const schema = {
   contacts,
   teams,
   teamMembers,
+  calls,
+  callInvitations,
+  notifications,
 };
 
 export default schema;

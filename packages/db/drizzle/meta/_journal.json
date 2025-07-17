@@ -36,6 +36,20 @@
       "when": 1752620123957,
       "tag": "0004_bent_talon",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1752692427067,
+      "tag": "0005_regular_talon",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1752692528608,
+      "tag": "0006_quick_jimmy_woo",
+      "breakpoints": true
     }
   ]
 }
