@@ -32,7 +32,10 @@ export function CreateCallModal({ onClose, onCallCreated }: {
     if (!mounted) return;
     const fetchContacts = async () => {
       try {
-        const res = await fetch("http://localhost:1284/api/contacts", { credentials: "include" });
+        const res = await fetch("http://localhost:1284/api/contacts", 
+          { 
+            credentials: "include", 
+          });
         if (res.ok) {
           const data = await res.json();
           setContacts(data.contacts || []);

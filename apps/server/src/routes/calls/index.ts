@@ -1,12 +1,13 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { db } from '@call/db';
-import { calls, callInvitations, notifications, user } from '@call/db/schema';
+import { calls, callInvitations, notifications, user as userTable } from '@call/db/schema';
 import { eq, inArray, and } from 'drizzle-orm';
 import { initMediasoup, createRouterForCall } from '../../config/mediasoup';
-import { auth } from '@call/auth/auth';
 import { getRouter } from '../../config/mediasoup';
-const callsRoutes = new Hono();
+import type { ReqVariables } from '../../index';
+
+const callsRoutes = new Hono<{ Variables: ReqVariables }>();
 
 const createCallSchema = z.object({
   name: z.string().min(1),
@@ -23,25 +24,44 @@ function generateCallCode() {
 }
 
 callsRoutes.post('/create', async (c) => {
-  const body = await c.req.json();
+  console.log("🔍 [CALLS DEBUG] POST /create called");
+  
+  // Get authenticated user (like teams does)
+  const user = c.get("user");
+  console.log("👤 [CALLS DEBUG] User:", { id: user?.id, email: user?.email });
+  
+  if (!user || !user.id) {
+    console.log("❌ [CALLS DEBUG] No user found - returning 401");
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+
+  let body;
+  try {
+    body = await c.req.json();
+    console.log("📝 [CALLS DEBUG] Request body:", body);
+  } catch (e) {
+    console.error("❌ [CALLS DEBUG] JSON parse error:", e);
+    return c.json({ message: "Invalid JSON body" }, 400);
+  }
+
+  // Validate input
   const parse = createCallSchema.safeParse(body);
   if (!parse.success) {
-    return c.json({ error: 'Invalid input' }, 400);
+    console.log("❌ [CALLS DEBUG] Validation error:", parse.error.errors);
+    return c.json({ message: parse.error.errors[0]?.message || "Invalid input" }, 400);
   }
   const { name, members } = parse.data;
+  console.log("✅ [CALLS DEBUG] Validated data:", { name, members });
 
-
-  const session = await auth.handler(c.req.raw);
-  const authUser = (session as any)?.user;
-  if (!authUser || !authUser.id) {
-    return c.json({ error: 'Unauthorized' }, 401);
-  }
-
-
-  const users = await db.select().from(user).where(inArray(user.email, members));
+  // Find users by email (like teams does)
+  console.log("🔍 [CALLS DEBUG] Finding users by email:", members);
+  const users = await db.select().from(userTable).where(inArray(userTable.email, members));
+  console.log("👥 [CALLS DEBUG] Found users:", users.length);
   const emailToUserId = new Map(users.map(u => [u.email, u.id]));
 
 
+  // Generate unique call ID
+  console.log("🔑 [CALLS DEBUG] Generating call ID...");
   let callId;
   let exists = true;
   while (exists) {
@@ -49,45 +69,75 @@ callsRoutes.post('/create', async (c) => {
     const found = await db.select().from(calls).where(eq(calls.id, callId));
     exists = found.length > 0;
   }
+  console.log("✅ [CALLS DEBUG] Generated call ID:", callId);
 
 
-  await db.insert(calls).values({
-    id: callId as string,
-    name,
-    creatorId: authUser.id as string,
-    createdAt: new Date(),
-  });
-
-
-  for (const email of members) {
-    const inviteeId = emailToUserId.get(email);
-
-    const invitationData: any = {
-      id: crypto.randomUUID(),
-      callId,
-      inviteeEmail: email,
-      status: 'pending',
+  // Insert call
+  console.log("💾 [CALLS DEBUG] Inserting call into database...");
+  try {
+    await db.insert(calls).values({
+      id: callId as string,
+      name,
+      creatorId: user.id as string,
       createdAt: new Date(),
-    };
-    if (inviteeId) invitationData.inviteeId = inviteeId;
-    await db.insert(callInvitations).values(invitationData);
+    });
+    console.log("✅ [CALLS DEBUG] Call inserted successfully");
+  } catch (error) {
+    console.error("❌ [CALLS DEBUG] Error inserting call:", error);
+    throw error;
+  }
 
 
-    if (inviteeId) {
-      await db.insert(notifications).values({
+  // Insert invitations and notifications
+  console.log("📧 [CALLS DEBUG] Creating invitations and notifications...");
+  try {
+    for (const email of members) {
+      const inviteeId = emailToUserId.get(email);
+      console.log(`📨 [CALLS DEBUG] Processing invitation for ${email}, inviteeId: ${inviteeId}`);
+
+      const invitationData: any = {
         id: crypto.randomUUID(),
-        userId: inviteeId,
-        message: `${authUser.name || authUser.email} te invita a una llamada: ${name}`,
         callId,
+        inviteeEmail: email,
+        status: 'pending',
         createdAt: new Date(),
-      });
+      };
+      if (inviteeId) invitationData.inviteeId = inviteeId;
+      
+      await db.insert(callInvitations).values(invitationData);
+      console.log(`✅ [CALLS DEBUG] Invitation created for ${email}`);
+
+      if (inviteeId) {
+        await db.insert(notifications).values({
+          id: crypto.randomUUID(),
+          userId: inviteeId,
+          message: `${user.name || user.email} te invita a una llamada: ${name}`,
+          callId,
+          createdAt: new Date(),
+        });
+        console.log(`✅ [CALLS DEBUG] Notification created for ${email}`);
+      }
     }
+    console.log("✅ [CALLS DEBUG] All invitations and notifications created");
+  } catch (error) {
+    console.error("❌ [CALLS DEBUG] Error creating invitations/notifications:", error);
+    throw error;
   }
 
   
-  await initMediasoup();
-  await createRouterForCall(callId!);
+  // Initialize mediasoup (temporarily disabled due to worker issues)
+  console.log("🎥 [CALLS DEBUG] Skipping mediasoup initialization for now...");
+  try {
+    // await initMediasoup();
+    // await createRouterForCall(callId!);
+    console.log("✅ [CALLS DEBUG] Mediasoup initialization skipped");
+  } catch (error) {
+    console.error("❌ [CALLS DEBUG] Error initializing mediasoup:", error);
+    // Don't throw error, just log it
+    console.log("⚠️ [CALLS DEBUG] Continuing without mediasoup...");
+  }
 
+  console.log("🎉 [CALLS DEBUG] Call created successfully:", callId);
   return c.json({ callId });
 });
 
@@ -160,8 +210,8 @@ callsRoutes.post('/:id/join', async (c) => {
   if (!rtpCapabilities) return c.json({ error: 'Missing rtpCapabilities' }, 400);
 
 
-  const session = await auth.handler(c.req.raw);
-  const user = (session as any)?.user;
+  // Get authenticated user (like teams does)
+  const user = c.get("user");
   if (!user?.id) return c.json({ error: 'Unauthorized' }, 401);
 
 
