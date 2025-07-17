@@ -274,13 +274,11 @@ export default function CallRoomPage() {
               </Select.Trigger>
               <Select.Content className="bg-background border rounded shadow-md z-50">
                 {videoDevices.length === 0 ? (
-                  <Select.Item value="" disabled>
-                    No hay cámaras
-                  </Select.Item>
+                  <div className="px-2 py-1 text-muted-foreground text-sm">No hay cámaras</div>
                 ) : (
-                  videoDevices.map((d) => (
+                  videoDevices.filter((d) => d.deviceId).map((d) => (
                     <Select.Item key={d.deviceId} value={d.deviceId} className="px-2 py-1 cursor-pointer">
-                      {d.label}
+                      {d.label || 'Cámara sin nombre'}
                     </Select.Item>
                   ))
                 )}
@@ -295,13 +293,11 @@ export default function CallRoomPage() {
               </Select.Trigger>
               <Select.Content className="bg-background border rounded shadow-md z-50">
                 {audioDevices.length === 0 ? (
-                  <Select.Item value="" disabled>
-                    No hay micrófonos
-                  </Select.Item>
+                  <div className="px-2 py-1 text-muted-foreground text-sm">No hay micrófonos</div>
                 ) : (
-                  audioDevices.map((d) => (
+                  audioDevices.filter((d) => d.deviceId).map((d) => (
                     <Select.Item key={d.deviceId} value={d.deviceId} className="px-2 py-1 cursor-pointer">
-                      {d.label}
+                      {d.label || 'Micrófono sin nombre'}
                     </Select.Item>
                   ))
                 )}
