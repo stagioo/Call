@@ -30,6 +30,7 @@
     "livekit-client": "^2.14.0",
     "livekit-server-sdk": "^2.13.1",
     "lucide-react": "^0.475.0",
+    "mediasoup-client": "^3.12.5",
     "motion": "^12.18.1",
     "nanoid": "^5.1.5",
     "next": "^15.2.3",
