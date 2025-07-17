@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/hooks/useSession";
 import type { Device } from "mediasoup-client";
 import * as Select from "@radix-ui/react-select";
+import { Button } from "@call/ui/components/button";
 
 interface MediaDevice {
   deviceId: string;
@@ -25,6 +26,10 @@ export default function CallRoomPage() {
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [selectedAudio, setSelectedAudio] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [joined, setJoined] = useState(false);
+  const [producerTransport, setProducerTransport] = useState<any>(null);
 
   useEffect(() => {
     if (!isLoading && !session?.user) {
@@ -141,6 +146,79 @@ export default function CallRoomPage() {
     }
   }, [localStream]);
 
+  const handleJoinCall = async () => {
+    if (!device || !localStream || joinLoading) return;
+    setJoinLoading(true);
+    setJoinError(null);
+    try {
+      // 1. Enviar rtpCapabilities al backend
+      const res = await fetch(`http://localhost:1284/api/calls/${callId}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ rtpCapabilities: device.rtpCapabilities }),
+      });
+      if (!res.ok) {
+        if (res.status === 401) setJoinError("No autorizado");
+        else if (res.status === 404) setJoinError("Llamada no encontrada");
+        else setJoinError("Error al unirse a la llamada");
+        setJoinLoading(false);
+        return;
+      }
+      const data = await res.json();
+      if (!data.transportOptions) {
+        setJoinError("Respuesta inválida del servidor");
+        setJoinLoading(false);
+        return;
+      }
+      // 2. Crear Producer Transport en mediasoup-client
+      const sendTransport = device.createSendTransport(data.transportOptions);
+      setProducerTransport(sendTransport);
+      // 3. Conectar eventos del transport
+      sendTransport.on("connect", async ({ dtlsParameters }, callback, errback) => {
+        try {
+          const res = await fetch(`http://localhost:1284/api/calls/${callId}/connect-transport`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ transportId: sendTransport.id, dtlsParameters }),
+          });
+          if (!res.ok) throw new Error("Error conectando transport");
+          callback();
+        } catch (err) {
+          errback(err instanceof Error ? err : new Error(String(err)));
+        }
+      });
+      sendTransport.on("produce", async ({ kind, rtpParameters }, callback, errback) => {
+        try {
+          const res = await fetch(`http://localhost:1284/api/calls/${callId}/produce`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              transportId: sendTransport.id,
+              kind,
+              rtpParameters,
+            }),
+          });
+          const { id } = await res.json();
+          callback({ id });
+        } catch (err) {
+          errback(err instanceof Error ? err : new Error(String(err)));
+        }
+      });
+      // 4. Producir audio y video
+      for (const track of localStream.getTracks()) {
+        await sendTransport.produce({ track });
+      }
+      setJoined(true);
+    } catch (err: any) {
+      setJoinError(err.message || "Error inesperado al unirse a la llamada");
+    } finally {
+      setJoinLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-32 items-center justify-center">
@@ -231,6 +309,15 @@ export default function CallRoomPage() {
             </Select.Root>
           </div>
         </div>
+        <Button
+          className="mt-6 w-full max-w-xs"
+          onClick={handleJoinCall}
+          disabled={joinLoading || joined || !device || !localStream}
+        >
+          {joinLoading ? "Uniéndose..." : joined ? "¡Ya estás en la llamada!" : "Unirse a la llamada"}
+        </Button>
+        {joinError && <div className="text-red-500 mt-2 text-sm">{joinError}</div>}
+        {joined && <div className="text-green-600 mt-2 text-sm">¡Te has unido a la llamada!</div>}
       </div>
     </div>
   );
