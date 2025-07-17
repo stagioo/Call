@@ -3,6 +3,12 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/hooks/useSession";
 import type { Device } from "mediasoup-client";
+import * as Select from "@radix-ui/react-select";
+
+interface MediaDevice {
+  deviceId: string;
+  label: string;
+}
 
 export default function CallRoomPage() {
   const params = useParams();
@@ -14,6 +20,10 @@ export default function CallRoomPage() {
   const [error, setError] = useState<string | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [videoDevices, setVideoDevices] = useState<MediaDevice[]>([]);
+  const [audioDevices, setAudioDevices] = useState<MediaDevice[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+  const [selectedAudio, setSelectedAudio] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -62,14 +72,28 @@ export default function CallRoomPage() {
     };
   }, [callId, session?.user]);
 
-  // Captura y previsualización del stream local
+  // Enumerar dispositivos y capturar stream local
   useEffect(() => {
     let stream: MediaStream | null = null;
     setMediaError(null);
-    const getMedia = async () => {
+    const getDevicesAndMedia = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        setLocalStream(stream);
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videos = devices.filter((d) => d.kind === "videoinput").map((d) => ({ deviceId: d.deviceId, label: d.label || `Cámara (${d.deviceId.slice(-4)})` }));
+        const audios = devices.filter((d) => d.kind === "audioinput").map((d) => ({ deviceId: d.deviceId, label: d.label || `Micrófono (${d.deviceId.slice(-4)})` }));
+        setVideoDevices(videos);
+        setAudioDevices(audios);
+        // Seleccionar por defecto el primero
+        setSelectedVideo((prev) => prev || (videos[0]?.deviceId ?? null));
+        setSelectedAudio((prev) => prev || (audios[0]?.deviceId ?? null));
+        // Capturar stream con los dispositivos por defecto
+        if (videos[0] || audios[0]) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: videos[0] ? { deviceId: { exact: videos[0].deviceId } } : false,
+            audio: audios[0] ? { deviceId: { exact: audios[0].deviceId } } : false,
+          });
+          setLocalStream(stream);
+        }
       } catch (err: any) {
         if (err && err.name === "NotAllowedError") {
           setMediaError("Permiso denegado para acceder a la cámara o micrófono");
@@ -78,13 +102,37 @@ export default function CallRoomPage() {
         }
       }
     };
+    getDevicesAndMedia();
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    };
+    // eslint-disable-next-line
+  }, []);
+
+  // Cambiar stream local al seleccionar otro dispositivo
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    if (!selectedVideo && !selectedAudio) return;
+    const getMedia = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: selectedVideo ? { deviceId: { exact: selectedVideo } } : false,
+          audio: selectedAudio ? { deviceId: { exact: selectedAudio } } : false,
+        });
+        setLocalStream(stream);
+      } catch (err: any) {
+        setMediaError("No se pudo acceder al dispositivo seleccionado");
+      }
+    };
     getMedia();
     return () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, []);
+  }, [selectedVideo, selectedAudio]);
 
   // Asignar el stream al elemento <video>
   useEffect(() => {
@@ -139,6 +187,50 @@ export default function CallRoomPage() {
           />
         )}
         <div className="mt-2 text-xs text-muted-foreground">Previsualización de tu cámara y micrófono</div>
+        <div className="flex gap-4 mt-4 w-full max-w-xs">
+          <div className="flex-1">
+            <label className="block text-xs font-medium mb-1">Cámara</label>
+            <Select.Root value={selectedVideo ?? undefined} onValueChange={setSelectedVideo}>
+              <Select.Trigger className="w-full border rounded px-2 py-1 bg-background text-sm">
+                <Select.Value placeholder="Selecciona cámara" />
+              </Select.Trigger>
+              <Select.Content className="bg-background border rounded shadow-md z-50">
+                {videoDevices.length === 0 ? (
+                  <Select.Item value="" disabled>
+                    No hay cámaras
+                  </Select.Item>
+                ) : (
+                  videoDevices.map((d) => (
+                    <Select.Item key={d.deviceId} value={d.deviceId} className="px-2 py-1 cursor-pointer">
+                      {d.label}
+                    </Select.Item>
+                  ))
+                )}
+              </Select.Content>
+            </Select.Root>
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs font-medium mb-1">Micrófono</label>
+            <Select.Root value={selectedAudio ?? undefined} onValueChange={setSelectedAudio}>
+              <Select.Trigger className="w-full border rounded px-2 py-1 bg-background text-sm">
+                <Select.Value placeholder="Selecciona micrófono" />
+              </Select.Trigger>
+              <Select.Content className="bg-background border rounded shadow-md z-50">
+                {audioDevices.length === 0 ? (
+                  <Select.Item value="" disabled>
+                    No hay micrófonos
+                  </Select.Item>
+                ) : (
+                  audioDevices.map((d) => (
+                    <Select.Item key={d.deviceId} value={d.deviceId} className="px-2 py-1 cursor-pointer">
+                      {d.label}
+                    </Select.Item>
+                  ))
+                )}
+              </Select.Content>
+            </Select.Root>
+          </div>
+        </div>
       </div>
     </div>
   );
