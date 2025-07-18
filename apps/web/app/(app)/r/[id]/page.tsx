@@ -12,7 +12,7 @@ import {
   useLocalParticipant,
 } from "@livekit/components-react";
 import { Room, Track } from "livekit-client";
-import { useParams } from "next/navigation";
+import { useParams } from "next/navigation"; 
 import { Button } from "@call/ui/components/button";
 import "@livekit/components-styles";
 import {
