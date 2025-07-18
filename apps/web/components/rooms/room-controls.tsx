@@ -45,7 +45,7 @@ function RoomControls() {
         >
           <div className="flex h-10 w-10 items-center justify-center">
             {isMicOn ? (
-              <Mic className="size-6" strokeWidth={1.5} />
+              <Mic className="size-6 text-white" strokeWidth={1.5} />
             ) : (
               <MicOff className="size-6 text-[#FF4D4D]" strokeWidth={1.5} />
             )}
@@ -60,9 +60,9 @@ function RoomControls() {
         >
           <div className="flex h-10 w-10 items-center justify-center">
             {isScreenShareOn ? (
-              <ScreenShare className="size-6" strokeWidth={1.5} />
+              <ScreenShare className="size-6 text-white" strokeWidth={1.5} />
             ) : (
-              <ScreenShareOff className="size-6" strokeWidth={1.5} />
+              <ScreenShareOff className="size-6 text-white" strokeWidth={1.5} />
             )}
           </div>
         </TrackToggle>
@@ -75,9 +75,9 @@ function RoomControls() {
         >
           <div className="flex h-10 w-10 items-center justify-center">
             {isCamOn ? (
-              <Video className="size-6" strokeWidth={1.5} />
+              <Video className="size-6 text-white" strokeWidth={1.5} />
             ) : (
-              <VideoOff className="size-6" strokeWidth={1.5} />
+              <VideoOff className="size-6 text-white" strokeWidth={1.5} />
             )}
           </div>
         </TrackToggle>
@@ -85,7 +85,7 @@ function RoomControls() {
         {/* Disconnect button */}
         <DisconnectButton style={{ padding: "0" }}>
           <div className="mr-1.5 flex size-8 items-center justify-center rounded-full bg-[#FF4D4D] transition-colors hover:bg-[#FF3333]">
-            <Phone className="size-5 rotate-[136deg]" strokeWidth={1.5} />
+            <Phone className="size-5 rotate-[136deg] text-white" strokeWidth={1.5} />
           </div>
         </DisconnectButton>
       </div>
@@ -113,7 +113,7 @@ const AudioLinesIcon = ({
         height={size}
         viewBox="0 0 24 24"
         fill="none"
-        stroke="currentColor"
+        stroke="white"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
