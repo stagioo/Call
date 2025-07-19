@@ -1,9 +1,26 @@
 {
   "extends": "@call/typescript-config/base",
   "compilerOptions": {
-    "baseUrl": ".",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "module": "NodeNext",
+    "target": "ES2022",
+    "moduleResolution": "nodenext",
+    "baseUrl": "./src",
     "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
+      "@/*": ["./*.js"],
+      "@/config/*": ["./config/*.js"],
+      "@/validators": ["./validators/index.js"],
+      "@/validators/*": ["./validators/*.js"],
+      "@/routes": ["./routes/index.js"],
+      "@/routes/*": ["./routes/*.js"]
+    },
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "sourceMap": true,
+    "strict": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules"]
 }

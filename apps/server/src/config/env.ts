@@ -53,6 +53,33 @@ export const env = createEnv({
     BACKEND_URL: z
       .string({ message: "The BACKEND_URL environment variable is required." })
       .url("BACKEND_URL must be a valid URL (e.g., http://localhost:4000)."),
+
+    PORT: z
+      .string({ message: "The PORT environment variable is optional." })
+      .optional()
+      .default("1284")
+      .transform((val) => parseInt(val, 10))
+      .pipe(z.number().min(1).max(65535)),
+
+    VALKEY_HOST: z
+      .string({ message: "The VALKEY_HOST environment variable is required." })
+      .min(1, "VALKEY_HOST cannot be empty.")
+      .default("localhost"),
+
+    VALKEY_PORT: z
+      .string({ message: "The VALKEY_PORT environment variable is optional." })
+      .optional()
+      .default("6379")
+      .transform((val) => parseInt(val, 10))
+      .pipe(z.number().min(1).max(65535)),
+
+    VALKEY_USERNAME: z
+      .string({ message: "The VALKEY_USERNAME environment variable is optional." })
+      .optional(),
+
+    VALKEY_PASSWORD: z
+      .string({ message: "The VALKEY_PASSWORD environment variable is optional." })
+      .optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

@@ -1,10 +1,12 @@
 import { auth } from "@call/auth/auth";
-import { env } from "@/config/env";
+import { env } from "./config/env.js";
 import { cors } from "hono/cors";
 import { db } from "@call/db";
-import routes from "@/routes";
+import routes from "./routes/index.js";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
+import { serve } from '@hono/node-server';
+
 export interface ReqVariables {
   user: typeof auth.$Infer.Session.user | null;
   session: typeof auth.$Infer.Session.session | null;
@@ -15,7 +17,7 @@ const app = new Hono<{ Variables: ReqVariables }>();
 
 app.use("*", logger());
 
-// Configuración de CORS mejorada
+// Enhanced CORS configuration
 const allowedOrigins = [
   env.FRONTEND_URL,
   "http://localhost:3000",
@@ -28,10 +30,10 @@ app.use(
   "*",
   cors({
     origin: (origin) => {
-      // Permitir requests sin origin (como mobile apps o Postman)
+      // Allow requests without origin (like mobile apps or Postman)
       if (!origin) return "*";
       
-      // Verificar si el origin está en la lista de permitidos
+      // Check if origin is in the allowed list
       return allowedOrigins.includes(origin) ? origin : null;
     },
     credentials: true,
@@ -44,7 +46,7 @@ app.use(
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     exposeHeaders: ["Set-Cookie"],
-    maxAge: 86400, // 24 horas
+    maxAge: 86400, // 24 hours
   })
 );
 
@@ -66,7 +68,11 @@ app.use("*", async (c, next) => {
 
 app.route("/api", routes);
 
-export default {
-  port: 1284,
+const port = env.PORT || 1284;
+
+console.log(`Server is running on port ${port}`);
+
+serve({
   fetch: app.fetch,
-};
+  port: Number(port),
+});
