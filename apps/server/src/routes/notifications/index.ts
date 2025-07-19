@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { db } from "@call/db";
 import { notifications, callInvitations, calls, user as userTable } from "@call/db/schema";
 import { eq, and, desc } from "drizzle-orm";
-import type { ReqVariables } from "../../index";
+import type { ReqVariables } from "../../index.js";
 
 const notificationsRoutes = new Hono<{ Variables: ReqVariables }>();
 

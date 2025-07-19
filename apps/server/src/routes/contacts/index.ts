@@ -4,7 +4,7 @@ import { db } from "@call/db";
 import { contactRequests, contacts, user as userTable } from "@call/db/schema";
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq, or } from "drizzle-orm";
-import type { ReqVariables } from "../../index";
+import type { ReqVariables } from "../../index.js";
 
 const contactsRoutes = new Hono<{ Variables: ReqVariables }>();
 

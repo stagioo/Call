@@ -4,7 +4,7 @@ import { db } from "@call/db";
 import { teams, teamMembers, user as userTable } from "@call/db/schema";
 import { createId } from "@paralleldrive/cuid2";
 import { eq, inArray, and } from "drizzle-orm";
-import type { ReqVariables } from "../../index";
+import type { ReqVariables } from "../../index.js";
 
 const teamsRoutes = new Hono<{ Variables: ReqVariables }>();
 

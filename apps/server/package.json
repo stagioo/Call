@@ -1,18 +1,18 @@
 {
   "name": "@call/server",
-  "module": "src/index.ts",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "yassr": "bun src/ws-signaling.ts",
-    "dev:hot": "bun --hot src/index.ts",
-    "build": "bun build src/index.ts --target bun --outdir dist",
-    "start": "bun dist/index.js"
+    "dev": "nodemon --exec tsx src/index.ts",
+    "yassr": "tsx src/ws-signaling.ts",
+    "dev:hot": "nodemon --exec tsx src/index.ts",
+    "build": "tsc --build",
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "@call/auth": "workspace:*",
     "@call/db": "workspace:*",
+    "@hono/node-server": "^1.17.0",
     "@hono/zod-validator": "^0.7.0",
     "@t3-oss/env-core": "^0.13.8",
     "@types/ws": "^8.18.1",
@@ -34,6 +34,8 @@
     "@types/node": "^20",
     "@types/pg": "^8.15.4",
     "nodemon": "^3.1.10",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
+    "typescript": "^5.7.3"
   }
 }

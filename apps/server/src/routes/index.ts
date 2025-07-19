@@ -1,11 +1,11 @@
-import authRoutes from "@/routes/auth";
-import emailRoutes from "@/routes/email";
-import roomRoutes from "@/routes/room";
+import authRoutes from "./auth/index.js";
+import emailRoutes from "./email/index.js";
+import roomRoutes from "./room/index.js";
 import { Hono } from "hono";
-import contactsRoutes from "./contacts";
-import teamsRoutes from "./teams";
-import callsRoutes from "./calls";
-import notificationsRoutes from "./notifications";
+import contactsRoutes from "./contacts/index.js";
+import teamsRoutes from "./teams/index.js";
+import callsRoutes from "./calls/index.js";
+import notificationsRoutes from "./notifications/index.js";
 const router = new Hono();
 
 router.route("/auth", authRoutes);
