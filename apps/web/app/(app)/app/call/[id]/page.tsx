@@ -50,15 +50,15 @@ export default function CallRoomPage() {
         });
         if (!res.ok) {
           if (res.status === 404) {
-            setError("Llamada no encontrada");
+            setError("Call not found");
           } else {
-            setError("Error obteniendo capacidades RTP");
+            setError("Error getting RTP capabilities");
           }
           return;
         }
         const data = await res.json();
         if (!data.rtpCapabilities) {
-          setError("Respuesta inválida del servidor");
+          setError("Invalid server response");
           return;
         }
         setRtpCapabilities(data.rtpCapabilities);
@@ -77,7 +77,7 @@ export default function CallRoomPage() {
     };
   }, [callId, session?.user]);
 
-  // Enumerar dispositivos y capturar stream local
+  // Enumerate devices and capture local stream
   useEffect(() => {
     let stream: MediaStream | null = null;
     setMediaError(null);
@@ -101,9 +101,9 @@ export default function CallRoomPage() {
         }
       } catch (err: any) {
         if (err && err.name === "NotAllowedError") {
-          setMediaError("Permiso denegado para acceder a la cámara o micrófono");
+          setMediaError("Permission denied to access camera or microphone");
         } else {
-          setMediaError("No se pudo acceder a la cámara o micrófono");
+          setMediaError("Could not access camera or microphone");
         }
       }
     };
@@ -116,7 +116,7 @@ export default function CallRoomPage() {
     // eslint-disable-next-line
   }, []);
 
-  // Cambiar stream local al seleccionar otro dispositivo
+  // Change local stream when selecting another device
   useEffect(() => {
     let stream: MediaStream | null = null;
     if (!selectedVideo && !selectedAudio) return;
@@ -128,7 +128,7 @@ export default function CallRoomPage() {
         });
         setLocalStream(stream);
       } catch (err: any) {
-        setMediaError("No se pudo acceder al dispositivo seleccionado");
+        setMediaError("Could not access the selected device");
       }
     };
     getMedia();
@@ -139,7 +139,7 @@ export default function CallRoomPage() {
     };
   }, [selectedVideo, selectedAudio]);
 
-  // Asignar el stream al elemento <video>
+  // Assign the stream to the <video> element
   useEffect(() => {
     if (videoRef.current && localStream) {
       videoRef.current.srcObject = localStream;
@@ -151,7 +151,7 @@ export default function CallRoomPage() {
     setJoinLoading(true);
     setJoinError(null);
     try {
-      // 1. Enviar rtpCapabilities al backend
+      // 1. Send rtpCapabilities to the backend
       const res = await fetch(`http://localhost:1284/api/calls/${callId}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,21 +160,21 @@ export default function CallRoomPage() {
       });
       if (!res.ok) {
         if (res.status === 401) setJoinError("No autorizado");
-        else if (res.status === 404) setJoinError("Llamada no encontrada");
-        else setJoinError("Error al unirse a la llamada");
+        else if (res.status === 404) setJoinError("Call not found");
+        else setJoinError("Error joining the call");
         setJoinLoading(false);
         return;
       }
       const data = await res.json();
       if (!data.transportOptions) {
-        setJoinError("Respuesta inválida del servidor");
+        setJoinError("Invalid server response");
         setJoinLoading(false);
         return;
       }
-      // 2. Crear Producer Transport en mediasoup-client
+      // 2. Create Producer Transport in mediasoup-client
       const sendTransport = device.createSendTransport(data.transportOptions);
       setProducerTransport(sendTransport);
-      // 3. Conectar eventos del transport
+      // 3. Connect transport events
       sendTransport.on("connect", async ({ dtlsParameters }, callback, errback) => {
         try {
           const res = await fetch(`http://localhost:1284/api/calls/${callId}/connect-transport`, {
@@ -183,7 +183,7 @@ export default function CallRoomPage() {
             credentials: "include",
             body: JSON.stringify({ transportId: sendTransport.id, dtlsParameters }),
           });
-          if (!res.ok) throw new Error("Error conectando transport");
+          if (!res.ok) throw new Error("Error connecting transport");
           callback();
         } catch (err) {
           errback(err instanceof Error ? err : new Error(String(err)));
@@ -207,13 +207,13 @@ export default function CallRoomPage() {
           errback(err instanceof Error ? err : new Error(String(err)));
         }
       });
-      // 4. Producir audio y video
+      // 4. Produce audio and video
       for (const track of localStream.getTracks()) {
         await sendTransport.produce({ track });
       }
       setJoined(true);
     } catch (err: any) {
-      setJoinError(err.message || "Error inesperado al unirse a la llamada");
+      setJoinError(err.message || "Unexpected error joining the call");
     } finally {
       setJoinLoading(false);
     }
@@ -228,7 +228,7 @@ export default function CallRoomPage() {
   }
 
   if (!session?.user) {
-    // Redirección en curso
+    // Redirecting in progress
     return null;
   }
 
@@ -250,7 +250,7 @@ export default function CallRoomPage() {
         </pre>
       )}
       {device && (
-        <div className="mt-2 text-green-600">Mediasoup Device inicializado correctamente.</div>
+        <div className="mt-2 text-green-600">Mediasoup Device initialized successfully.</div>
       )}
       <div className="mt-8 flex flex-col items-center">
         {mediaError ? (
@@ -264,21 +264,21 @@ export default function CallRoomPage() {
             className="rounded-lg border border-gray-300 shadow-md w-[320px] h-[240px] bg-black object-cover"
           />
         )}
-        <div className="mt-2 text-xs text-muted-foreground">Previsualización de tu cámara y micrófono</div>
+        <div className="mt-2 text-xs text-muted-foreground">Preview of your camera and microphone</div>
         <div className="flex gap-4 mt-4 w-full max-w-xs">
           <div className="flex-1">
-            <label className="block text-xs font-medium mb-1">Cámara</label>
+            <label className="block text-xs font-medium mb-1">Camera</label>
             <Select.Root value={selectedVideo ?? undefined} onValueChange={setSelectedVideo}>
               <Select.Trigger className="w-full border rounded px-2 py-1 bg-background text-sm">
-                <Select.Value placeholder="Selecciona cámara" />
+                <Select.Value placeholder="Select camera" />
               </Select.Trigger>
               <Select.Content className="bg-background border rounded shadow-md z-50">
                 {videoDevices.length === 0 ? (
-                  <div className="px-2 py-1 text-muted-foreground text-sm">No hay cámaras</div>
+                  <div className="px-2 py-1 text-muted-foreground text-sm">No cameras</div>
                 ) : (
                   videoDevices.filter((d) => d.deviceId).map((d) => (
                     <Select.Item key={d.deviceId} value={d.deviceId} className="px-2 py-1 cursor-pointer">
-                      {d.label || 'Cámara sin nombre'}
+                      {d.label || 'Unnamed camera'}
                     </Select.Item>
                   ))
                 )}
@@ -286,18 +286,18 @@ export default function CallRoomPage() {
             </Select.Root>
           </div>
           <div className="flex-1">
-            <label className="block text-xs font-medium mb-1">Micrófono</label>
+            <label className="block text-xs font-medium mb-1">Microphone</label>
             <Select.Root value={selectedAudio ?? undefined} onValueChange={setSelectedAudio}>
               <Select.Trigger className="w-full border rounded px-2 py-1 bg-background text-sm">
-                <Select.Value placeholder="Selecciona micrófono" />
+                <Select.Value placeholder="Select microphone" />
               </Select.Trigger>
               <Select.Content className="bg-background border rounded shadow-md z-50">
                 {audioDevices.length === 0 ? (
-                  <div className="px-2 py-1 text-muted-foreground text-sm">No hay micrófonos</div>
+                  <div className="px-2 py-1 text-muted-foreground text-sm">No microphones</div>
                 ) : (
                   audioDevices.filter((d) => d.deviceId).map((d) => (
                     <Select.Item key={d.deviceId} value={d.deviceId} className="px-2 py-1 cursor-pointer">
-                      {d.label || 'Micrófono sin nombre'}
+                      {d.label || 'Unnamed microphone'}
                     </Select.Item>
                   ))
                 )}
@@ -310,10 +310,10 @@ export default function CallRoomPage() {
           onClick={handleJoinCall}
           disabled={joinLoading || joined || !device || !localStream}
         >
-          {joinLoading ? "Uniéndose..." : joined ? "¡Ya estás en la llamada!" : "Unirse a la llamada"}
+          {joinLoading ? "Joining..." : joined ? "You have joined the call!" : "Join the call"}
         </Button>
         {joinError && <div className="text-red-500 mt-2 text-sm">{joinError}</div>}
-        {joined && <div className="text-green-600 mt-2 text-sm">¡Te has unido a la llamada!</div>}
+        {joined && <div className="text-green-600 mt-2 text-sm">You have joined the call!</div>}
       </div>
     </div>
   );
