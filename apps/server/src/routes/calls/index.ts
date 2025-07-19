@@ -121,7 +121,7 @@ callsRoutes.post("/create", async (c) => {
         await db.insert(notifications).values({
           id: crypto.randomUUID(),
           userId: inviteeId,
-          message: `${user.name || user.email} te invita a una llamada: ${name}`,
+          message: `${user.name || user.email} hes inviting you to a call: ${name}`,
           callId,
           createdAt: new Date(),
         });
