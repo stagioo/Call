@@ -137,11 +137,10 @@ callsRoutes.post("/create", async (c) => {
     throw error;
   }
 
-  // Initialize mediasoup (temporarily disabled due to worker issues)
-  console.log("🎥 [CALLS DEBUG] Skipping mediasoup initialization for now...");
+
   try {
-    // await initMediasoup();
-    // await createRouterForCall(callId!);
+    await initMediasoup();
+    await createRouterForCall(callId!);
     console.log("✅ [CALLS DEBUG] Mediasoup initialization skipped");
   } catch (error) {
     console.error("❌ [CALLS DEBUG] Error initializing mediasoup:", error);
