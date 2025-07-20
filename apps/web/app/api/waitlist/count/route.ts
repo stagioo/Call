@@ -1,13 +1,21 @@
-import { waitlist } from "@call/db/schema";
 import { NextResponse } from "next/server";
-import { count } from "drizzle-orm";
-import { db } from "@call/db";
+import { supabase } from "@/lib/supabase";
 
 export async function GET() {
   try {
-    const result = await db.select({ count: count() }).from(waitlist);
-    const resultCount = result[0]!.count || 0;
-    return NextResponse.json({ count: resultCount });
+    const { count, error } = await supabase
+      .from("waitlist")
+      .select("id", { count: "exact", head: true });
+
+    if (error) {
+      console.error("Error getting waitlist count:", error);
+      return NextResponse.json(
+        { success: false, error: "Internal server error" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ count: count ?? 0 });
   } catch (error) {
     console.error("Error getting waitlist count:", error);
     return NextResponse.json(

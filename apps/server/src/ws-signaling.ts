@@ -5,7 +5,6 @@ const PORT = 3005;
 const server = createServer();
 const wss = new WebSocketServer({ server });
 
-// Map<roomId, Set<ws>>
 const rooms = new Map<string, Set<WebSocket>>();
 
 wss.on("connection", (ws: WebSocket) => {
@@ -24,7 +23,7 @@ wss.on("connection", (ws: WebSocket) => {
           console.log(
             `[WS] Usuario ${data.userId} se unió a la sala: ${currentRoom}`
           );
-          // Notificar a los demás usuarios de la sala
+         
           rooms.get(currentRoom)?.forEach((client) => {
             if (client !== ws && client.readyState === 1) {
               client.send(

@@ -77,7 +77,7 @@ export default function CallRoomPage() {
     };
   }, [callId, session?.user]);
 
-  // Enumerate devices and capture local stream
+
   useEffect(() => {
     let stream: MediaStream | null = null;
     setMediaError(null);
@@ -88,10 +88,10 @@ export default function CallRoomPage() {
         const audios = devices.filter((d) => d.kind === "audioinput").map((d) => ({ deviceId: d.deviceId, label: d.label || `Micrófono (${d.deviceId.slice(-4)})` }));
         setVideoDevices(videos);
         setAudioDevices(audios);
-        // Seleccionar por defecto el primero
+    
         setSelectedVideo((prev) => prev || (videos[0]?.deviceId ?? null));
         setSelectedAudio((prev) => prev || (audios[0]?.deviceId ?? null));
-        // Capturar stream con los dispositivos por defecto
+ 
         if (videos[0] || audios[0]) {
           stream = await navigator.mediaDevices.getUserMedia({
             video: videos[0] ? { deviceId: { exact: videos[0].deviceId } } : false,
@@ -113,10 +113,10 @@ export default function CallRoomPage() {
         stream.getTracks().forEach((track) => track.stop());
       }
     };
-    // eslint-disable-next-line
+
   }, []);
 
-  // Change local stream when selecting another device
+
   useEffect(() => {
     let stream: MediaStream | null = null;
     if (!selectedVideo && !selectedAudio) return;
@@ -139,7 +139,6 @@ export default function CallRoomPage() {
     };
   }, [selectedVideo, selectedAudio]);
 
-  // Assign the stream to the <video> element
   useEffect(() => {
     if (videoRef.current && localStream) {
       videoRef.current.srcObject = localStream;
@@ -151,7 +150,7 @@ export default function CallRoomPage() {
     setJoinLoading(true);
     setJoinError(null);
     try {
-      // 1. Send rtpCapabilities to the backend
+      
       const res = await fetch(`http://localhost:1284/api/calls/${callId}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
