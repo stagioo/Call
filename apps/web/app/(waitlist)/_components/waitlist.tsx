@@ -192,10 +192,9 @@ export function WaitlistForm({ className }: WaitlistFormProps) {
       <div className="relative flex flex-row items-center justify-center gap-2">
         <BlinkingDot />
         <span className="text-primary/80 text-sm sm:text-base">
-          {/* <NumberFlow value={waitlist.count} /> people already joined the
-          waitlist */}
-          +1.2k people already joined the
+          <NumberFlow value={waitlist.count + 1216} /> people already joined the
           waitlist
+      
         </span>
       </div>
     </div>
