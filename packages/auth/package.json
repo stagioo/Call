@@ -5,7 +5,8 @@
   "private": true,
   "exports": {
     "./auth-client": "./src/auth-client.ts",
-    "./auth": "./src/auth.ts"
+    "./auth": "./src/auth.ts",
+    "./utils/send-mail": "./src/utils/send-mail.ts"
   },
   "devDependencies": {
     "@call/typescript-config": "workspace:*",
