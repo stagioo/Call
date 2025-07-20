@@ -5,6 +5,7 @@ import { contactRequests, contacts, user as userTable } from "@call/db/schema";
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq, or } from "drizzle-orm";
 import type { ReqVariables } from "../../index.js";
+import { sendMail } from '@call/auth/utils/send-mail';
 
 const contactsRoutes = new Hono<{ Variables: ReqVariables }>();
 
@@ -34,9 +35,19 @@ contactsRoutes.post("/invite", async (c) => {
     }
 
     const [receiver] = await db.select({ id: userTable.id }).from(userTable).where(eq(userTable.email, receiverEmail));
-    const receiverId = receiver ? receiver.id : null;
 
-    if (receiverId) {
+    if (!receiver) {
+      await sendMail({
+        to: receiverEmail,
+        subject: "Invitation to join Call",
+        text: `You are invited to join Call by ${user.name} here is the link ${process.env.FRONTEND_URL}/login`,
+        
+      });
+      return c.json({ message: "Email sent to receiver to invite them to the app." }, 200);
+    }
+
+    const receiverId = receiver.id;
+
       const [existingRelation] = await db
         .select({ check: contacts.userId })
         .from(contacts)
@@ -46,7 +57,6 @@ contactsRoutes.post("/invite", async (c) => {
       if (existingRelation) {
         return c.json({ message: "You are already contacts with this user." }, 409);
       }
-    }
     
     const [existingRequest] = await db
       .select({ id: contactRequests.id })
