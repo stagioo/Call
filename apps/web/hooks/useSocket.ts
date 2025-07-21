@@ -1,61 +1,33 @@
+'use client';
 import { useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
-
 
 const SOCKET_URL = "ws://localhost:4001";
 
 export function useSocket() {
   const [connected, setConnected] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-
-    const socket = io(SOCKET_URL, {
-      autoConnect: true,
-      transports: ["websocket", "polling"],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      timeout: 20000,
-      withCredentials: true,
-    });
-
+    const socket = new WebSocket(SOCKET_URL);
     socketRef.current = socket;
 
-    socket.on("connect", () => {
-      console.log("Socket connected successfully");
+    socket.onopen = () => {
       setConnected(true);
-    });
+      console.log("WebSocket connected");
+    };
 
-    socket.on("disconnect", (reason) => {
-      console.log("Socket disconnected:", reason);
+    socket.onclose = () => {
       setConnected(false);
-    });
+      console.log("WebSocket disconnected");
+    };
 
-    socket.on("connect_error", (error) => {
-      console.error("Socket connection error:", error);
-      // Try to reconnect with polling if websocket fails
-      const manager = socket.io;
-      if (
-        manager &&
-        manager.opts &&
-        manager.opts.transports &&
-        manager.opts.transports[0] === "websocket"
-      ) {
-        console.log("Falling back to polling transport");
-        manager.opts.transports = ["polling", "websocket"];
-      }
-    });
-
-    socket.on("error", (error) => {
-      console.error("Socket error:", error);
-    });
+    socket.onerror = (err) => {
+      setConnected(false);
+      console.error("WebSocket error", err);
+    };
 
     return () => {
-      console.log("Cleaning up socket connection");
-      if (socket.connected) {
-        socket.disconnect();
-      }
+      socket.close();
     };
   }, []);
 

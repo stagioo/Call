@@ -56,9 +56,16 @@ startMediasoup().catch(console.error);
 const httpServer = createServer();
 const wss = new WebSocketServer({ server: httpServer });
 
+// Mapa para guardar los transports y producers por conexión
 const transports = new Map<string, mediasoup.types.WebRtcTransport>();
+const producers = new Map<string, mediasoup.types.Producer>();
+const clients = new Set<WebSocket>();
 
 wss.on('connection', (ws: WebSocket) => {
+  clients.add(ws);
+  ws.on('close', () => {
+    clients.delete(ws);
+  });
   ws.on('message', async (message: string) => {
     let data;
     try {
@@ -67,7 +74,7 @@ wss.on('connection', (ws: WebSocket) => {
       ws.send(JSON.stringify({ error: 'Invalid JSON' }));
       return;
     }
-    
+    // Lógica de señalización de mediasoup
     if (data.type === 'createRoom') {
       ws.send(JSON.stringify({ reqId: data.reqId, type: 'createRoomResponse', success: true }));
       return;
@@ -77,7 +84,7 @@ wss.on('connection', (ws: WebSocket) => {
         reqId: data.reqId,
         type: 'joinRoomResponse',
         rtpCapabilities: router.rtpCapabilities,
-        producers: [],
+        producers: Array.from(producers.values()).map(p => ({ id: p.id, kind: p.kind })),
       }));
       return;
     }
@@ -109,7 +116,73 @@ wss.on('connection', (ws: WebSocket) => {
       }
       return;
     }
- 
+    if (data.type === 'connectWebRtcTransport') {
+      const transport = transports.get(data.transportId);
+      if (!transport) {
+        ws.send(JSON.stringify({ reqId: data.reqId, error: 'Transport not found' }));
+        return;
+      }
+      await transport.connect({ dtlsParameters: data.dtlsParameters });
+      ws.send(JSON.stringify({ reqId: data.reqId, type: 'connectWebRtcTransportResponse', connected: true }));
+      return;
+    }
+    if (data.type === 'produce') {
+      const transport = transports.get(data.transportId);
+      if (!transport) {
+        console.log('[produce] Transport not found:', data.transportId);
+        ws.send(JSON.stringify({ reqId: data.reqId, error: 'Transport not found' }));
+        return;
+      }
+      try {
+        const producer = await transport.produce({
+          kind: data.kind,
+          rtpParameters: data.rtpParameters,
+        });
+        producers.set(producer.id, producer);
+        console.log('[produce] Producer created:', producer.id, 'kind:', producer.kind);
+        ws.send(JSON.stringify({ reqId: data.reqId, type: 'produceResponse', id: producer.id }));
+        // Notificar a todos los demás clientes del nuevo producer
+        for (const client of clients) {
+          if (client !== ws && client.readyState === 1) {
+            client.send(JSON.stringify({ type: 'newProducer', id: producer.id, kind: producer.kind }));
+          }
+        }
+      } catch (err: any) {
+        console.log('[produce] Error:', err.message);
+        ws.send(JSON.stringify({ reqId: data.reqId, error: err.message }));
+      }
+      return;
+    }
+    if (data.type === 'consume') {
+      const transport = transports.get(data.transportId);
+      const producer = producers.get(data.producerId);
+      if (!transport || !producer) {
+        console.log('[consume] Transport or producer not found:', data.transportId, data.producerId);
+        ws.send(JSON.stringify({ reqId: data.reqId, error: 'Transport or producer not found' }));
+        return;
+      }
+      try {
+        const consumer = await transport.consume({
+          producerId: producer.id,
+          rtpCapabilities: data.rtpCapabilities,
+          paused: false,
+        });
+        console.log('[consume] Consumer created:', consumer.id, 'for producer:', producer.id);
+        ws.send(JSON.stringify({
+          reqId: data.reqId,
+          type: 'consumeResponse',
+          id: consumer.id,
+          producerId: producer.id,
+          kind: consumer.kind,
+          rtpParameters: consumer.rtpParameters,
+        }));
+      } catch (err: any) {
+        console.log('[consume] Error:', err.message);
+        ws.send(JSON.stringify({ reqId: data.reqId, error: err.message }));
+      }
+      return;
+    }
+    // Respuesta por defecto
     ws.send(JSON.stringify({ reqId: data.reqId, type: 'pong', data: 'Mediasoup signaling server ready' }));
   });
 });
