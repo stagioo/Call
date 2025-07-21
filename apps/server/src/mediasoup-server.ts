@@ -34,7 +34,7 @@ const mediasoupConfig = {
     ],
   },
   webRtcTransport: {
-    listenIps: [{ ip: '0.0.0.0', announcedIp: null }],
+    listenIps: [{ ip: '0.0.0.0', announcedIp: undefined }],
     enableUdp: true,
     enableTcp: true,
     preferUdp: true,
@@ -53,9 +53,10 @@ async function startMediasoup() {
 
 startMediasoup().catch(console.error);
 
-// Servidor HTTP y WebSocket para señalización
 const httpServer = createServer();
 const wss = new WebSocketServer({ server: httpServer });
+
+const transports = new Map<string, mediasoup.types.WebRtcTransport>();
 
 wss.on('connection', (ws: WebSocket) => {
   ws.on('message', async (message: string) => {
@@ -66,9 +67,50 @@ wss.on('connection', (ws: WebSocket) => {
       ws.send(JSON.stringify({ error: 'Invalid JSON' }));
       return;
     }
-    // Aquí irá la lógica de señalización de mediasoup (crear transport, connect, produce, consume, etc.)
-    // Por ahora, solo responde con un mensaje de prueba
-    ws.send(JSON.stringify({ type: 'pong', data: 'Mediasoup signaling server ready' }));
+    
+    if (data.type === 'createRoom') {
+      ws.send(JSON.stringify({ reqId: data.reqId, type: 'createRoomResponse', success: true }));
+      return;
+    }
+    if (data.type === 'joinRoom') {
+      ws.send(JSON.stringify({
+        reqId: data.reqId,
+        type: 'joinRoomResponse',
+        rtpCapabilities: router.rtpCapabilities,
+        producers: [],
+      }));
+      return;
+    }
+    if (data.type === 'createWebRtcTransport') {
+      try {
+        const transport = await router.createWebRtcTransport({
+          listenIps: mediasoupConfig.webRtcTransport.listenIps,
+          enableUdp: mediasoupConfig.webRtcTransport.enableUdp,
+          enableTcp: mediasoupConfig.webRtcTransport.enableTcp,
+          preferUdp: mediasoupConfig.webRtcTransport.preferUdp,
+          initialAvailableOutgoingBitrate: mediasoupConfig.webRtcTransport.initialAvailableOutgoingBitrate,
+        });
+        transports.set(transport.id, transport);
+        ws.send(JSON.stringify({
+          reqId: data.reqId,
+          type: 'createWebRtcTransportResponse',
+          id: transport.id,
+          iceParameters: transport.iceParameters,
+          iceCandidates: transport.iceCandidates,
+          dtlsParameters: transport.dtlsParameters,
+          sctpParameters: transport.sctpParameters,
+        }));
+      } catch (err: any) {
+        ws.send(JSON.stringify({
+          reqId: data.reqId,
+          type: 'createWebRtcTransportResponse',
+          error: err.message,
+        }));
+      }
+      return;
+    }
+ 
+    ws.send(JSON.stringify({ reqId: data.reqId, type: 'pong', data: 'Mediasoup signaling server ready' }));
   });
 });
 
