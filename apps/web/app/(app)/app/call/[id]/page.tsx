@@ -243,11 +243,7 @@ export default function CallRoomPage() {
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       <h1 className="text-2xl font-bold mb-2">Call Room</h1>
       <p className="mb-4 text-muted-foreground">Call ID: {callId}</p>
-      {rtpCapabilities && (
-        <pre className="bg-muted p-2 rounded text-xs mt-2 overflow-x-auto max-w-xl">
-          {JSON.stringify(rtpCapabilities, null, 2)}
-        </pre>
-      )}
+      {/* Eliminado: Mostrar rtpCapabilities en la UI */}
       {device && (
         <div className="mt-2 text-green-600">Mediasoup Device initialized successfully.</div>
       )}

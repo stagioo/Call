@@ -139,13 +139,12 @@ callsRoutes.post("/create", async (c) => {
 
 
   try {
-    await initMediasoup();
     await createRouterForCall(callId!);
-    console.log("✅ [CALLS DEBUG] Mediasoup initialization skipped");
+    console.log("✅ [CALLS DEBUG] Router created for call");
   } catch (error) {
-    console.error("❌ [CALLS DEBUG] Error initializing mediasoup:", error);
+    console.error("❌ [CALLS DEBUG] Error creating router:", error);
     // Don't throw error, just log it
-    console.log("⚠️ [CALLS DEBUG] Continuing without mediasoup...");
+    console.log("⚠️ [CALLS DEBUG] Continuing without router...");
   }
 
   console.log("🎉 [CALLS DEBUG] Call created successfully:", callId);
@@ -199,7 +198,8 @@ callsRoutes.get("/:id/router-capabilities", async (c) => {
   const router = await getRouter(callId);
   if (!router) return c.json({ error: "Router not found" }, 404);
 
-  return c.json(router.rtpCapabilities);
+  // FIX: responde como objeto con la propiedad rtpCapabilities
+  return c.json({ rtpCapabilities: router.rtpCapabilities });
 });
 
 callsRoutes.post("/:id/join", async (c) => {
