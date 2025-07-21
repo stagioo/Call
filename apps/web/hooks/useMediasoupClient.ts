@@ -154,7 +154,7 @@ export function useMediasoupClient() {
     async (
       producerId: string,
       rtpCapabilities: RtpCapabilities,
-      onStream?: (stream: MediaStream) => void
+      onStream?: (stream: MediaStream, kind?: string) => void
     ) => {
       if (!recvTransportRef.current) return;
       const res = await sendRequest("consume", {
@@ -169,7 +169,7 @@ export function useMediasoupClient() {
         rtpParameters: res.rtpParameters as RtpParameters,
       });
       const stream = new MediaStream([consumer.track]);
-      if (onStream) onStream(stream);
+      if (onStream) onStream(stream, res.kind); // <-- PASA EL KIND AQUÍ
       else setRemoteStreams((prev) => [...prev, stream]);
     },
     [sendRequest]

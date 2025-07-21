@@ -62,6 +62,7 @@ const producers = new Map<string, mediasoup.types.Producer>();
 const clients = new Set<WebSocket>();
 
 wss.on('connection', (ws: WebSocket) => {
+  console.log('[mediasoup] Nueva conexión WebSocket');
   clients.add(ws);
   ws.on('close', () => {
     clients.delete(ws);
