@@ -8,7 +8,6 @@ import { logger } from "hono/logger";
 import { serve } from '@hono/node-server';
 import chalk from 'chalk';
 import { networkInterfaces } from 'os';
-import { initMediasoup } from "./config/mediasoup.js";
 
 export interface ReqVariables {
   user: typeof auth.$Infer.Session.user | null;
@@ -96,16 +95,6 @@ const logServerStart = (port: number) => {
 };
 
 const startServerWithEventHandling = async (startPort: number, maxAttempts: number = 50): Promise<void> => {
-  // Initialize mediasoup workers first
-  try {
-    console.log(chalk.blue('Initializing mediasoup workers...'));
-    await initMediasoup();
-    console.log(chalk.green('✅ Mediasoup workers initialized successfully'));
-  } catch (error) {
-    console.error(chalk.red('❌ Failed to initialize mediasoup workers:'), error);
-    throw error;
-  }
-
   return new Promise((resolve, reject) => {
     let currentPort = startPort;
     let attempts = 0;
