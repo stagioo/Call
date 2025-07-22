@@ -64,18 +64,53 @@ const transports = new Map<string, mediasoup.types.WebRtcTransport>();
 
 // Also save userId along with the producer
 
-const producers = new Map<
-  string,
-  { producer: mediasoup.types.Producer; userId: string }
->();
+const producers = new Map<string, { producer: mediasoup.types.Producer; userId: string }>();
 const clients = new Set<WebSocket>();
+const clientProducers = new Map<WebSocket, Set<string>>();
 
 wss.on("connection", (ws: WebSocket) => {
   console.log("[mediasoup] Nueva conexión WebSocket");
   clients.add(ws);
+  clientProducers.set(ws, new Set());
+
   ws.on("close", () => {
+    console.log("[mediasoup] Cliente desconectado, limpiando recursos...");
     clients.delete(ws);
+    
+    // Limpiar productores asociados a este cliente
+    const producerIds = clientProducers.get(ws);
+    if (producerIds) {
+      producerIds.forEach(producerId => {
+        const producerData = producers.get(producerId);
+        if (producerData) {
+          console.log("[mediasoup] Cerrando productor:", producerId);
+          producerData.producer.close();
+          producers.delete(producerId);
+          
+          // Notificar a otros clientes
+          for (const client of clients) {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify({
+                type: "producerClosed",
+                producerId
+              }));
+            }
+          }
+        }
+      });
+    }
+    clientProducers.delete(ws);
+
+    // Limpiar transportes asociados
+    transports.forEach((transport, transportId) => {
+      if (transport.appData.clientId === ws) {
+        console.log("[mediasoup] Cerrando transporte:", transportId);
+        transport.close();
+        transports.delete(transportId);
+      }
+    });
   });
+
   ws.on("message", async (message: string) => {
     let data;
     try {
@@ -121,6 +156,7 @@ wss.on("connection", (ws: WebSocket) => {
           preferUdp: mediasoupConfig.webRtcTransport.preferUdp,
           initialAvailableOutgoingBitrate:
             mediasoupConfig.webRtcTransport.initialAvailableOutgoingBitrate,
+          appData: { clientId: ws }
         });
         transports.set(transport.id, transport);
         ws.send(
@@ -178,15 +214,18 @@ wss.on("connection", (ws: WebSocket) => {
           kind: data.kind,
           rtpParameters: data.rtpParameters,
         });
+
         producers.set(producer.id, { producer, userId });
+        clientProducers.get(ws)?.add(producer.id);
 
         // Handle producer closure
         producer.on("transportclose", () => {
           console.log("[mediasoup] Producer transport closed:", producer.id);
           producers.delete(producer.id);
+          clientProducers.get(ws)?.delete(producer.id);
           // Notify all clients
           for (const client of clients) {
-            if (client.readyState === 1) {
+            if (client.readyState === WebSocket.OPEN) {
               client.send(
                 JSON.stringify({
                   type: "producerClosed",
@@ -214,7 +253,7 @@ wss.on("connection", (ws: WebSocket) => {
         );
         // Notify all other clients of the new producer
         for (const client of clients) {
-          if (client !== ws && client.readyState === 1) {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
             client.send(
               JSON.stringify({
                 type: "newProducer",

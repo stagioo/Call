@@ -106,11 +106,58 @@ export function useMediasoupClient() {
     return "";
   });
 
+  // Cleanup functions
+  const cleanupConsumer = useCallback((producerId: string) => {
+    const consumer = consumersRef.current.get(producerId);
+    if (consumer) {
+      consumer.close();
+      consumersRef.current.delete(producerId);
+    }
+    setRemoteStreams(prev => prev.filter(s => s.producerId !== producerId));
+  }, []);
+
+  const cleanupAllConsumers = useCallback(() => {
+    consumersRef.current.forEach(consumer => {
+      consumer.close();
+    });
+    consumersRef.current.clear();
+    setRemoteStreams([]);
+  }, []);
+
+  const cleanupLocalMedia = useCallback(() => {
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      setLocalStream(null);
+    }
+  }, [localStream]);
+
+  const cleanupTransports = useCallback(() => {
+    if (sendTransportRef.current) {
+      sendTransportRef.current.close();
+      sendTransportRef.current = null;
+    }
+    if (recvTransportRef.current) {
+      recvTransportRef.current.close();
+      recvTransportRef.current = null;
+    }
+  }, []);
+
+  const cleanupAll = useCallback(() => {
+    cleanupAllConsumers();
+    cleanupLocalMedia();
+    cleanupTransports();
+  }, [cleanupAllConsumers, cleanupLocalMedia, cleanupTransports]);
+
+  // Join room with cleanup
   const joinRoom = useCallback(
     async (roomId: string): Promise<JoinResponse> => {
       if (!socket || !connected) {
         throw new Error("WebSocket not connected");
       }
+
+      // Cleanup existing resources before joining
+      cleanupAll();
+
       await sendRequest("createRoom", { roomId });
       const response = await sendRequest("joinRoom", {
         roomId,
@@ -118,8 +165,16 @@ export function useMediasoupClient() {
       });
       return response;
     },
-    [socket, connected, sendRequest]
+    [socket, connected, sendRequest, cleanupAll]
   );
+
+  // Handle WebSocket reconnection
+  useEffect(() => {
+    if (!connected) {
+      console.log("[mediasoup] WebSocket disconnected, cleaning up...");
+      cleanupAll();
+    }
+  }, [connected, cleanupAll]);
 
   // Load mediasoup device
   const loadDevice = useCallback(async (rtpCapabilities: RtpCapabilities) => {
@@ -200,25 +255,6 @@ export function useMediasoupClient() {
     return producers;
   }, []);
 
-  // Cleanup function for streams and consumers
-  const cleanupConsumer = useCallback((producerId: string) => {
-    const consumer = consumersRef.current.get(producerId);
-    if (consumer) {
-      consumer.close();
-      consumersRef.current.delete(producerId);
-    }
-    setRemoteStreams(prev => prev.filter(s => s.producerId !== producerId));
-  }, []);
-
-  // Cleanup all consumers and streams
-  const cleanupAllConsumers = useCallback(() => {
-    consumersRef.current.forEach(consumer => {
-      consumer.close();
-    });
-    consumersRef.current.clear();
-    setRemoteStreams([]);
-  }, []);
-
   // Consume remote media
   const consume = useCallback(
     async (
@@ -265,6 +301,12 @@ export function useMediasoupClient() {
 
         // Handle consumer closure
         consumer.on("@close", () => {
+          console.log("[mediasoup] Consumer closed:", consumer.id);
+          cleanupConsumer(producerId);
+        });
+
+        consumer.on("transportclose", () => {
+          console.log("[mediasoup] Consumer transport closed:", consumer.id);
           cleanupConsumer(producerId);
         });
 
@@ -328,7 +370,7 @@ export function useMediasoupClient() {
     consume,
     localStream,
     setLocalStream,
-    remoteStreams: remoteStreams.map(rs => rs.stream), // Mantener la compatibilidad con la API anterior
+    remoteStreams: remoteStreams.map(rs => rs.stream), 
     connected,
     socket,
     device: deviceRef.current,
