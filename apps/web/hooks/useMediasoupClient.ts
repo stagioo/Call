@@ -24,6 +24,10 @@ interface RemoteStream {
   userId: string;
 }
 
+interface ProduceOptions {
+  source?: 'screen' | 'camera';
+}
+
 function useWsRequest(socket: WebSocket | null) {
   const pending = useRef(new Map<string, (data: any) => void>());
   const eventHandlers = useRef(new Map<string, (data: any) => void>());
@@ -176,6 +180,70 @@ export function useMediasoupClient() {
     }
   }, [connected, cleanupAll]);
 
+  // Handle user disconnection events
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUserDisconnection = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'userLeft' || data.type === 'producerClosed') {
+          console.log('[mediasoup] User disconnection event:', data);
+          
+          // Immediately stop and remove all related streams
+          setRemoteStreams(prev => {
+            const streamsToRemove = prev.filter(s => 
+              (data.type === 'userLeft' && s.userId === data.userId) || 
+              (data.type === 'producerClosed' && s.producerId === data.producerId)
+            );
+
+            // Stop all tracks from streams being removed
+            streamsToRemove.forEach(stream => {
+              if (stream.stream) {
+                stream.stream.getTracks().forEach(track => {
+                  track.stop();
+                  track.enabled = false;
+                });
+              }
+            });
+
+            // Return only streams that should remain
+            const remainingStreams = prev.filter(s => 
+              !(data.type === 'userLeft' && s.userId === data.userId) && 
+              !(data.type === 'producerClosed' && s.producerId === data.producerId)
+            );
+
+            // Force update of remaining streams
+            return [...remainingStreams];
+          });
+
+          // Clean up consumers
+          if (data.type === 'userLeft') {
+            consumersRef.current.forEach((consumer, producerId) => {
+              if (consumer.appData.userId === data.userId) {
+                consumer.close();
+                consumersRef.current.delete(producerId);
+              }
+            });
+          } else if (data.type === 'producerClosed' && data.producerId) {
+            const consumer = consumersRef.current.get(data.producerId);
+            if (consumer) {
+              consumer.close();
+              consumersRef.current.delete(data.producerId);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[mediasoup] Error handling disconnection:', error);
+      }
+    };
+
+    socket.addEventListener('message', handleUserDisconnection);
+    return () => {
+      socket.removeEventListener('message', handleUserDisconnection);
+    };
+  }, [socket]);
+
   // Load mediasoup device
   const loadDevice = useCallback(async (rtpCapabilities: RtpCapabilities) => {
     let device = deviceRef.current;
@@ -236,24 +304,41 @@ export function useMediasoupClient() {
   }, [socket, sendRequest]);
 
   // Produce local media
-  const produce = useCallback(async (stream: MediaStream) => {
+  const produce = useCallback(async (stream: MediaStream, options?: ProduceOptions) => {
     if (!sendTransportRef.current) return;
-    setLocalStream(stream);
+
+    // Only update localStream if this is a camera stream
+    if (!options?.source || options.source === 'camera') {
+      setLocalStream(stream);
+    }
+
     const producers = [];
     for (const track of stream.getTracks()) {
       try {
-        const producer = await sendTransportRef.current.produce({ track });
+        const producer = await sendTransportRef.current.produce({
+          track,
+          appData: {
+            source: options?.source || 'camera',
+            kind: track.kind,
+            userId
+          }
+        });
         producers.push(producer);
       } catch (e) {
-        // Ignore individual errors
+        console.error('Error producing track:', e);
       }
     }
+
+    // Only cleanup if no producers were created
     if (producers.length === 0) {
       stream.getTracks().forEach((track) => track.stop());
-      setLocalStream(null);
+      if (!options?.source || options.source === 'camera') {
+        setLocalStream(null);
+      }
     }
+
     return producers;
-  }, []);
+  }, [userId]);
 
   // Consume remote media
   const consume = useCallback(
@@ -264,12 +349,6 @@ export function useMediasoupClient() {
     ) => {
       if (!recvTransportRef.current) {
         console.error("[mediasoup] No receive transport available");
-        return;
-      }
-
-      // Check if we're already consuming this producer
-      if (consumersRef.current.has(producerId)) {
-        console.log("[mediasoup] Already consuming producer:", producerId);
         return;
       }
 
@@ -285,28 +364,22 @@ export function useMediasoupClient() {
           return;
         }
 
-        const consumer: Consumer = await recvTransportRef.current.consume({
+        const consumer = await recvTransportRef.current.consume({
           id: res.id,
           producerId: res.producerId,
           kind: res.kind as "audio" | "video",
           rtpParameters: res.rtpParameters as RtpParameters,
         });
 
-        // Store the consumer
         consumersRef.current.set(producerId, consumer);
-
-        console.log("[mediasoup] Created consumer:", consumer.id, "for producer:", res.producerId);
         
         const stream = new MediaStream([consumer.track]);
 
-        // Handle consumer closure
         consumer.on("@close", () => {
-          console.log("[mediasoup] Consumer closed:", consumer.id);
           cleanupConsumer(producerId);
         });
 
         consumer.on("transportclose", () => {
-          console.log("[mediasoup] Consumer transport closed:", consumer.id);
           cleanupConsumer(producerId);
         });
 
@@ -314,9 +387,13 @@ export function useMediasoupClient() {
           onStream(stream, res.kind, res.userId);
         } else {
           setRemoteStreams(prev => {
-            // Remove any existing stream with the same producerId
             const filtered = prev.filter(s => s.producerId !== producerId);
-            return [...filtered, { stream, producerId, userId: res.userId }];
+            return [...filtered, {
+              stream,
+              producerId,
+              userId: res.userId,
+              kind: res.appData?.source || 'camera'
+            }];
           });
         }
       } catch (error) {
@@ -370,7 +447,7 @@ export function useMediasoupClient() {
     consume,
     localStream,
     setLocalStream,
-    remoteStreams: remoteStreams.map(rs => rs.stream), 
+    remoteStreams,
     connected,
     socket,
     device: deviceRef.current,
