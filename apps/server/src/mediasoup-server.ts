@@ -50,7 +50,7 @@ async function startMediasoup() {
   router = await worker.createRouter({
     mediaCodecs: mediasoupConfig.router.mediaCodecs,
   });
-  console.log("[mediasoup] Worker y router inicializados");
+  console.log("[mediasoup] Worker and router initialized");
 }
 
 startMediasoup().catch(console.error);
@@ -69,25 +69,25 @@ const clients = new Set<WebSocket>();
 const clientProducers = new Map<WebSocket, Set<string>>();
 
 wss.on("connection", (ws: WebSocket) => {
-  console.log("[mediasoup] Nueva conexión WebSocket");
+  console.log("[mediasoup] New WebSocket connection");
   clients.add(ws);
   clientProducers.set(ws, new Set());
 
   ws.on("close", () => {
-    console.log("[mediasoup] Cliente desconectado, limpiando recursos...");
+    console.log("[mediasoup] Client disconnected, cleaning up resources...");
     clients.delete(ws);
     
-    // Limpiar productores asociados a este cliente
+    // Clean up producers associated with this client
     const producerIds = clientProducers.get(ws);
     if (producerIds) {
       producerIds.forEach(producerId => {
         const producerData = producers.get(producerId);
         if (producerData) {
-          console.log("[mediasoup] Cerrando productor:", producerId);
+          console.log("[mediasoup] Closing producer:", producerId);
           producerData.producer.close();
           producers.delete(producerId);
           
-          // Notificar a otros clientes
+          // Notify other clients
           for (const client of clients) {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
               client.send(JSON.stringify({
@@ -101,10 +101,10 @@ wss.on("connection", (ws: WebSocket) => {
     }
     clientProducers.delete(ws);
 
-    // Limpiar transportes asociados
+    // Clean up transports associated
     transports.forEach((transport, transportId) => {
       if (transport.appData.clientId === ws) {
-        console.log("[mediasoup] Cerrando transporte:", transportId);
+        console.log("[mediasoup] Closing transport:", transportId);
         transport.close();
         transports.delete(transportId);
       }
