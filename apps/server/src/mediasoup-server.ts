@@ -2,7 +2,7 @@ import * as mediasoup from 'mediasoup';
 import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 
-// Configuración básica de mediasoup
+// basic configuration for mediasoup 
 const mediasoupConfig = {
   worker: {
     rtcMinPort: 40000,
@@ -56,9 +56,13 @@ startMediasoup().catch(console.error);
 const httpServer = createServer();
 const wss = new WebSocketServer({ server: httpServer });
 
-// Mapa para guardar los transports y producers por conexión
+// Map to store transports and producers by connection
+
 const transports = new Map<string, mediasoup.types.WebRtcTransport>();
-const producers = new Map<string, mediasoup.types.Producer>();
+
+// Also save userId along with the producer
+
+const producers = new Map<string, { producer: mediasoup.types.Producer, userId: string }>();
 const clients = new Set<WebSocket>();
 
 wss.on('connection', (ws: WebSocket) => {
@@ -75,7 +79,7 @@ wss.on('connection', (ws: WebSocket) => {
       ws.send(JSON.stringify({ error: 'Invalid JSON' }));
       return;
     }
-    // Lógica de señalización de mediasoup
+    // Mediasoup signaling logic
     if (data.type === 'createRoom') {
       ws.send(JSON.stringify({ reqId: data.reqId, type: 'createRoomResponse', success: true }));
       return;
@@ -85,7 +89,7 @@ wss.on('connection', (ws: WebSocket) => {
         reqId: data.reqId,
         type: 'joinRoomResponse',
         rtpCapabilities: router.rtpCapabilities,
-        producers: Array.from(producers.values()).map(p => ({ id: p.id, kind: p.kind })),
+        producers: Array.from(producers.values()).map(({ producer, userId }) => ({ id: producer.id, kind: producer.kind, userId })),
       }));
       return;
     }
@@ -135,17 +139,18 @@ wss.on('connection', (ws: WebSocket) => {
         return;
       }
       try {
+        const userId = data.userId || 'unknown';
         const producer = await transport.produce({
           kind: data.kind,
           rtpParameters: data.rtpParameters,
         });
-        producers.set(producer.id, producer);
-        console.log('[produce] Producer created:', producer.id, 'kind:', producer.kind);
+        producers.set(producer.id, { producer, userId });
+        console.log('[produce] Producer created:', producer.id, 'kind:', producer.kind, 'userId:', userId);
         ws.send(JSON.stringify({ reqId: data.reqId, type: 'produceResponse', id: producer.id }));
-        // Notificar a todos los demás clientes del nuevo producer
+        // Notify all other clients of the new producer
         for (const client of clients) {
           if (client !== ws && client.readyState === 1) {
-            client.send(JSON.stringify({ type: 'newProducer', id: producer.id, kind: producer.kind }));
+            client.send(JSON.stringify({ type: 'newProducer', id: producer.id, kind: producer.kind, userId }));
           }
         }
       } catch (err: any) {
@@ -156,12 +161,13 @@ wss.on('connection', (ws: WebSocket) => {
     }
     if (data.type === 'consume') {
       const transport = transports.get(data.transportId);
-      const producer = producers.get(data.producerId);
-      if (!transport || !producer) {
+      const producerObj = producers.get(data.producerId);
+      if (!transport || !producerObj) {
         console.log('[consume] Transport or producer not found:', data.transportId, data.producerId);
         ws.send(JSON.stringify({ reqId: data.reqId, error: 'Transport or producer not found' }));
         return;
       }
+      const producer = producerObj.producer;
       try {
         const consumer = await transport.consume({
           producerId: producer.id,
@@ -176,6 +182,7 @@ wss.on('connection', (ws: WebSocket) => {
           producerId: producer.id,
           kind: consumer.kind,
           rtpParameters: consumer.rtpParameters,
+          userId: producerObj.userId,
         }));
       } catch (err: any) {
         console.log('[consume] Error:', err.message);
@@ -183,7 +190,7 @@ wss.on('connection', (ws: WebSocket) => {
       }
       return;
     }
-    // Respuesta por defecto
+    // Default response
     ws.send(JSON.stringify({ reqId: data.reqId, type: 'pong', data: 'Mediasoup signaling server ready' }));
   });
 });

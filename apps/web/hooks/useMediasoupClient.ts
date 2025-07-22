@@ -68,6 +68,18 @@ export function useMediasoupClient() {
   const recvTransportRef = useRef<Transport | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<MediaStream[]>([]);
+  // Obtener o generar userId
+  const [userId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      let id = localStorage.getItem('user-id');
+      if (!id) {
+        id = crypto.randomUUID();
+        localStorage.setItem('user-id', id);
+      }
+      return id;
+    }
+    return '';
+  });
 
   const joinRoom = useCallback(
     async (roomId: string): Promise<JoinResponse> => {
@@ -105,13 +117,13 @@ export function useMediasoupClient() {
         .catch(errback);
     });
     transport.on("produce", ({ kind, rtpParameters }, callback, errback) => {
-      sendRequest("produce", { transportId: transport.id, kind, rtpParameters })
+      sendRequest("produce", { transportId: transport.id, kind, rtpParameters, userId })
         .then((res) => callback({ id: res.id }))
         .catch(errback);
     });
     sendTransportRef.current = transport;
     return transport;
-  }, [socket, sendRequest]);
+  }, [socket, sendRequest, userId]);
 
   // Create recv transport
   const createRecvTransport = useCallback(async () => {
@@ -139,7 +151,7 @@ export function useMediasoupClient() {
         const producer = await sendTransportRef.current.produce({ track });
         producers.push(producer);
       } catch (e) {
-        // Ignorar errores individuales
+       // Ignore individual errors
       }
     }
     if (producers.length === 0) {
@@ -154,7 +166,7 @@ export function useMediasoupClient() {
     async (
       producerId: string,
       rtpCapabilities: RtpCapabilities,
-      onStream?: (stream: MediaStream, kind?: string) => void
+      onStream?: (stream: MediaStream, kind?: string, userId?: string) => void
     ) => {
       if (!recvTransportRef.current) return;
       const res = await sendRequest("consume", {
@@ -169,7 +181,7 @@ export function useMediasoupClient() {
         rtpParameters: res.rtpParameters as RtpParameters,
       });
       const stream = new MediaStream([consumer.track]);
-      if (onStream) onStream(stream, res.kind); // <-- PASA EL KIND AQUÍ
+      if (onStream) onStream(stream, res.kind, res.userId); // <-- PASS THE KIND AND USERID HERE
       else setRemoteStreams((prev) => [...prev, stream]);
     },
     [sendRequest]

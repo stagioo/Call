@@ -14,7 +14,7 @@ export default function CallPage() {
           color: 'white',
           fontWeight: 600,
         }}>
-          {connected ? 'WebSocket conectado' : 'WebSocket desconectado'}
+          {connected ? 'WebSocket connected' : 'WebSocket desconnected'}
         </span>
       </div>
       <CallSection />
