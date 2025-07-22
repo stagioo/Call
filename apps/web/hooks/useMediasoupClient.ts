@@ -180,6 +180,70 @@ export function useMediasoupClient() {
     }
   }, [connected, cleanupAll]);
 
+  // Handle user disconnection events
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUserDisconnection = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'userLeft' || data.type === 'producerClosed') {
+          console.log('[mediasoup] User disconnection event:', data);
+          
+          // Immediately stop and remove all related streams
+          setRemoteStreams(prev => {
+            const streamsToRemove = prev.filter(s => 
+              (data.type === 'userLeft' && s.userId === data.userId) || 
+              (data.type === 'producerClosed' && s.producerId === data.producerId)
+            );
+
+            // Stop all tracks from streams being removed
+            streamsToRemove.forEach(stream => {
+              if (stream.stream) {
+                stream.stream.getTracks().forEach(track => {
+                  track.stop();
+                  track.enabled = false;
+                });
+              }
+            });
+
+            // Return only streams that should remain
+            const remainingStreams = prev.filter(s => 
+              !(data.type === 'userLeft' && s.userId === data.userId) && 
+              !(data.type === 'producerClosed' && s.producerId === data.producerId)
+            );
+
+            // Force update of remaining streams
+            return [...remainingStreams];
+          });
+
+          // Clean up consumers
+          if (data.type === 'userLeft') {
+            consumersRef.current.forEach((consumer, producerId) => {
+              if (consumer.appData.userId === data.userId) {
+                consumer.close();
+                consumersRef.current.delete(producerId);
+              }
+            });
+          } else if (data.type === 'producerClosed' && data.producerId) {
+            const consumer = consumersRef.current.get(data.producerId);
+            if (consumer) {
+              consumer.close();
+              consumersRef.current.delete(data.producerId);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[mediasoup] Error handling disconnection:', error);
+      }
+    };
+
+    socket.addEventListener('message', handleUserDisconnection);
+    return () => {
+      socket.removeEventListener('message', handleUserDisconnection);
+    };
+  }, [socket]);
+
   // Load mediasoup device
   const loadDevice = useCallback(async (rtpCapabilities: RtpCapabilities) => {
     let device = deviceRef.current;

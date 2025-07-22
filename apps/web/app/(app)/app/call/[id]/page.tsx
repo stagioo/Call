@@ -357,12 +357,15 @@ useEffect(() => {
   });
 }, [joined, producers, device, myProducerIds, recvTransportReady, consume]);
 
-// Listen for new producers in real-time
+// Listen for new producers and user disconnections in real-time
 useEffect(() => {
   if (!joined || !socket || !device || !recvTransportReady) return;
-  const handler = (event: MessageEvent) => {
+  
+  const handleMessage = (event: MessageEvent) => {
     try {
       const data = JSON.parse(event.data);
+      
+      // Handle new producers
       if (data.type === 'newProducer' && data.id) {
         if (!consumedProducers.current.has(data.id) && !myProducerIds.includes(data.id)) {
           consumedProducers.current.add(data.id);
@@ -395,26 +398,112 @@ useEffect(() => {
           });
         }
       }
+      
+      // Handle user disconnection
+      if (data.type === 'userLeft') {
+        console.log('[mediasoup] User left:', data.userId);
+        
+        // Remove all streams from this user and stop tracks
+        setRemoteStreams(prev => {
+          // First stop all tracks
+          prev.forEach(stream => {
+            if (stream.userId === data.userId) {
+              stream.stream.getTracks().forEach(track => {
+                track.stop();
+                track.enabled = false;
+              });
+            }
+          });
+          // Then filter out the streams
+          return prev.filter(stream => stream.userId !== data.userId);
+        });
+        
+        setRemoteAudios(prev => {
+          // First stop all tracks
+          prev.forEach(audio => {
+            if (audio.userId === data.userId) {
+              audio.stream.getTracks().forEach(track => {
+                track.stop();
+                track.enabled = false;
+              });
+            }
+          });
+          // Then filter out the audio streams
+          return prev.filter(audio => audio.userId !== data.userId);
+        });
+        
+        // Remove from consumed producers
+        producers.forEach(producer => {
+          if (producer.userId === data.userId) {
+            consumedProducers.current.delete(producer.id);
+          }
+        });
+
+        // Force a re-render of the streams
+        setTimeout(() => {
+          setRemoteStreams(prev => [...prev]);
+          setRemoteAudios(prev => [...prev]);
+        }, 0);
+      }
+      
+      // Handle producer closed
+      if (data.type === 'producerClosed') {
+        console.log('[mediasoup] Producer closed:', data);
+        const producerId = data.producerId;
+        
+        // Remove the specific stream
+        setRemoteStreams(prev => {
+          const remainingStreams = prev.filter(stream => stream.producerId !== producerId);
+          // Stop tracks for removed stream
+          prev.forEach(stream => {
+            if (stream.producerId === producerId) {
+              stream.stream.getTracks().forEach(track => track.stop());
+            }
+          });
+          return remainingStreams;
+        });
+        
+        setRemoteAudios(prev => {
+          const remainingAudios = prev.filter(audio => audio.id !== producerId);
+          // Stop tracks for removed audio stream
+          prev.forEach(audio => {
+            if (audio.id === producerId) {
+              audio.stream.getTracks().forEach(track => track.stop());
+            }
+          });
+          return remainingAudios;
+        });
+        
+        // Remove from consumed producers
+        consumedProducers.current.delete(producerId);
+      }
     } catch (err) {
       console.error('[WebSocket] Error processing message:', err);
     }
   };
-  socket.addEventListener('message', handler);
+
+  socket.addEventListener('message', handleMessage);
   return () => {
-    socket.removeEventListener('message', handler);
+    socket.removeEventListener('message', handleMessage);
   };
-}, [joined, socket, device, myProducerIds, recvTransportReady, consume]);
+}, [joined, socket, device, myProducerIds, recvTransportReady, consume, producers]);
 
 // Handle leaving the call
 const handleHangup = useCallback(() => {
   // Stop all tracks in local stream
   if (localStream) {
-    localStream.getTracks().forEach(track => track.stop());
+    localStream.getTracks().forEach(track => {
+      track.stop();
+      track.enabled = false;
+    });
   }
 
   // Stop screen sharing if active
   if (screenStream) {
-    screenStream.getTracks().forEach(track => track.stop());
+    screenStream.getTracks().forEach(track => {
+      track.stop();
+      track.enabled = false;
+    });
     setScreenStream(null);
     setIsScreenSharing(false);
   }
@@ -438,8 +527,29 @@ const handleHangup = useCallback(() => {
   }
 
   // Clear all remote videos and audios
-  setRemoteStreams([]);
-  setRemoteAudios([]);
+  setRemoteStreams(prev => {
+    prev.forEach(stream => {
+      if (stream.stream) {
+        stream.stream.getTracks().forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
+      }
+    });
+    return [];
+  });
+  
+  setRemoteAudios(prev => {
+    prev.forEach(audio => {
+      if (audio.stream) {
+        audio.stream.getTracks().forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
+      }
+    });
+    return [];
+  });
   
   // Clear consumed producers set
   consumedProducers.current.clear();
@@ -521,13 +631,43 @@ useEffect(() => {
   }
 }, [screenStream, socket]);
 
-// Filter remote streams by type
+// Filter remote streams by type and ensure they are active and have valid tracks
 const remoteVideoStreams = remoteStreams.filter(
-  stream => stream.kind === 'camera' && stream.stream.active && stream.stream.getVideoTracks().some(track => track.enabled)
+  stream => {
+    // Check if stream is valid
+    if (!stream?.stream) return false;
+    
+    // Get video tracks
+    const videoTracks = stream.stream.getVideoTracks();
+    if (!videoTracks.length) return false;
+    
+    // Check if any track is valid
+    const hasValidTrack = videoTracks.some(track => 
+      track.readyState === 'live' && 
+      track.enabled
+    );
+    
+    return stream.kind === 'camera' && hasValidTrack;
+  }
 );
 
 const remoteScreenStreams = remoteStreams.filter(
-  stream => stream.kind === 'screen' && stream.stream.active && stream.stream.getVideoTracks().some(track => track.enabled)
+  stream => {
+    // Check if stream is valid
+    if (!stream?.stream) return false;
+    
+    // Get video tracks
+    const videoTracks = stream.stream.getVideoTracks();
+    if (!videoTracks.length) return false;
+    
+    // Check if any track is valid
+    const hasValidTrack = videoTracks.some(track => 
+      track.readyState === 'live' && 
+      track.enabled
+    );
+    
+    return stream.kind === 'screen' && hasValidTrack;
+  }
 );
 
 return (
@@ -622,48 +762,76 @@ return (
           )}
 
           {/* Remote cameras */}
-          {remoteVideoStreams.map(({ stream, userId: remoteUserId, id }) => (
-            <div className="relative" key={id}>
-              <video
-                autoPlay
-                playsInline
-                className="rounded-lg shadow-lg w-[320px] h-[240px] bg-black"
-                ref={el => {
-                  if (el) {
-                    el.srcObject = stream;
-                    el.onloadedmetadata = () => {
-                      el.play().catch(e => console.warn('Error forcing play:', e));
-                    };
-                  }
-                }}
-              />
-              <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                {remoteUserId ? remoteUserId.slice(0, 6) : 'User'}
-              </span>
-            </div>
-          ))}
+          {remoteVideoStreams.map(({ stream, userId: remoteUserId, id }) => {
+            if (!stream?.getVideoTracks().some(track => track.readyState === 'live' && track.enabled)) {
+              return null;
+            }
+            
+            return (
+              <div className="relative" key={id}>
+                <video
+                  autoPlay
+                  playsInline
+                  className="rounded-lg shadow-lg w-[320px] h-[240px] bg-black"
+                  ref={el => {
+                    if (el) {
+                      el.srcObject = stream;
+                      // Remove video element if stream becomes invalid
+                      el.onended = () => {
+                        setRemoteStreams(prev => prev.filter(s => s.id !== id));
+                      };
+                      el.onloadedmetadata = () => {
+                        el.play().catch(e => console.warn('Error forcing play:', e));
+                      };
+                    }
+                  }}
+                  onError={() => {
+                    // Remove stream on error
+                    setRemoteStreams(prev => prev.filter(s => s.id !== id));
+                  }}
+                />
+                <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                  {remoteUserId ? remoteUserId.slice(0, 6) : 'User'}
+                </span>
+              </div>
+            );
+          })}
 
           {/* Remote screens */}
-          {remoteScreenStreams.map(({ stream, userId: remoteUserId, id }) => (
-            <div className="relative" key={id}>
-              <video
-                autoPlay
-                playsInline
-                className="rounded-lg shadow-lg w-[320px] h-[240px] bg-black"
-                ref={el => {
-                  if (el) {
-                    el.srcObject = stream;
-                    el.onloadedmetadata = () => {
-                      el.play().catch(e => console.warn('Error forcing play:', e));
-                    };
-                  }
-                }}
-              />
-              <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                {`${remoteUserId ? remoteUserId.slice(0, 6) : 'User'}'s screen`}
-              </span>
-            </div>
-          ))}
+          {remoteScreenStreams.map(({ stream, userId: remoteUserId, id }) => {
+            if (!stream?.getVideoTracks().some(track => track.readyState === 'live' && track.enabled)) {
+              return null;
+            }
+            
+            return (
+              <div className="relative" key={id}>
+                <video
+                  autoPlay
+                  playsInline
+                  className="rounded-lg shadow-lg w-[320px] h-[240px] bg-black"
+                  ref={el => {
+                    if (el) {
+                      el.srcObject = stream;
+                      // Remove video element if stream becomes invalid
+                      el.onended = () => {
+                        setRemoteStreams(prev => prev.filter(s => s.id !== id));
+                      };
+                      el.onloadedmetadata = () => {
+                        el.play().catch(e => console.warn('Error forcing play:', e));
+                      };
+                    }
+                  }}
+                  onError={() => {
+                    // Remove stream on error
+                    setRemoteStreams(prev => prev.filter(s => s.id !== id));
+                  }}
+                />
+                <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                  {`${remoteUserId ? remoteUserId.slice(0, 6) : 'User'}'s screen`}
+                </span>
+              </div>
+            );
+          })}
 
           {/* Remote audios */}
           {remoteAudios.map(({ stream, id }) => (
@@ -693,4 +861,4 @@ return (
     )}
   </div>
 );
-} 
+}
