@@ -89,7 +89,7 @@ export default function CallPreviewPage() {
     localStream,
     connected,
     socket,
-    deviceRef,
+    device,
     createRecvTransport: createRecv,
   } = useMediasoupClient();
 
@@ -189,11 +189,11 @@ const handleJoin = async () => {
 
 // Consume existing producers when joining the call (only after the device and recv transport are ready)
 useEffect(() => {
-  if (!joined || !producers.length || !deviceRef.current || !recvTransportReady) return;
+  if (!joined || !producers.length || !device || !recvTransportReady) return;
   producers.forEach((producer) => {
     if (!consumedProducers.current.has(producer.id) && !myProducerIds.includes(producer.id)) {
       consumedProducers.current.add(producer.id);
-      consume(producer.id, deviceRef.current!.rtpCapabilities, (stream: MediaStream, kind?: string, remoteUserId?: string) => {
+      consume(producer.id, device!.rtpCapabilities, (stream: MediaStream, kind?: string, remoteUserId?: string) => {
         if (!stream) return;
         if (kind === 'video' && stream.getVideoTracks().length > 0) {
           setRemoteVideos((prev) => prev.find(v => v.id === stream.id) ? prev : [...prev, { id: stream.id, stream, userId: remoteUserId }]);
@@ -206,18 +206,18 @@ useEffect(() => {
     }
   });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [joined, producers, deviceRef.current, myProducerIds, recvTransportReady]);
+}, [joined, producers, device, myProducerIds, recvTransportReady]);
 
 // Listen for new producers in real-time
 useEffect(() => {
-  if (!joined || !socket || !deviceRef.current || !recvTransportReady) return;
+  if (!joined || !socket || !device || !recvTransportReady) return;
   const handler = (event: MessageEvent) => {
     try {
       const data = JSON.parse(event.data);
       if (data.type === 'newProducer' && data.id) {
         if (!consumedProducers.current.has(data.id) && !myProducerIds.includes(data.id)) {
           consumedProducers.current.add(data.id);
-          consume(data.id, deviceRef.current!.rtpCapabilities, (stream: MediaStream, kind?: string, remoteUserId?: string) => {
+          consume(data.id, device!.rtpCapabilities, (stream: MediaStream, kind?: string, remoteUserId?: string) => {
             if (!stream) return;
             if (kind === 'video' && stream.getVideoTracks().length > 0) {
               setRemoteVideos((prev) => prev.find(v => v.id === stream.id) ? prev : [...prev, { id: stream.id, stream, userId: remoteUserId ?? data.userId }]);
@@ -237,7 +237,7 @@ useEffect(() => {
     socket.removeEventListener('message', handler);
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [joined, socket, deviceRef.current, myProducerIds, recvTransportReady]);
+}, [joined, socket, device, myProducerIds, recvTransportReady]);
 
 // TODO: For full real-time, you should listen for new producers via signaling (e.g., broadcast to all users when someone produces)
 

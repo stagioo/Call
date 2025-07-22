@@ -18,6 +18,12 @@ interface JoinResponse {
   }[];
 }
 
+interface RemoteStream {
+  stream: MediaStream;
+  producerId: string;
+  userId: string;
+}
+
 function useWsRequest(socket: WebSocket | null) {
   const pending = useRef(new Map<string, (data: any) => void>());
   const eventHandlers = useRef(new Map<string, (data: any) => void>());
@@ -84,8 +90,9 @@ export function useMediasoupClient() {
   const deviceRef = useRef<Device | null>(null);
   const sendTransportRef = useRef<Transport | null>(null);
   const recvTransportRef = useRef<Transport | null>(null);
+  const consumersRef = useRef<Map<string, Consumer>>(new Map());
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteStreams, setRemoteStreams] = useState<MediaStream[]>([]);
+  const [remoteStreams, setRemoteStreams] = useState<RemoteStream[]>([]);
   // Obtener o generar userId
   const [userId] = useState(() => {
     if (typeof window !== "undefined") {
@@ -193,6 +200,25 @@ export function useMediasoupClient() {
     return producers;
   }, []);
 
+  // Cleanup function for streams and consumers
+  const cleanupConsumer = useCallback((producerId: string) => {
+    const consumer = consumersRef.current.get(producerId);
+    if (consumer) {
+      consumer.close();
+      consumersRef.current.delete(producerId);
+    }
+    setRemoteStreams(prev => prev.filter(s => s.producerId !== producerId));
+  }, []);
+
+  // Cleanup all consumers and streams
+  const cleanupAllConsumers = useCallback(() => {
+    consumersRef.current.forEach(consumer => {
+      consumer.close();
+    });
+    consumersRef.current.clear();
+    setRemoteStreams([]);
+  }, []);
+
   // Consume remote media
   const consume = useCallback(
     async (
@@ -204,6 +230,13 @@ export function useMediasoupClient() {
         console.error("[mediasoup] No receive transport available");
         return;
       }
+
+      // Check if we're already consuming this producer
+      if (consumersRef.current.has(producerId)) {
+        console.log("[mediasoup] Already consuming producer:", producerId);
+        return;
+      }
+
       try {
         const res = await sendRequest("consume", {
           transportId: recvTransportRef.current.id,
@@ -223,19 +256,33 @@ export function useMediasoupClient() {
           rtpParameters: res.rtpParameters as RtpParameters,
         });
 
+        // Store the consumer
+        consumersRef.current.set(producerId, consumer);
+
         console.log("[mediasoup] Created consumer:", consumer.id, "for producer:", res.producerId);
         
         const stream = new MediaStream([consumer.track]);
+
+        // Handle consumer closure
+        consumer.on("@close", () => {
+          cleanupConsumer(producerId);
+        });
+
         if (onStream) {
           onStream(stream, res.kind, res.userId);
         } else {
-          setRemoteStreams((prev) => [...prev, stream]);
+          setRemoteStreams(prev => {
+            // Remove any existing stream with the same producerId
+            const filtered = prev.filter(s => s.producerId !== producerId);
+            return [...filtered, { stream, producerId, userId: res.userId }];
+          });
         }
       } catch (error) {
         console.error("[mediasoup] Error in consume:", error);
+        cleanupConsumer(producerId);
       }
     },
-    [sendRequest]
+    [sendRequest, cleanupConsumer]
   );
 
   // Handle new producers
@@ -247,12 +294,30 @@ export function useMediasoupClient() {
       consume(data.id, deviceRef.current!.rtpCapabilities);
     };
 
+    const handleProducerClosed = (data: any) => {
+      console.log("[mediasoup] Producer closed:", data);
+      cleanupConsumer(data.producerId);
+    };
+
     addEventHandler("newProducer", handleNewProducer);
+    addEventHandler("producerClosed", handleProducerClosed);
 
     return () => {
       removeEventHandler("newProducer");
+      removeEventHandler("producerClosed");
+      cleanupAllConsumers();
     };
-  }, [addEventHandler, removeEventHandler, consume, deviceRef]);
+  }, [addEventHandler, removeEventHandler, consume, cleanupConsumer, cleanupAllConsumers]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanupAllConsumers();
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cleanupAllConsumers, localStream]);
 
   return {
     joinRoom,
@@ -263,10 +328,9 @@ export function useMediasoupClient() {
     consume,
     localStream,
     setLocalStream,
-    remoteStreams,
+    remoteStreams: remoteStreams.map(rs => rs.stream), // Mantener la compatibilidad con la API anterior
     connected,
     socket,
     device: deviceRef.current,
-    deviceRef,
   };
 }

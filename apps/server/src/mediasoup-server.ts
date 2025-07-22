@@ -179,6 +179,24 @@ wss.on("connection", (ws: WebSocket) => {
           rtpParameters: data.rtpParameters,
         });
         producers.set(producer.id, { producer, userId });
+
+        // Handle producer closure
+        producer.on("transportclose", () => {
+          console.log("[mediasoup] Producer transport closed:", producer.id);
+          producers.delete(producer.id);
+          // Notify all clients
+          for (const client of clients) {
+            if (client.readyState === 1) {
+              client.send(
+                JSON.stringify({
+                  type: "producerClosed",
+                  producerId: producer.id,
+                })
+              );
+            }
+          }
+        });
+
         console.log(
           "[produce] Producer created:",
           producer.id,
