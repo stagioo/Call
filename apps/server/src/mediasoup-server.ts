@@ -819,6 +819,61 @@ wss.on("connection", (ws: WebSocket) => {
           break;
         }
 
+        case "closeProducer": {
+          const peer = getPeerFromSocket(ws);
+          if (!peer) {
+            ws.send(
+              JSON.stringify({
+                reqId: data.reqId,
+                error: "Peer not found",
+              })
+            );
+            return;
+          }
+
+          const myProducer = peer.producers.get(data.producerId);
+          if (!myProducer) {
+            ws.send(
+              JSON.stringify({
+                reqId: data.reqId,
+                error: "Producer not found",
+              })
+            );
+            return;
+          }
+
+          // Close the producer
+          myProducer.producer.close();
+          peer.producers.delete(data.producerId);
+
+          // Get room to notify other peers
+          const roomId = peerRoomMap.get(peer.id);
+          const room = getRoom(roomId!);
+          if (room) {
+            // Notify other peers about producer closure
+            Object.values(room.peers).forEach((otherPeer) => {
+              if (otherPeer.id !== peer.id && otherPeer.ws.readyState === WebSocket.OPEN) {
+                otherPeer.ws.send(
+                  JSON.stringify({
+                    type: "producerClosed",
+                    peerId: peer.id,
+                    producerId: data.producerId,
+                  })
+                );
+              }
+            });
+          }
+
+          ws.send(
+            JSON.stringify({
+              reqId: data.reqId,
+              type: "closeProducerResponse",
+              success: true,
+            })
+          );
+          break;
+        }
+
         default:
           ws.send(
             JSON.stringify({

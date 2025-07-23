@@ -320,26 +320,29 @@ export default function CallPreviewPage() {
   const handleToggleScreenShare = async () => {
     try {
       if (screenStream) {
-        // Stop screen sharing
-        screenStream
-          .getTracks()
-          .forEach((track: MediaStreamTrack) => track.stop());
-        setScreenStream(null);
-        setIsScreenSharing(false);
-
-        // Close screen share producer if exists
-        if (
-          screenProducerRef.current &&
-          socket?.readyState === WebSocket.OPEN
-        ) {
+        // First, close screen share producer if exists
+        if (screenProducerRef.current && socket?.readyState === WebSocket.OPEN) {
+          const producerId = screenProducerRef.current.id;
           socket.send(
             JSON.stringify({
               type: "closeProducer",
-              producerId: screenProducerRef.current.id,
+              producerId: producerId,
+              reqId: crypto.randomUUID(),
             })
           );
+          // Remove from myProducerIds
+          setMyProducerIds(prev => prev.filter(id => id !== producerId));
           screenProducerRef.current = null;
         }
+
+        // Then stop screen sharing tracks
+        const stream: MediaStream = screenStream;
+        stream.getTracks().forEach((track: MediaStreamTrack) => {
+          track.stop();
+          track.enabled = false;
+        });
+        setScreenStream(null);
+        setIsScreenSharing(false);
       } else {
         // Start screen sharing
         const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -351,43 +354,54 @@ export default function CallPreviewPage() {
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           videoTrack.onended = () => {
-            if (screenStream) {
-              (screenStream as MediaStream)
-                .getTracks()
-                .forEach((track: MediaStreamTrack) => track.stop());
-            }
-            setScreenStream(null);
-            setIsScreenSharing(false);
-            if (
-              screenProducerRef.current &&
-              socket?.readyState === WebSocket.OPEN
-            ) {
-              socket.send(
-                JSON.stringify({
-                  type: "closeProducer",
-                  producerId: screenProducerRef.current.id,
-                })
-              );
-              screenProducerRef.current = null;
+            const currentStream = screenStream;
+            if (currentStream) {
+              // First, close screen share producer if exists
+              if (screenProducerRef.current && socket?.readyState === WebSocket.OPEN) {
+                const producerId = screenProducerRef.current.id;
+                socket.send(
+                  JSON.stringify({
+                    type: "closeProducer",
+                    producerId: producerId,
+                    reqId: crypto.randomUUID(),
+                  })
+                );
+                // Remove from myProducerIds
+                setMyProducerIds(prev => prev.filter(id => id !== producerId));
+                screenProducerRef.current = null;
+              }
+
+              // Then stop screen sharing tracks
+              const stream: MediaStream = currentStream;
+              stream.getTracks().forEach((track: MediaStreamTrack) => {
+                track.stop();
+                track.enabled = false;
+              });
+              setScreenStream(null);
+              setIsScreenSharing(false);
             }
           };
         }
 
+        // Set screen stream first
         setScreenStream(stream);
         setIsScreenSharing(true);
 
-        // Produce screen sharing stream separately
+        // Then produce screen sharing stream
         if (joined && socket?.readyState === WebSocket.OPEN) {
-          const producers = await produce(stream, { source: "screen" });
-          const firstProducer = producers?.[0];
-          if (
-            producers &&
-            producers.length > 0 &&
-            firstProducer &&
-            "id" in firstProducer
-          ) {
-            screenProducerRef.current = firstProducer;
-            setMyProducerIds((prev) => [...prev, firstProducer.id]);
+          try {
+            const producers = await produce(stream, { source: "screen" });
+            const firstProducer = producers?.[0];
+            if (producers && producers.length > 0 && firstProducer && "id" in firstProducer) {
+              screenProducerRef.current = firstProducer;
+              setMyProducerIds((prev) => [...prev, firstProducer.id]);
+            }
+          } catch (error) {
+            console.error("Error producing screen share:", error);
+            // Cleanup if production fails
+            stream.getTracks().forEach(track => track.stop());
+            setScreenStream(null);
+            setIsScreenSharing(false);
           }
         }
       }
@@ -599,30 +613,39 @@ export default function CallPreviewPage() {
   // Handle screen sharing cleanup
   useEffect(() => {
     if (screenStream) {
+      const stream: MediaStream = screenStream;
       const handleStreamEnded = () => {
-        screenStream.getTracks().forEach((track) => track.stop());
-        setScreenStream(null);
-        setIsScreenSharing(false);
-        if (
-          screenProducerRef.current &&
-          socket?.readyState === WebSocket.OPEN
-        ) {
+        // First, close screen share producer if exists
+        if (screenProducerRef.current && socket?.readyState === WebSocket.OPEN) {
+          const producerId = screenProducerRef.current.id;
           socket.send(
             JSON.stringify({
               type: "closeProducer",
-              producerId: screenProducerRef.current.id,
+              producerId: producerId,
+              reqId: crypto.randomUUID(),
             })
           );
+          // Remove from myProducerIds
+          setMyProducerIds(prev => prev.filter(id => id !== producerId));
           screenProducerRef.current = null;
         }
+
+        // Then stop screen sharing tracks
+        stream.getTracks().forEach((track) => {
+          track.stop();
+          track.enabled = false;
+        });
+        setScreenStream(null);
+        setIsScreenSharing(false);
       };
 
-      screenStream.getVideoTracks().forEach((track) => {
+      const videoTracks = stream.getVideoTracks();
+      videoTracks.forEach((track) => {
         track.onended = handleStreamEnded;
       });
 
       return () => {
-        screenStream.getVideoTracks().forEach((track) => {
+        videoTracks.forEach((track) => {
           track.onended = null;
         });
       };
@@ -700,6 +723,7 @@ export default function CallPreviewPage() {
 
     const isVideoKind = stream.kind === "video";
     const isVideoSource = stream.source === "webcam";
+    const isNotScreenShare = stream.source !== "screen"; // Add this check
 
     console.log("[Call] Video stream analysis:", {
       producerId: stream.producerId,
@@ -707,6 +731,7 @@ export default function CallPreviewPage() {
       source: stream.source,
       isVideoKind,
       isVideoSource,
+      isNotScreenShare,
       hasValidTrack,
       videoTracksCount: videoTracks.length,
       trackStates: videoTracks.map((t) => ({
@@ -715,7 +740,7 @@ export default function CallPreviewPage() {
       })),
     });
 
-    const isValidVideoStream = isVideoSource && isVideoKind && hasValidTrack;
+    const isValidVideoStream = isVideoSource && isVideoKind && hasValidTrack && isNotScreenShare;
 
     console.log("[Call] Video stream valid:", isValidVideoStream);
     return isValidVideoStream;
@@ -737,7 +762,15 @@ export default function CallPreviewPage() {
     const isValidScreenStream =
       stream.source === "screen" && stream.kind === "video" && hasValidTrack;
 
-    console.log("[Call] Screen stream valid:", isValidScreenStream);
+    console.log("[Call] Screen stream valid:", {
+      producerId: stream.producerId,
+      isValidScreenStream,
+      source: stream.source,
+      kind: stream.kind,
+      hasValidTrack,
+      peerId: stream.peerId
+    });
+
     return isValidScreenStream;
   });
 
