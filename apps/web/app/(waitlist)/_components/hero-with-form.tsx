@@ -15,8 +15,15 @@ const Vercel = (props: SVGProps<SVGSVGElement>) => (
 const HeroWithForm = () => {
   return (
     <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-5 px-6 py-30">
-      <Badge className="gap-1">
-        Backed by <Vercel className="h-3 w-3" /> Vercel
+      <Badge asChild className="gap-1 cursor-pointer">
+        <a
+          href="https://vercel.com/oss"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Backed by Vercel - Open Source Sponsorship"
+        >
+          Backed by <Vercel className="h-3 w-3" /> Vercel
+        </a>
       </Badge>
       <h1 className="font-lora text-primary/80 max-w-lg text-center text-4xl font-bold">
         {siteConfig.description}
