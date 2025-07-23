@@ -36,6 +36,7 @@ const MediaControls = ({
   onToggleScreenShare,
   onToggleCamera,
   onToggleMic,
+  isMicOn,
 }: {
   localStream: MediaStream | null;
   joined: boolean;
@@ -44,21 +45,17 @@ const MediaControls = ({
   onToggleScreenShare: () => void;
   onToggleCamera: () => void;
   onToggleMic: () => void;
+  isMicOn: boolean;
 }) => {
   const [isCameraOn, setIsCameraOn] = useState(true);
-  const [isMicOn, setIsMicOn] = useState(true);
 
   // Update states when localStream changes
   useEffect(() => {
     if (localStream) {
       const videoTracks = localStream.getVideoTracks();
-      const audioTracks = localStream.getAudioTracks();
 
       if (videoTracks.length > 0 && videoTracks[0]) {
         setIsCameraOn(videoTracks[0].enabled);
-      }
-      if (audioTracks.length > 0 && audioTracks[0]) {
-        setIsMicOn(audioTracks[0].enabled);
       }
     }
   }, [localStream]);
@@ -66,11 +63,6 @@ const MediaControls = ({
   const handleToggleCamera = () => {
     onToggleCamera();
     setIsCameraOn((prev) => !prev);
-  };
-
-  const handleToggleMic = () => {
-    onToggleMic();
-    setIsMicOn((prev) => !prev);
   };
 
   return (
@@ -83,7 +75,7 @@ const MediaControls = ({
       </button>
       <button
         className={`rounded px-4 py-2 ${isMicOn ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"}`}
-        onClick={handleToggleMic}
+        onClick={onToggleMic}
       >
         {isMicOn ? "Turn off microphone" : "Turn on microphone"}
       </button>
@@ -130,6 +122,7 @@ export default function CallPreviewPage() {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const screenProducerRef = useRef<any>(null);
   const localAudioProducerId = useRef<string | null>(null);
+  const [isLocalMicOn, setIsLocalMicOn] = useState(true);
 
   // Mediasoup hooks with cleanupAll
   const {
@@ -331,6 +324,7 @@ export default function CallPreviewPage() {
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         setProducerMuted(localAudioProducerId.current, !audioTrack.enabled);
+        setIsLocalMicOn(audioTrack.enabled);
       }
     }
   };
@@ -919,9 +913,12 @@ export default function CallPreviewPage() {
                     }
                   }}
                 />
-                <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
-                  You ({displayName})
-                </span>
+                <div className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-white">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">You ({displayName})</span>
+                    {!isLocalMicOn && <MicOff size={12} />}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1119,6 +1116,7 @@ export default function CallPreviewPage() {
             onToggleScreenShare={handleToggleScreenShare}
             onToggleCamera={toggleCamera}
             onToggleMic={toggleMic}
+            isMicOn={isLocalMicOn}
           />
         </div>
       )}
