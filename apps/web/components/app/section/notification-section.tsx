@@ -52,7 +52,7 @@ const NotificationSection = () => {
       });
       const data = await res.json();
       if (res.ok && data.callId) {
-        router.push(`/call/${data.callId}`);
+        router.push(`/app/call/${data.callId}`);
       } else {
         setError(data.message || "Could not accept invitation");
       }
