@@ -550,7 +550,8 @@ export function useMediasoupClient() {
           cleanupConsumer(producerId);
         });
 
-        consumer.on("producerclose", () => {
+        // Usar @close en lugar de producerclose ya que es el evento correcto según los tipos
+        consumer.on("@close", () => {
           console.log(
             `[mediasoup] Producer closed for consumer: ${consumer.id}`
           );

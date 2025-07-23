@@ -14,15 +14,28 @@ type Worker = mediasoup.types.Worker;
 
 export type ProducerSource = "mic" | "webcam" | "screen";
 
+// Tipos específicos para mediasoup
+type MediasoupProducer = Producer & {
+  appData: {
+    peerId?: string;
+    source?: ProducerSource;
+  };
+};
+
+type MediasoupAudioLevelObserverVolume = {
+  producer: MediasoupProducer;
+  volume: number;
+};
+
 export type MyProducer = {
-  id: string; // Producer ID
+  id: string;
   source: ProducerSource;
-  producer: Producer;
+  producer: MediasoupProducer;
   paused: boolean;
 };
 
 export type MyConsumer = {
-  id: string; // Consumer ID
+  id: string;
   peerId: string;
   producerId: string;
   consumer: Consumer;
@@ -33,12 +46,9 @@ export type MyPeer = {
   displayName: string;
   device: any;
   ws: WebSocket;
-
   connectionState: "new" | "connecting" | "connected" | "disconnected";
-
   sendTransport: Transport | null;
   recvTransport: Transport | null;
-
   producers: Map<string, MyProducer>;
   consumers: Map<string, MyConsumer>;
 };
@@ -157,9 +167,9 @@ async function createRoom(roomId: string): Promise<MyRoom> {
   rooms[roomId] = room;
 
   // Handle audio level changes
-  audioLevelObserver.on("volumes", (volumes) => {
+  audioLevelObserver.on("volumes", (volumes: MediasoupAudioLevelObserverVolume[]) => {
     const volume = volumes[0];
-    if (volume) {
+    if (volume && volume.producer.appData?.peerId) {
       // Notify all peers in the room about audio levels
       Object.values(room.peers).forEach((peer) => {
         if (peer.ws.readyState === WebSocket.OPEN) {
@@ -330,11 +340,16 @@ wss.on("connection", (ws: WebSocket) => {
           peer.connectionState = "connecting";
 
           // Get existing producers in the room
-          const existingProducers: any[] = [];
-          Object.values(room.peers).forEach((otherPeer) => {
+          const existingProducers = Object.values(room.peers).reduce<Array<{
+            id: string;
+            peerId: string;
+            kind: mediasoup.types.MediaKind;
+            source: ProducerSource;
+            displayName: string;
+          }>>((acc, otherPeer) => {
             if (otherPeer.id !== peerId) {
               otherPeer.producers.forEach((myProducer) => {
-                existingProducers.push({
+                acc.push({
                   id: myProducer.id,
                   peerId: otherPeer.id,
                   kind: myProducer.producer.kind,
@@ -343,7 +358,8 @@ wss.on("connection", (ws: WebSocket) => {
                 });
               });
             }
-          });
+            return acc;
+          }, []);
 
           // Notify other peers about new peer
           Object.values(room.peers).forEach((otherPeer) => {
@@ -500,7 +516,7 @@ wss.on("connection", (ws: WebSocket) => {
             return;
           }
 
-          const detectedSource =
+          const detectedSource: ProducerSource =
             data.source || (data.kind === "audio" ? "mic" : "webcam");
 
           console.log(
@@ -514,7 +530,7 @@ wss.on("connection", (ws: WebSocket) => {
               peerId: peer.id,
               source: detectedSource,
             },
-          });
+          }) as MediasoupProducer;
 
           const myProducer: MyProducer = {
             id: producer.id,
@@ -631,7 +647,7 @@ wss.on("connection", (ws: WebSocket) => {
           let targetPeer: MyPeer | null = null;
           let myProducer: MyProducer | null = null;
 
-          Object.values(room.peers).forEach((p) => {
+          for (const p of Object.values(room.peers)) {
             const producer = p.producers.get(data.producerId);
             if (producer) {
               targetPeer = p;
@@ -639,8 +655,9 @@ wss.on("connection", (ws: WebSocket) => {
               console.log(
                 `[consume] Found producer ${data.producerId} from peer: ${p.id}`
               );
+              break;
             }
-          });
+          }
 
           if (!targetPeer || !myProducer) {
             console.log(

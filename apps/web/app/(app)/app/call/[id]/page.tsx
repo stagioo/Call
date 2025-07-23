@@ -49,10 +49,10 @@ const MediaControls = ({
       const videoTracks = localStream.getVideoTracks();
       const audioTracks = localStream.getAudioTracks();
 
-      if (videoTracks.length > 0) {
+      if (videoTracks.length > 0 && videoTracks[0]) {
         setIsCameraOn(videoTracks[0].enabled);
       }
-      if (audioTracks.length > 0) {
+      if (audioTracks.length > 0 && audioTracks[0]) {
         setIsMicOn(audioTracks[0].enabled);
       }
     }
@@ -311,7 +311,8 @@ export default function CallPreviewPage() {
       );
     } catch (error) {
       console.error("Error joining call:", error);
-      alert(`Failed to join call: ${error.message || "Unknown error"}`);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      alert(`Failed to join call: ${errorMessage}`);
     }
   };
 
@@ -698,8 +699,7 @@ export default function CallPreviewPage() {
     );
 
     const isVideoKind = stream.kind === "video";
-    const isVideoSource =
-      stream.source === "webcam" || stream.source === "camera";
+    const isVideoSource = stream.source === "webcam";
 
     console.log("[Call] Video stream analysis:", {
       producerId: stream.producerId,
