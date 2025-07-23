@@ -1,11 +1,11 @@
 import { JoinCallBox } from "./_components/join-call-box";
+import { CallHistory } from "./_components/call-history";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@call/ui/components/tabs";
 import { useState } from "react";
 
 const SECTIONS = [
   { key: "joincall", label: "Join Call" },
   { key: "history", label: "History" },
-
 ];
 
 const CallSection = () => {
@@ -24,9 +24,8 @@ const CallSection = () => {
           <JoinCallBox />
         </TabsContent>
         <TabsContent value="history">
-          <div className="p-8 text-center text-muted-foreground">History section (coming soon)</div>
+          <CallHistory />
         </TabsContent>
-   
       </Tabs>
     </div>
   );

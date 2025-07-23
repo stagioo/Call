@@ -106,6 +106,21 @@ interface RemoteStream {
   producerId?: string;
 }
 
+const recordCallParticipation = async (callId: string) => {
+  try {
+    await fetch("http://localhost:1284/api/calls/record-participation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ callId }),
+    });
+  } catch (error) {
+    console.error("Error recording call participation:", error);
+  }
+};
+
 export default function CallPreviewPage() {
   const params = useParams();
   const callId = params?.id as string;
@@ -301,6 +316,9 @@ export default function CallPreviewPage() {
         "[Call] Successfully joined with producers:",
         myProducers.map((p) => p.id)
       );
+
+      // Record participation after successfully joining
+      await recordCallParticipation(callId);
     } catch (error) {
       console.error("Error joining call:", error);
       const errorMessage =

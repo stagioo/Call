@@ -219,6 +219,27 @@ export const calls = pgTable(
   ]
 );
 
+// Call Participants Table - tracks actual participation in calls
+export const callParticipants = pgTable(
+  "call_participants",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    callId: text("call_id")
+      .notNull()
+      .references(() => calls.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    joinedAt: timestamp("joined_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("call_participants_call_id_idx").on(table.callId),
+    index("call_participants_user_id_idx").on(table.userId),
+  ]
+);
+
 // Call Invitations Table
 export const callInvitations = pgTable(
   "call_invitations",

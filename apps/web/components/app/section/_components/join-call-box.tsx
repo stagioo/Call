@@ -30,14 +30,14 @@ export function JoinCallBox() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full mb-4">
           <TabsTrigger value="link" className="flex-1">Link</TabsTrigger>
-          <TabsTrigger value="code" className="flex-1">code</TabsTrigger>
+          <TabsTrigger value="code" className="flex-1">Code</TabsTrigger>
         </TabsList>
         <TabsContent value="link">
           <div className="mb-4">
-            <Label htmlFor="call-link">link of the call</Label>
+            <Label htmlFor="call-link">Link of the call</Label>
             <Input
               id="call-link"
-              placeholder="Pega el enlace aquí"
+              placeholder="Paste the link here"
               className="mt-2"
               value={link}
               onChange={e => setLink(e.target.value)}
@@ -46,7 +46,7 @@ export function JoinCallBox() {
         </TabsContent>
         <TabsContent value="code">
           <div className="mb-4">
-            <Label htmlFor="call-code">code of the call</Label>
+            <Label htmlFor="call-code">Code of the call</Label>
             <InputOTP
               maxLength={6}
               className="mt-2"
@@ -64,7 +64,7 @@ export function JoinCallBox() {
         </TabsContent>
       </Tabs>
       <Button className="w-full mt-2" onClick={handleJoin} disabled={isButtonDisabled}>
-        join the call
+        Join the call
       </Button>
     </div>
   );
