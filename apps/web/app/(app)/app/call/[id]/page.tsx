@@ -1,21 +1,39 @@
-'use client';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
-import { useMediasoupClient } from '@/hooks/useMediasoupClient';
+"use client";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useParams } from "next/navigation";
+import { useMediasoupClient } from "@/hooks/useMediasoupClient";
 
 function generateUserId() {
-  if (typeof window !== 'undefined') {
-    let id = localStorage.getItem('user-id');
+  if (typeof window !== "undefined") {
+    let id = localStorage.getItem("user-id");
     if (!id) {
       id = crypto.randomUUID();
-      localStorage.setItem('user-id', id);
+      localStorage.setItem("user-id", id);
     }
     return id;
   }
-  return '';
+  return "";
 }
 
-const MediaControls = ({ localStream, joined, onHangup, isScreenSharing, onToggleScreenShare }: { 
+function generateDisplayName() {
+  if (typeof window !== "undefined") {
+    let name = localStorage.getItem("display-name");
+    if (!name) {
+      name = `User-${Math.random().toString(36).slice(2, 8)}`;
+      localStorage.setItem("display-name", name);
+    }
+    return name;
+  }
+  return "Anonymous";
+}
+
+const MediaControls = ({
+  localStream,
+  joined,
+  onHangup,
+  isScreenSharing,
+  onToggleScreenShare,
+}: {
   localStream: MediaStream | null;
   joined: boolean;
   onHangup: () => void;
@@ -24,52 +42,66 @@ const MediaControls = ({ localStream, joined, onHangup, isScreenSharing, onToggl
 }) => {
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
-  const localStreamRef = useRef<MediaStream | null>(null);
 
+  // Update states when localStream changes
   useEffect(() => {
-    localStreamRef.current = localStream;
+    if (localStream) {
+      const videoTracks = localStream.getVideoTracks();
+      const audioTracks = localStream.getAudioTracks();
+
+      if (videoTracks.length > 0) {
+        setIsCameraOn(videoTracks[0].enabled);
+      }
+      if (audioTracks.length > 0) {
+        setIsMicOn(audioTracks[0].enabled);
+      }
+    }
   }, [localStream]);
 
   const toggleCamera = () => {
-    if (localStreamRef.current) {
-      localStreamRef.current.getVideoTracks().forEach((track) => {
+    if (localStream) {
+      const videoTracks = localStream.getVideoTracks();
+      videoTracks.forEach((track) => {
         track.enabled = !isCameraOn;
+        console.log(`[MediaControls] Video track enabled: ${track.enabled}`);
       });
       setIsCameraOn((prev) => !prev);
     }
   };
 
   const toggleMic = () => {
-    if (localStreamRef.current) {
-      localStreamRef.current.getAudioTracks().forEach((track) => {
+    if (localStream) {
+      const audioTracks = localStream.getAudioTracks();
+      audioTracks.forEach((track) => {
         track.enabled = !isMicOn;
+        console.log(`[MediaControls] Audio track enabled: ${track.enabled}`);
       });
       setIsMicOn((prev) => !prev);
     }
   };
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex gap-4 rounded-lg z-50">
+    <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 gap-4 rounded-lg">
       <button
-        className={`px-4 py-2 rounded ${isCameraOn ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+        className={`rounded px-4 py-2 ${isCameraOn ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"}`}
         onClick={toggleCamera}
       >
-        {isCameraOn ? 'Turn off camera' : 'Turn on camera'}
+        {isCameraOn ? "Turn off camera" : "Turn on camera"}
       </button>
       <button
-        className={`px-4 py-2 rounded ${isMicOn ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+        className={`rounded px-4 py-2 ${isMicOn ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"}`}
         onClick={toggleMic}
       >
-        {isMicOn ? 'Turn off microphone' : 'Turn on microphone'}
+        {isMicOn ? "Turn off microphone" : "Turn on microphone"}
       </button>
       <button
-        className={`px-4 py-2 rounded ${isScreenSharing ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+        className={`rounded px-4 py-2 ${isScreenSharing ? "bg-green-600 text-white" : "bg-gray-200 text-gray-800"}`}
         onClick={onToggleScreenShare}
       >
-        {isScreenSharing ? 'Stop sharing' : 'Share screen'}
+        {isScreenSharing ? "Stop sharing" : "Share screen"}
       </button>
       <button
-        className="px-4 py-2 rounded bg-red-600 text-white"
+        className="rounded bg-red-600 px-4 py-2 text-white"
         onClick={onHangup}
       >
         Hang up
@@ -81,8 +113,11 @@ const MediaControls = ({ localStream, joined, onHangup, isScreenSharing, onToggl
 interface RemoteStream {
   id: string;
   stream: MediaStream;
-  userId?: string;
-  kind?: string;
+  peerId: string;
+  userId?: string; // For backward compatibility
+  kind: "audio" | "video";
+  source: "mic" | "webcam" | "screen";
+  displayName: string;
   producerId?: string;
 }
 
@@ -90,6 +125,7 @@ export default function CallPreviewPage() {
   const params = useParams();
   const callId = params?.id as string;
   const userId = generateUserId();
+  const displayName = generateDisplayName();
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<string | undefined>();
@@ -110,14 +146,18 @@ export default function CallPreviewPage() {
     produce,
     consume,
     localStream,
+    remoteStreams: hookRemoteStreams,
+    peers,
     connected,
     socket,
     device,
+    currentRoomId,
   } = useMediasoupClient();
 
   // Local state for remote consumers
-  const [remoteStreams, setRemoteStreams] = useState<RemoteStream[]>([]);
-  const [remoteAudios, setRemoteAudios] = useState<{ id: string, stream: MediaStream, userId?: string }[]>([]);
+  const [remoteAudios, setRemoteAudios] = useState<
+    { id: string; stream: MediaStream; peerId?: string; displayName?: string }[]
+  >([]);
   const [recvTransportReady, setRecvTransportReady] = useState(false);
   const consumedProducers = useRef<Set<string>>(new Set());
   const [producers, setProducers] = useState<any[]>([]);
@@ -126,8 +166,8 @@ export default function CallPreviewPage() {
   // Get available devices
   useEffect(() => {
     navigator.mediaDevices.enumerateDevices().then((devices) => {
-      setVideoDevices(devices.filter((d) => d.kind === 'videoinput'));
-      setAudioDevices(devices.filter((d) => d.kind === 'audioinput'));
+      setVideoDevices(devices.filter((d) => d.kind === "videoinput"));
+      setAudioDevices(devices.filter((d) => d.kind === "audioinput"));
     });
   }, []);
 
@@ -135,6 +175,9 @@ export default function CallPreviewPage() {
   useEffect(() => {
     let active = true;
     const getStream = async () => {
+      // Don't create preview stream if already joined
+      if (joined) return;
+
       try {
         const constraints: MediaStreamConstraints = {
           video: selectedVideo ? { deviceId: { exact: selectedVideo } } : true,
@@ -142,723 +185,857 @@ export default function CallPreviewPage() {
         };
         const s = await navigator.mediaDevices.getUserMedia(constraints);
         if (active) setPreviewStream(s);
-      } catch {
+      } catch (err) {
+        console.error("Error getting preview stream:", err);
         if (active) setPreviewStream(null);
       }
     };
     getStream();
     return () => {
       active = false;
-      previewStream?.getTracks().forEach((t) => t.stop());
+      // Don't stop preview stream here - let it be cleaned up properly
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVideo, selectedAudio]);
+  }, [selectedVideo, selectedAudio, joined]);
 
-// Assign stream to the preview video
+  // Assign stream to the preview video
   useEffect(() => {
     if (videoRef.current && previewStream) {
       videoRef.current.srcObject = previewStream;
     }
   }, [previewStream]);
 
- // Logic to join the call
-const handleJoin = async () => {
-  if (!callId) return;
-  // 1. Join the room in the backend
-  const joinRes = await joinRoom(callId);
-  // 2. Get the RTP capabilities of the remote router
-  const rtpCapabilities = (joinRes as any).rtpCapabilities || (joinRes as any).routerRtpCapabilities;
-  if (!rtpCapabilities) {
-    alert('No RTP capabilities received from the router');
-    return;
-  }
-  setProducers((joinRes as any).producers || []);
-  // 3. Load the mediasoup device
-  await loadDevice(rtpCapabilities);
-  // 4. Create send and receive transports
-  await createSendTransport();
-  await createRecvTransport();
-  setRecvTransportReady(true);
-  // 5. Get the local stream with the selected devices
-  let stream: MediaStream;
-  try {
-    if (previewStream) {
-      // Ensure we have both audio and video tracks in the preview stream
-      const hasAudio = previewStream.getAudioTracks().length > 0;
-      const hasVideo = previewStream.getVideoTracks().length > 0;
-      
-      if (!hasAudio || !hasVideo) {
-        // Get a new stream with both audio and video
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          video: hasVideo ? false : true,
-          audio: hasAudio ? false : true
-        });
-        
-        // Combine tracks from both streams
-        const combinedStream = new MediaStream();
-        
-        // Add existing tracks
-        previewStream.getTracks().forEach(track => combinedStream.addTrack(track));
-        
-        // Add new tracks
-        stream.getTracks().forEach(track => {
-          if ((track.kind === 'audio' && !hasAudio) || (track.kind === 'video' && !hasVideo)) {
-            combinedStream.addTrack(track);
-          }
-        });
-        
-        stream = combinedStream;
-      } else {
-        stream = previewStream;
-      }
-    } else {
-      stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-    }
-    
-    if (!stream.getTracks().length) {
-      alert('No audio/video tracks detected in the local stream. Check permissions and devices.');
-      console.error('Empty local stream:', stream);
+  // Logic to join the call
+  const handleJoin = async () => {
+    if (!callId || !connected) {
+      alert("Not connected to server");
       return;
     }
 
-    // Log tracks for debugging
-    console.log('Local stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled, id: t.id })));
-    
-  } catch (err) {
-    alert('Error accessing camera/microphone. Check permissions.');
-    console.error('Error getUserMedia:', err);
-    return;
-  }
-  // 6. Produce the local stream and save the IDs
-  const myProducers = await produce(stream, { source: 'camera' });
-  if (!myProducers || !myProducers.length) {
-    alert('Could not produce audio/video. Check console for more details.');
-    console.error('Empty producers:', myProducers);
-    return;
-  }
-  setMyProducerIds(myProducers.map((p: any) => p.id));
-  setJoined(true);
-};
-
-// Handle screen sharing
-const handleToggleScreenShare = async () => {
-  try {
-    if (screenStream) {
-      // Stop screen sharing
-      screenStream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
-      setScreenStream(null);
-      setIsScreenSharing(false);
-
-      // Close screen share producer if exists
-      if (screenProducerRef.current && socket?.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-          type: 'closeProducer',
-          producerId: screenProducerRef.current.id
-        }));
-        screenProducerRef.current = null;
-      }
-    } else {
-      // Start screen sharing
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: false
-      });
-
-      // Handle when user stops sharing via browser UI
-      const videoTrack = stream.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.onended = () => {
-          if (screenStream) {
-            (screenStream as MediaStream).getTracks().forEach((track: MediaStreamTrack) => track.stop());
-          }
-          setScreenStream(null);
-          setIsScreenSharing(false);
-          if (screenProducerRef.current && socket?.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({
-              type: 'closeProducer',
-              producerId: screenProducerRef.current.id
-            }));
-            screenProducerRef.current = null;
-          }
-        };
-      }
-
-      setScreenStream(stream);
-      setIsScreenSharing(true);
-
-      // Produce screen sharing stream separately
-      if (joined && socket?.readyState === WebSocket.OPEN) {
-        const producers = await produce(stream, { source: 'screen' });
-        const firstProducer = producers?.[0];
-        if (producers && producers.length > 0 && firstProducer && 'id' in firstProducer) {
-          screenProducerRef.current = firstProducer;
-          setMyProducerIds(prev => [...prev, firstProducer.id]);
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Error toggling screen share:', err);
-    setIsScreenSharing(false);
-    setScreenStream(null);
-  }
-};
-
-// Consume existing producers
-useEffect(() => {
-  if (!joined || !producers.length || !device || !recvTransportReady) return;
-  
-  producers.forEach((producer) => {
-    if (!consumedProducers.current.has(producer.id) && !myProducerIds.includes(producer.id)) {
-      consumedProducers.current.add(producer.id);
-      consume(producer.id, device.rtpCapabilities, (stream: MediaStream, kind?: string, remoteUserId?: string) => {
-        if (!stream) return;
-        
-        // Handle video streams (both camera and screen)
-        if (kind === 'video') {
-          const isScreenShare = producer.appData?.source === 'screen';
-          setRemoteStreams(prev => {
-            // Remove any existing stream with the same ID
-            const filtered = prev.filter(v => v.id !== stream.id);
-            return [...filtered, { 
-              id: stream.id, 
-              stream, 
-              userId: remoteUserId,
-              kind: isScreenShare ? 'screen' : 'camera'
-            }];
-          });
-        }
-        
-        // Handle audio streams
-        if (kind === 'audio') {
-          setRemoteAudios(prev => {
-            // Remove any existing audio stream with the same ID
-            const filtered = prev.filter(a => a.id !== stream.id);
-            // Get audio tracks and create new stream only if we have tracks
-            const audioTracks = stream.getAudioTracks();
-            if (audioTracks.length === 0) return filtered;
-            // Create a new MediaStream with only the audio track
-            const audioStream = new MediaStream(audioTracks);
-            return [...filtered, { 
-              id: stream.id, 
-              stream: audioStream, 
-              userId: remoteUserId 
-            }];
-          });
-        }
-      });
-    }
-  });
-}, [joined, producers, device, myProducerIds, recvTransportReady, consume]);
-
-// Listen for new producers and user disconnections in real-time
-useEffect(() => {
-  if (!joined || !socket || !device || !recvTransportReady) return;
-  
-  const handleMessage = (event: MessageEvent) => {
     try {
-      const data = JSON.parse(event.data);
-      
-      // Handle new producers
-      if (data.type === 'newProducer' && data.id) {
-        if (!consumedProducers.current.has(data.id) && !myProducerIds.includes(data.id)) {
-          consumedProducers.current.add(data.id);
-          consume(data.id, device.rtpCapabilities, (stream: MediaStream, kind?: string, remoteUserId?: string) => {
-            if (!stream) return;
-            if (kind === 'video') {
-              const isScreenShare = data.appData?.source === 'screen';
-              setRemoteStreams(prev => prev.find(v => v.id === stream.id) ? prev : [...prev, { 
-                id: stream.id, 
-                stream, 
-                userId: remoteUserId ?? data.userId,
-                kind: isScreenShare ? 'screen' : 'camera'
-              }]);
-            }
-            if (kind === 'audio') {
-              setRemoteAudios(prev => {
-                if (prev.find(a => a.id === stream.id)) return prev;
-                // Get audio tracks and create new stream only if we have tracks
-                const audioTracks = stream.getAudioTracks();
-                if (audioTracks.length === 0) return prev;
-                // Create a new MediaStream with only the audio track
-                const audioStream = new MediaStream(audioTracks);
-                return [...prev, { 
-                  id: stream.id, 
-                  stream: audioStream, 
-                  userId: remoteUserId ?? data.userId 
-                }];
-              });
-            }
-          });
-        }
+      console.log("[Call] Starting join process...");
+
+      // 1. Join the room in the backend
+      const joinRes = await joinRoom(callId);
+      console.log("[Call] Join response:", joinRes);
+
+      // 2. Get the RTP capabilities of the remote router
+      const rtpCapabilities = joinRes.rtpCapabilities;
+      if (!rtpCapabilities) {
+        alert("No RTP capabilities received from the router");
+        return;
       }
-      
-      // Handle user disconnection
-      if (data.type === 'userLeft') {
-        console.log('[mediasoup] User left:', data.userId);
-        
-        // Remove all streams from this user and stop tracks
-        setRemoteStreams(prev => {
-          // First stop all tracks
-          prev.forEach(stream => {
-            if (stream.userId === data.userId) {
-              stream.stream.getTracks().forEach(track => {
-                track.stop();
-                track.enabled = false;
-              });
-            }
-          });
-          // Then filter out the streams
-          return prev.filter(stream => stream.userId !== data.userId);
+      setProducers(joinRes.producers || []);
+      console.log("[Call] Joined room with producers:", joinRes.producers);
+      console.log("[Call] Peers in room:", joinRes.peers);
+
+      // 3. Load the mediasoup device
+      await loadDevice(rtpCapabilities);
+
+      // 4. Create send and receive transports
+      await createSendTransport();
+      await createRecvTransport();
+      setRecvTransportReady(true);
+
+      // 5. Get a fresh stream for the call - this ensures we have clean active tracks
+      let stream: MediaStream;
+      try {
+        // Stop preview stream first to free up the camera
+        if (previewStream) {
+          console.log(
+            "[Call] Stopping preview stream before getting call stream"
+          );
+          previewStream.getTracks().forEach((track) => track.stop());
+          setPreviewStream(null);
+        }
+
+        // Always get a fresh stream for the call with simple constraints
+        const constraints: MediaStreamConstraints = {
+          video: selectedVideo ? { deviceId: { exact: selectedVideo } } : true,
+          audio: selectedAudio
+            ? { deviceId: { exact: selectedAudio } }
+            : { echoCancellation: true, noiseSuppression: true },
+        };
+
+        console.log(
+          "[Call] Getting fresh media stream with constraints:",
+          constraints
+        );
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        if (!stream || !stream.getTracks().length) {
+          alert(
+            "No audio/video tracks detected. Check permissions and devices."
+          );
+          console.error("Empty local stream:", stream);
+          return;
+        }
+
+        console.log(
+          "[Call] Got stream with tracks:",
+          stream.getTracks().map((t) => ({
+            kind: t.kind,
+            enabled: t.enabled,
+            readyState: t.readyState,
+            id: t.id,
+          }))
+        );
+
+        // Ensure all tracks are enabled
+        stream.getTracks().forEach((track) => {
+          track.enabled = true;
+          console.log(`[Call] Enabled ${track.kind} track:`, track.id);
         });
-        
-        setRemoteAudios(prev => {
-          // First stop all tracks
-          prev.forEach(audio => {
-            if (audio.userId === data.userId) {
-              audio.stream.getTracks().forEach(track => {
-                track.stop();
-                track.enabled = false;
-              });
-            }
-          });
-          // Then filter out the audio streams
-          return prev.filter(audio => audio.userId !== data.userId);
-        });
-        
-        // Remove from consumed producers
-        producers.forEach(producer => {
-          if (producer.userId === data.userId) {
-            consumedProducers.current.delete(producer.id);
-          }
+      } catch (err) {
+        alert("Error accessing camera/microphone. Check permissions.");
+        console.error("Error getUserMedia:", err);
+        return;
+      }
+
+      // 6. Produce the local stream and save the IDs - let the produce function auto-detect sources
+      console.log("[Call] Starting production...");
+      const myProducers = await produce(stream);
+      console.log("[Call] Production result:", myProducers);
+
+      if (!myProducers || !myProducers.length) {
+        alert("Could not produce audio/video. Check console for more details.");
+        console.error("Empty producers:", myProducers);
+        return;
+      }
+
+      setMyProducerIds(myProducers.map((p: any) => p.id));
+      setJoined(true);
+      console.log(
+        "[Call] Successfully joined with producers:",
+        myProducers.map((p) => p.id)
+      );
+    } catch (error) {
+      console.error("Error joining call:", error);
+      alert(`Failed to join call: ${error.message || "Unknown error"}`);
+    }
+  };
+
+  // Handle screen sharing
+  const handleToggleScreenShare = async () => {
+    try {
+      if (screenStream) {
+        // Stop screen sharing
+        screenStream
+          .getTracks()
+          .forEach((track: MediaStreamTrack) => track.stop());
+        setScreenStream(null);
+        setIsScreenSharing(false);
+
+        // Close screen share producer if exists
+        if (
+          screenProducerRef.current &&
+          socket?.readyState === WebSocket.OPEN
+        ) {
+          socket.send(
+            JSON.stringify({
+              type: "closeProducer",
+              producerId: screenProducerRef.current.id,
+            })
+          );
+          screenProducerRef.current = null;
+        }
+      } else {
+        // Start screen sharing
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: false,
         });
 
-        // Force a re-render of the streams
-        setTimeout(() => {
-          setRemoteStreams(prev => [...prev]);
-          setRemoteAudios(prev => [...prev]);
-        }, 0);
-      }
-      
-      // Handle producer closed
-      if (data.type === 'producerClosed') {
-        console.log('[mediasoup] Producer closed:', data);
-        const producerId = data.producerId;
-        
-        // Remove the specific stream
-        setRemoteStreams(prev => {
-          const remainingStreams = prev.filter(stream => stream.producerId !== producerId);
-          // Stop tracks for removed stream
-          prev.forEach(stream => {
-            if (stream.producerId === producerId) {
-              stream.stream.getTracks().forEach(track => track.stop());
+        // Handle when user stops sharing via browser UI
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          videoTrack.onended = () => {
+            if (screenStream) {
+              (screenStream as MediaStream)
+                .getTracks()
+                .forEach((track: MediaStreamTrack) => track.stop());
             }
-          });
-          return remainingStreams;
-        });
-        
-        setRemoteAudios(prev => {
-          const remainingAudios = prev.filter(audio => audio.id !== producerId);
-          // Stop tracks for removed audio stream
-          prev.forEach(audio => {
-            if (audio.id === producerId) {
-              audio.stream.getTracks().forEach(track => track.stop());
+            setScreenStream(null);
+            setIsScreenSharing(false);
+            if (
+              screenProducerRef.current &&
+              socket?.readyState === WebSocket.OPEN
+            ) {
+              socket.send(
+                JSON.stringify({
+                  type: "closeProducer",
+                  producerId: screenProducerRef.current.id,
+                })
+              );
+              screenProducerRef.current = null;
             }
-          });
-          return remainingAudios;
-        });
-        
-        // Remove from consumed producers
-        consumedProducers.current.delete(producerId);
+          };
+        }
+
+        setScreenStream(stream);
+        setIsScreenSharing(true);
+
+        // Produce screen sharing stream separately
+        if (joined && socket?.readyState === WebSocket.OPEN) {
+          const producers = await produce(stream, { source: "screen" });
+          const firstProducer = producers?.[0];
+          if (
+            producers &&
+            producers.length > 0 &&
+            firstProducer &&
+            "id" in firstProducer
+          ) {
+            screenProducerRef.current = firstProducer;
+            setMyProducerIds((prev) => [...prev, firstProducer.id]);
+          }
+        }
       }
     } catch (err) {
-      console.error('[WebSocket] Error processing message:', err);
+      console.error("Error toggling screen share:", err);
+      setIsScreenSharing(false);
+      setScreenStream(null);
     }
   };
 
-  socket.addEventListener('message', handleMessage);
-  return () => {
-    socket.removeEventListener('message', handleMessage);
-  };
-}, [joined, socket, device, myProducerIds, recvTransportReady, consume, producers]);
+  // Consume existing producers
+  useEffect(() => {
+    if (!joined || !producers.length || !device || !recvTransportReady) return;
 
-// Handle leaving the call
-const handleHangup = useCallback(() => {
-  // Stop all tracks in local stream
-  if (localStream) {
-    localStream.getTracks().forEach(track => {
-      track.stop();
-      track.enabled = false;
-    });
-  }
+    console.log("[Call] Processing existing producers:", producers);
+    console.log("[Call] Current userId:", userId);
 
-  // Stop screen sharing if active
-  if (screenStream) {
-    screenStream.getTracks().forEach(track => {
-      track.stop();
-      track.enabled = false;
-    });
-    setScreenStream(null);
-    setIsScreenSharing(false);
-  }
+    producers.forEach((producer) => {
+      console.log(
+        `[Call] Checking producer ${producer.id} from peer ${producer.peerId}`
+      );
 
-  // Close screen share producer if exists
-  if (screenProducerRef.current && socket?.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({
-      type: 'closeProducer',
-      producerId: screenProducerRef.current.id
-    }));
-    screenProducerRef.current = null;
-  }
-
-  // Notify server that we're leaving
-  if (socket?.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({
-      type: 'leaveRoom',
-      roomId: callId,
-      userId: userId
-    }));
-  }
-
-  // Clear all remote videos and audios
-  setRemoteStreams(prev => {
-    prev.forEach(stream => {
-      if (stream.stream) {
-        stream.stream.getTracks().forEach(track => {
-          track.stop();
-          track.enabled = false;
-        });
+      if (
+        !consumedProducers.current.has(producer.id) &&
+        producer.peerId !== userId
+      ) {
+        console.log(`[Call] Consuming existing producer: ${producer.id}`);
+        consumedProducers.current.add(producer.id);
+        consume(producer.id, device.rtpCapabilities);
+      } else {
+        console.log(
+          `[Call] Skipping producer ${producer.id}: already consumed or own producer`
+        );
       }
     });
-    return [];
-  });
-  
-  setRemoteAudios(prev => {
-    prev.forEach(audio => {
-      if (audio.stream) {
-        audio.stream.getTracks().forEach(track => {
-          track.stop();
-          track.enabled = false;
-        });
+  }, [joined, producers, device, recvTransportReady, consume, userId]);
+
+  // Listen for new producers in real-time
+  useEffect(() => {
+    if (!joined || !socket || !device || !recvTransportReady) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        // Handle new producers
+        if (data.type === "newProducer" && data.id) {
+          console.log("[Call] New producer message:", data);
+
+          if (data.peerId === userId) {
+            console.log("[Call] Ignoring own producer");
+            return;
+          }
+
+          if (!consumedProducers.current.has(data.id)) {
+            console.log(
+              `[Call] Consuming new producer: ${data.id} from peer: ${data.peerId}`
+            );
+            consumedProducers.current.add(data.id);
+            consume(data.id, device.rtpCapabilities);
+          } else {
+            console.log(`[Call] Producer ${data.id} already consumed`);
+          }
+        }
+
+        // Handle producer closed
+        if (data.type === "producerClosed") {
+          console.log("[Call] Producer closed:", data);
+          const producerId = data.producerId;
+
+          setRemoteAudios((prev) => {
+            const remainingAudios = prev.filter(
+              (audio) => audio.id !== producerId
+            );
+            // Stop tracks for removed audio stream
+            prev.forEach((audio) => {
+              if (audio.id === producerId) {
+                audio.stream.getTracks().forEach((track) => track.stop());
+              }
+            });
+            return remainingAudios;
+          });
+
+          // Remove from consumed producers
+          consumedProducers.current.delete(producerId);
+        }
+      } catch (err) {
+        console.error("[WebSocket] Error processing message:", err);
       }
+    };
+
+    socket.addEventListener("message", handleMessage);
+    return () => {
+      socket.removeEventListener("message", handleMessage);
+    };
+  }, [joined, socket, device, recvTransportReady, consume, userId]);
+
+  // Handle remote audio streams from hook
+  useEffect(() => {
+    console.log("[Call] Hook remote streams updated:", hookRemoteStreams);
+
+    // Extract audio streams and add them to remoteAudios - check for both 'mic' and 'webcam' sources
+    const audioStreams = hookRemoteStreams.filter(
+      (stream) =>
+        stream.kind === "audio" &&
+        (stream.source === "mic" || stream.source === "webcam")
+    );
+
+    console.log("[Call] Found audio streams:", audioStreams);
+
+    setRemoteAudios((prev) => {
+      // Create new audio array from hook streams
+      const newAudios = audioStreams.map((stream) => ({
+        id: stream.producerId,
+        stream: stream.stream,
+        peerId: stream.peerId,
+        displayName: stream.displayName,
+      }));
+
+      console.log("[Call] Setting remote audios:", newAudios);
+      return newAudios;
     });
-    return [];
-  });
-  
-  // Clear consumed producers set
-  consumedProducers.current.clear();
-  
-  // Reset producer IDs
-  setMyProducerIds([]);
+  }, [hookRemoteStreams]);
 
-  // Reset join state
-  setJoined(false);
-
-  // Navigate back to calls page
-  window.location.href = '/app/call';
-}, [localStream, screenStream, socket, callId, userId]);
-
-// Cleanup when component unmounts or user navigates away
-useEffect(() => {
-  const cleanup = () => {
-    // Stop all tracks in local stream
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-    }
-
+  // Handle leaving the call
+  const handleHangup = useCallback(() => {
     // Stop screen sharing if active
     if (screenStream) {
-      screenStream.getTracks().forEach(track => track.stop());
-    }
-
-    // Notify server that we're leaving
-    if (socket?.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({
-        type: 'leaveRoom',
-        roomId: callId,
-        userId: userId
-      }));
-    }
-
-    // Clear all states
-    setRemoteStreams([]);
-    setRemoteAudios([]);
-    consumedProducers.current.clear();
-    setMyProducerIds([]);
-  };
-
-  // Add beforeunload listener
-  window.addEventListener('beforeunload', cleanup);
-
-  // Cleanup function
-  return () => {
-    window.removeEventListener('beforeunload', cleanup);
-    cleanup();
-  };
-}, [localStream, screenStream, socket, callId, userId]);
-
-// Handle screen sharing cleanup
-useEffect(() => {
-  if (screenStream) {
-    const handleStreamEnded = () => {
-      screenStream.getTracks().forEach(track => track.stop());
+      screenStream.getTracks().forEach((track) => {
+        track.stop();
+        track.enabled = false;
+      });
       setScreenStream(null);
       setIsScreenSharing(false);
-      if (screenProducerRef.current && socket?.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-          type: 'closeProducer',
-          producerId: screenProducerRef.current.id
-        }));
-        screenProducerRef.current = null;
-      }
-    };
+    }
 
-    screenStream.getVideoTracks().forEach(track => {
-      track.onended = handleStreamEnded;
+    // Close screen share producer if exists
+    if (screenProducerRef.current && socket?.readyState === WebSocket.OPEN) {
+      socket.send(
+        JSON.stringify({
+          type: "closeProducer",
+          producerId: screenProducerRef.current.id,
+        })
+      );
+      screenProducerRef.current = null;
+    }
+
+    // Clear all remote audios
+    setRemoteAudios((prev) => {
+      prev.forEach((audio) => {
+        if (audio.stream) {
+          audio.stream.getTracks().forEach((track) => {
+            track.stop();
+            track.enabled = false;
+          });
+        }
+      });
+      return [];
     });
 
-    return () => {
-      screenStream.getVideoTracks().forEach(track => {
-        track.onended = null;
-      });
+    // Clear consumed producers set
+    consumedProducers.current.clear();
+
+    // Reset producer IDs
+    setMyProducerIds([]);
+
+    // Reset join state
+    setJoined(false);
+
+    // Navigate back to calls page
+    window.location.href = "/app/call";
+  }, [screenStream, socket, callId, userId]);
+
+  // Cleanup when component unmounts or user navigates away
+  useEffect(() => {
+    const cleanup = () => {
+      console.log("[Call] Cleaning up component...");
+
+      // Stop preview stream
+      if (previewStream) {
+        previewStream.getTracks().forEach((track) => track.stop());
+      }
+
+      // Stop screen sharing if active
+      if (screenStream) {
+        screenStream.getTracks().forEach((track) => track.stop());
+      }
+
+      // Clear all states
+      setRemoteAudios([]);
+      consumedProducers.current.clear();
+      setMyProducerIds([]);
     };
-  }
-}, [screenStream, socket]);
 
-// Filter remote streams by type and ensure they are active and have valid tracks
-const remoteVideoStreams = remoteStreams.filter(
-  stream => {
+    // Add beforeunload listener for page refresh/close
+    const handleBeforeUnload = () => {
+      cleanup();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Cleanup function for component unmount
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      cleanup();
+    };
+  }, [previewStream, screenStream]);
+
+  // Handle screen sharing cleanup
+  useEffect(() => {
+    if (screenStream) {
+      const handleStreamEnded = () => {
+        screenStream.getTracks().forEach((track) => track.stop());
+        setScreenStream(null);
+        setIsScreenSharing(false);
+        if (
+          screenProducerRef.current &&
+          socket?.readyState === WebSocket.OPEN
+        ) {
+          socket.send(
+            JSON.stringify({
+              type: "closeProducer",
+              producerId: screenProducerRef.current.id,
+            })
+          );
+          screenProducerRef.current = null;
+        }
+      };
+
+      screenStream.getVideoTracks().forEach((track) => {
+        track.onended = handleStreamEnded;
+      });
+
+      return () => {
+        screenStream.getVideoTracks().forEach((track) => {
+          track.onended = null;
+        });
+      };
+    }
+  }, [screenStream, socket]);
+
+  // Add comprehensive stream diagnostics
+  useEffect(() => {
+    console.log("=== STREAM DIAGNOSTICS ===");
+    console.log("[Call] Local stream:", localStream);
+    if (localStream) {
+      console.log("[Call] Local stream active:", localStream.active);
+      console.log(
+        "[Call] Local stream tracks:",
+        localStream.getTracks().map((t) => ({
+          kind: t.kind,
+          enabled: t.enabled,
+          readyState: t.readyState,
+          muted: t.muted,
+          id: t.id,
+        }))
+      );
+    }
+    console.log("[Call] Hook remote streams count:", hookRemoteStreams.length);
+    hookRemoteStreams.forEach((stream, index) => {
+      console.log(`[Call] Remote stream ${index}:`, {
+        producerId: stream.producerId,
+        peerId: stream.peerId,
+        kind: stream.kind,
+        source: stream.source,
+        displayName: stream.displayName,
+        streamActive: stream.stream.active,
+        tracks: stream.stream.getTracks().map((t) => ({
+          kind: t.kind,
+          enabled: t.enabled,
+          readyState: t.readyState,
+          muted: t.muted,
+        })),
+      });
+    });
+    console.log("[Call] Current userId:", userId);
+    console.log("[Call] Peers:", peers);
+    console.log("=========================");
+  }, [localStream, hookRemoteStreams, userId, peers]);
+
+  // Filter remote streams by type from the hook
+  console.log("[Call] All remote streams:", hookRemoteStreams);
+
+  const remoteVideoStreams = hookRemoteStreams.filter((stream) => {
+    console.log("[Call] Checking video stream:", {
+      producerId: stream.producerId,
+      peerId: stream.peerId,
+      kind: stream.kind,
+      source: stream.source,
+      streamValid: !!stream?.stream,
+    });
+
+    // Check if stream is valid
+    if (!stream?.stream) {
+      console.log("[Call] Stream is invalid");
+      return false;
+    }
+
+    // Get video tracks
+    const videoTracks = stream.stream.getVideoTracks();
+    if (!videoTracks.length) {
+      console.log("[Call] No video tracks for", stream.producerId);
+      return false;
+    }
+
+    // Check if any track is valid
+    const hasValidTrack = videoTracks.some(
+      (track) => track.readyState === "live" && track.enabled
+    );
+
+    const isVideoKind = stream.kind === "video";
+    const isVideoSource =
+      stream.source === "webcam" || stream.source === "camera";
+
+    console.log("[Call] Video stream analysis:", {
+      producerId: stream.producerId,
+      kind: stream.kind,
+      source: stream.source,
+      isVideoKind,
+      isVideoSource,
+      hasValidTrack,
+      videoTracksCount: videoTracks.length,
+      trackStates: videoTracks.map((t) => ({
+        readyState: t.readyState,
+        enabled: t.enabled,
+      })),
+    });
+
+    const isValidVideoStream = isVideoSource && isVideoKind && hasValidTrack;
+
+    console.log("[Call] Video stream valid:", isValidVideoStream);
+    return isValidVideoStream;
+  });
+
+  const remoteScreenStreams = hookRemoteStreams.filter((stream) => {
     // Check if stream is valid
     if (!stream?.stream) return false;
-    
+
     // Get video tracks
     const videoTracks = stream.stream.getVideoTracks();
     if (!videoTracks.length) return false;
-    
+
     // Check if any track is valid
-    const hasValidTrack = videoTracks.some(track => 
-      track.readyState === 'live' && 
-      track.enabled
+    const hasValidTrack = videoTracks.some(
+      (track) => track.readyState === "live" && track.enabled
     );
-    
-    return stream.kind === 'camera' && hasValidTrack;
-  }
-);
 
-const remoteScreenStreams = remoteStreams.filter(
-  stream => {
-    // Check if stream is valid
-    if (!stream?.stream) return false;
-    
-    // Get video tracks
-    const videoTracks = stream.stream.getVideoTracks();
-    if (!videoTracks.length) return false;
-    
-    // Check if any track is valid
-    const hasValidTrack = videoTracks.some(track => 
-      track.readyState === 'live' && 
-      track.enabled
-    );
-    
-    return stream.kind === 'screen' && hasValidTrack;
-  }
-);
+    const isValidScreenStream =
+      stream.source === "screen" && stream.kind === "video" && hasValidTrack;
 
-return (
-  <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6">
-    {!joined ? (
-      <>
-        <div className="w-full max-w-xs flex flex-col gap-4">
-          <label className="font-semibold">Camera</label>
-          <select
-            className="border rounded px-2 py-1"
-            value={selectedVideo}
-            onChange={e => setSelectedVideo(e.target.value)}
-          >
-            <option value="">Select camera</option>
-            {videoDevices.map((d) => (
-              <option key={d.deviceId} value={d.deviceId}>{d.label || `Camera (${d.deviceId})`}</option>
-            ))}
-          </select>
-          <label className="font-semibold mt-2">Microphone</label>
-          <select
-            className="border rounded px-2 py-1"
-            value={selectedAudio}
-            onChange={e => setSelectedAudio(e.target.value)}
-          >
-            <option value="">Select microphone</option>
-            {audioDevices.map((d) => (
-              <option key={d.deviceId} value={d.deviceId}>{d.label || `Microphone (${d.deviceId})`}</option>
-            ))}
-          </select>
-        </div>
-        <div className="rounded-lg shadow-lg overflow-hidden bg-black w-[320px] h-[240px] flex items-center justify-center">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <button
-          className="mt-4 px-6 py-2 rounded bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
-          onClick={handleJoin}
-          disabled={!connected}
-        >
-          {connected ? 'Join the call' : 'Connecting...'}
-        </button>
-      </>
-    ) : (
-      <div className="flex flex-col items-center gap-4 w-full">
-        <div className="text-lg font-semibold">In call</div>
-        <div className="flex flex-wrap gap-4 justify-center w-full">
-          {/* Local video */}
-          {localStream && localStream.active && localStream.getVideoTracks().some(track => track.enabled) && (
-            <div className="relative">
-              <video
-                autoPlay
-                playsInline
-                muted
-                className="rounded-lg shadow-lg w-[320px] h-[240px] bg-black"
-                ref={el => {
-                  if (el && localStream) {
-                    el.srcObject = localStream;
-                    el.onloadedmetadata = () => {
-                      el.play().catch(e => console.warn('Error forcing play:', e));
-                    };
-                  }
-                }}
-              />
-              <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">You ({userId.slice(0, 6)})</span>
-            </div>
-          )}
+    console.log("[Call] Screen stream valid:", isValidScreenStream);
+    return isValidScreenStream;
+  });
 
-          {/* Local screen share */}
-          {screenStream && screenStream.active && screenStream.getVideoTracks().some(track => track.enabled) && (
-            <div className="relative">
-              <video
-                autoPlay
-                playsInline
-                muted
-                className="rounded-lg shadow-lg w-[320px] h-[240px] bg-black"
-                ref={el => {
-                  if (el && screenStream) {
-                    el.srcObject = screenStream;
-                    el.onloadedmetadata = () => {
-                      el.play().catch(e => console.warn('Error forcing play:', e));
-                    };
-                  }
-                }}
-              />
-              <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">Your screen</span>
-            </div>
-          )}
+  console.log("[Call] Filtered video streams:", remoteVideoStreams);
+  console.log("[Call] Filtered screen streams:", remoteScreenStreams);
+  console.log("[Call] Remote audios:", remoteAudios);
 
-          {/* Remote cameras */}
-          {remoteVideoStreams.map(({ stream, userId: remoteUserId, id }) => {
-            if (!stream?.getVideoTracks().some(track => track.readyState === 'live' && track.enabled)) {
-              return null;
-            }
-            
-            return (
-              <div className="relative" key={id}>
-                <video
-                  autoPlay
-                  playsInline
-                  className="rounded-lg shadow-lg w-[320px] h-[240px] bg-black"
-                  ref={el => {
-                    if (el) {
-                      el.srcObject = stream;
-                      // Remove video element if stream becomes invalid
-                      el.onended = () => {
-                        setRemoteStreams(prev => prev.filter(s => s.id !== id));
-                      };
-                      el.onloadedmetadata = () => {
-                        el.play().catch(e => console.warn('Error forcing play:', e));
-                      };
-                    }
-                  }}
-                  onError={() => {
-                    // Remove stream on error
-                    setRemoteStreams(prev => prev.filter(s => s.id !== id));
-                  }}
-                />
-                <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                  {remoteUserId ? remoteUserId.slice(0, 6) : 'User'}
-                </span>
-              </div>
-            );
-          })}
-
-          {/* Remote screens */}
-          {remoteScreenStreams.map(({ stream, userId: remoteUserId, id }) => {
-            if (!stream?.getVideoTracks().some(track => track.readyState === 'live' && track.enabled)) {
-              return null;
-            }
-            
-            return (
-              <div className="relative" key={id}>
-                <video
-                  autoPlay
-                  playsInline
-                  className="rounded-lg shadow-lg w-[320px] h-[240px] bg-black"
-                  ref={el => {
-                    if (el) {
-                      el.srcObject = stream;
-                      // Remove video element if stream becomes invalid
-                      el.onended = () => {
-                        setRemoteStreams(prev => prev.filter(s => s.id !== id));
-                      };
-                      el.onloadedmetadata = () => {
-                        el.play().catch(e => console.warn('Error forcing play:', e));
-                      };
-                    }
-                  }}
-                  onError={() => {
-                    // Remove stream on error
-                    setRemoteStreams(prev => prev.filter(s => s.id !== id));
-                  }}
-                />
-                <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                  {`${remoteUserId ? remoteUserId.slice(0, 6) : 'User'}'s screen`}
-                </span>
-              </div>
-            );
-          })}
-
-          {/* Remote audios */}
-          {remoteAudios.map(({ stream, id }) => (
-            <audio
-              key={id}
+  return (
+    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-6">
+      {!joined ? (
+        <>
+          <div className="flex w-full max-w-xs flex-col gap-4">
+            <label className="font-semibold">Camera</label>
+            <select
+              className="rounded border px-2 py-1"
+              value={selectedVideo}
+              onChange={(e) => setSelectedVideo(e.target.value)}
+            >
+              <option value="">Select camera</option>
+              {videoDevices.map((d) => (
+                <option key={d.deviceId} value={d.deviceId}>
+                  {d.label || `Camera (${d.deviceId})`}
+                </option>
+              ))}
+            </select>
+            <label className="mt-2 font-semibold">Microphone</label>
+            <select
+              className="rounded border px-2 py-1"
+              value={selectedAudio}
+              onChange={(e) => setSelectedAudio(e.target.value)}
+            >
+              <option value="">Select microphone</option>
+              {audioDevices.map((d) => (
+                <option key={d.deviceId} value={d.deviceId}>
+                  {d.label || `Microphone (${d.deviceId})`}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex h-[240px] w-[320px] items-center justify-center overflow-hidden rounded-lg bg-black shadow-lg">
+            <video
+              ref={videoRef}
               autoPlay
               playsInline
-              ref={el => {
-                if (el) {
-                  el.srcObject = stream;
-                  el.onloadedmetadata = () => {
-                    el.play().catch(e => console.warn('Error forcing play:', e));
-                  };
-                }
-              }}
+              muted
+              className="h-full w-full object-cover"
             />
-          ))}
+          </div>
+          <button
+            className="mt-4 rounded bg-blue-600 px-6 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
+            onClick={handleJoin}
+            disabled={!connected}
+          >
+            {connected ? "Join the call" : "Connecting..."}
+          </button>
+        </>
+      ) : (
+        <div className="flex w-full flex-col items-center gap-4">
+          <div className="text-lg font-semibold">In call</div>
+          <div className="flex w-full flex-wrap justify-center gap-4">
+            {/* Local video */}
+            {localStream && (
+              <div className="relative">
+                <video
+                  autoPlay
+                  playsInline
+                  muted
+                  className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                  ref={(el) => {
+                    if (el && localStream) {
+                      console.log(
+                        "[Call] Setting local video element with stream:",
+                        {
+                          streamId: localStream.id,
+                          active: localStream.active,
+                          videoTracks: localStream
+                            .getVideoTracks()
+                            .map((t) => ({
+                              id: t.id,
+                              kind: t.kind,
+                              enabled: t.enabled,
+                              readyState: t.readyState,
+                              muted: t.muted,
+                            })),
+                        }
+                      );
+                      el.srcObject = localStream;
+                      el.onloadedmetadata = () => {
+                        console.log("[Call] Local video metadata loaded");
+                        el.play().catch((e) =>
+                          console.warn("Error playing local video:", e)
+                        );
+                      };
+                      el.oncanplay = () => {
+                        console.log("[Call] Local video can play");
+                      };
+                      el.onerror = (e) => {
+                        console.error("[Call] Local video error:", e);
+                      };
+                    }
+                  }}
+                />
+                <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+                  You ({displayName})
+                </span>
+              </div>
+            )}
+
+            {/* Local screen share */}
+            {screenStream &&
+              screenStream.getVideoTracks().length > 0 &&
+              screenStream
+                .getVideoTracks()
+                .some(
+                  (track) => track.readyState === "live" && track.enabled
+                ) && (
+                <div className="relative">
+                  <video
+                    autoPlay
+                    playsInline
+                    muted
+                    className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                    ref={(el) => {
+                      if (el && screenStream) {
+                        el.srcObject = screenStream;
+                        el.onloadedmetadata = () => {
+                          el.play().catch((e) =>
+                            console.warn("Error forcing play:", e)
+                          );
+                        };
+                      }
+                    }}
+                  />
+                  <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+                    Your screen
+                  </span>
+                </div>
+              )}
+
+            {/* Remote cameras */}
+            {remoteVideoStreams.map(
+              ({
+                stream,
+                peerId,
+                displayName: peerDisplayName,
+                producerId,
+              }) => {
+                console.log(
+                  `[Call] Rendering remote video for ${peerDisplayName}:`,
+                  {
+                    streamId: stream.id,
+                    active: stream.active,
+                    videoTracks: stream.getVideoTracks().map((t) => ({
+                      id: t.id,
+                      kind: t.kind,
+                      enabled: t.enabled,
+                      readyState: t.readyState,
+                      muted: t.muted,
+                    })),
+                  }
+                );
+
+                return (
+                  <div className="relative" key={producerId || peerId}>
+                    <video
+                      autoPlay
+                      playsInline
+                      className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                      ref={(el) => {
+                        if (el && stream) {
+                          console.log(
+                            `[Call] Setting remote video element for ${peerDisplayName}`
+                          );
+                          el.srcObject = stream;
+                          el.onloadedmetadata = () => {
+                            console.log(
+                              `[Call] Remote video metadata loaded for ${peerDisplayName}`
+                            );
+                            el.play().catch((e) =>
+                              console.warn(
+                                `Error playing remote video for ${peerDisplayName}:`,
+                                e
+                              )
+                            );
+                          };
+                          el.oncanplay = () => {
+                            console.log(
+                              `[Call] Remote video can play for ${peerDisplayName}`
+                            );
+                          };
+                          el.onerror = (e) => {
+                            console.error(
+                              `[Call] Remote video error for ${peerDisplayName}:`,
+                              e
+                            );
+                          };
+                        }
+                      }}
+                    />
+                    <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+                      {peerDisplayName || "User"}
+                    </span>
+                  </div>
+                );
+              }
+            )}
+
+            {/* Remote screens */}
+            {remoteScreenStreams.map(
+              ({
+                stream,
+                peerId,
+                displayName: peerDisplayName,
+                producerId,
+              }) => {
+                if (
+                  !stream
+                    ?.getVideoTracks()
+                    .some(
+                      (track) => track.readyState === "live" && track.enabled
+                    )
+                ) {
+                  return null;
+                }
+
+                return (
+                  <div className="relative" key={producerId || peerId}>
+                    <video
+                      autoPlay
+                      playsInline
+                      className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                      ref={(el) => {
+                        if (el) {
+                          console.log(
+                            `[Call] Setting screen share stream for ${peerDisplayName}:`,
+                            stream
+                          );
+                          el.srcObject = stream;
+                          el.onloadedmetadata = () => {
+                            console.log(
+                              `[Call] Screen share metadata loaded for ${peerDisplayName}`
+                            );
+                            el.play().catch((e) =>
+                              console.warn(
+                                `Error playing screen share for ${peerDisplayName}:`,
+                                e
+                              )
+                            );
+                          };
+                        }
+                      }}
+                    />
+                    <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+                      {`${peerDisplayName || "User"}'s screen`}
+                    </span>
+                  </div>
+                );
+              }
+            )}
+
+            {/* Remote audios */}
+            {remoteAudios.map(({ stream, id, peerId, displayName }) => (
+              <audio
+                key={id}
+                autoPlay
+                playsInline
+                ref={(el) => {
+                  if (el) {
+                    console.log(
+                      `[Call] Setting audio stream for ${displayName || peerId}:`,
+                      stream
+                    );
+                    el.srcObject = stream;
+                    el.onloadedmetadata = () => {
+                      console.log(
+                        `[Call] Audio metadata loaded for ${displayName || peerId}`
+                      );
+                      el.play().catch((e) =>
+                        console.warn(
+                          `Error playing audio for ${displayName || peerId}:`,
+                          e
+                        )
+                      );
+                    };
+                  }
+                }}
+              />
+            ))}
+          </div>
+          <MediaControls
+            localStream={localStream}
+            joined={joined}
+            onHangup={handleHangup}
+            isScreenSharing={isScreenSharing}
+            onToggleScreenShare={handleToggleScreenShare}
+          />
         </div>
-        <MediaControls 
-          localStream={localStream} 
-          joined={joined} 
-          onHangup={handleHangup}
-          isScreenSharing={isScreenSharing}
-          onToggleScreenShare={handleToggleScreenShare}
-        />
-      </div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
 }
