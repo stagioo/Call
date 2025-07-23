@@ -22,6 +22,7 @@ interface Producer {
   kind: "audio" | "video";
   source: "mic" | "webcam" | "screen";
   displayName: string;
+  muted: boolean;
 }
 
 interface JoinResponse {
@@ -38,6 +39,7 @@ interface RemoteStream {
   kind: "audio" | "video";
   source: "mic" | "webcam" | "screen";
   displayName: string;
+  muted: boolean;
 }
 
 interface ProduceOptions {
@@ -149,6 +151,27 @@ export function useMediasoupClient() {
     }
     return "Anonymous";
   });
+
+  // Producer muted
+  const setProducerMuted = useCallback(
+    (producerId: string, muted: boolean) => {
+      if (!socket || !connected) {
+        console.error("Cannot set mute state: socket not connected");
+        return;
+      }
+      console.log(
+        `[setProducerMuted] Setting producer ${producerId} muted state to: ${muted}`
+      );
+      sendRequest("setProducerMuted", { producerId, muted })
+        .then((response) => {
+          console.log(`[setProducerMuted] Response received:`, response);
+        })
+        .catch((error) => {
+          console.error(`[setProducerMuted] Error:`, error);
+        });
+    },
+    [socket, connected, sendRequest]
+  );
 
   // Cleanup functions
   const cleanupConsumer = useCallback((producerId: string) => {
@@ -303,14 +326,27 @@ export function useMediasoupClient() {
       cleanupConsumer(data.producerId);
     };
 
+    const handleProducerMuted = (data: any) => {
+      console.log("[mediasoup] Producer muted state changed:", data);
+      setRemoteStreams((prev) =>
+        prev.map((stream) =>
+          stream.producerId === data.producerId
+            ? { ...stream, muted: data.muted }
+            : stream
+        )
+      );
+    };
+
     addEventHandler("peerJoined", handlePeerJoined);
     addEventHandler("peerLeft", handlePeerLeft);
     addEventHandler("producerClosed", handleProducerClosed);
+    addEventHandler("producerMuted", handleProducerMuted);
 
     return () => {
       removeEventHandler("peerJoined");
       removeEventHandler("peerLeft");
       removeEventHandler("producerClosed");
+      removeEventHandler("producerMuted");
     };
   }, [socket, addEventHandler, removeEventHandler, cleanupConsumer]);
 
@@ -489,7 +525,8 @@ export function useMediasoupClient() {
     async (
       producerId: string,
       rtpCapabilities: RtpCapabilities,
-      onStream?: (stream: MediaStream, kind?: string, peerId?: string) => void
+      onStream?: (stream: MediaStream, kind?: string, peerId?: string) => void,
+      initialMutedState?: boolean
     ) => {
       if (!recvTransportRef.current) {
         console.error(
@@ -587,6 +624,7 @@ export function useMediasoupClient() {
                 kind: res.kind,
                 source: res.source || "webcam",
                 displayName: res.displayName || "Unknown",
+                muted: res.muted ?? initialMutedState ?? false,
               };
 
               if (existingIndex >= 0) {
@@ -638,7 +676,12 @@ export function useMediasoupClient() {
         console.log(
           `[mediasoup] Consuming new producer ${data.id} from peer ${data.peerId}`
         );
-        consume(data.id, deviceRef.current.rtpCapabilities);
+        consume(
+          data.id,
+          deviceRef.current.rtpCapabilities,
+          undefined,
+          data.muted
+        );
       } else {
         console.warn(
           "[mediasoup] Cannot consume new producer - device or transport not ready"
@@ -679,5 +722,6 @@ export function useMediasoupClient() {
     currentRoomId,
     userId,
     displayName,
+    setProducerMuted,
   };
 }
