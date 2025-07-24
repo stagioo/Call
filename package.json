@@ -45,6 +45,7 @@
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-tabs": "^1.1.12",
     "chalk": "^5.4.1",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.5.0",
     "mediasoup-client": "^3.12.5",
     "zod": "^3.25.67"

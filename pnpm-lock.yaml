@@ -23,6 +23,9 @@ importers:
       chalk:
         specifier: ^5.4.1
         version: 5.4.1
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0
