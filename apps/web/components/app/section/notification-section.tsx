@@ -15,6 +15,11 @@ interface Notification {
   inviterName?: string | null;
   inviterEmail?: string | null;
   createdAt: string;
+  type?: "call" | "contact";
+  contactRequestId?: string;
+  contactRequestStatus?: "pending" | "accepted" | "rejected";
+  senderName?: string;
+  senderEmail?: string;
 }
 
 const NotificationSection = () => {
@@ -29,10 +34,38 @@ const NotificationSection = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("http://localhost:1284/api/notifications", { credentials: "include" });
-        if (!res.ok) throw new Error("Failed to load notifications");
-        const data = await res.json();
-        setNotifications(data.notifications || []);
+        // Fetch both call notifications and contact requests
+        const [notificationsRes, contactRequestsRes] = await Promise.all([
+          fetch("http://localhost:1284/api/notifications", { credentials: "include" }),
+          fetch("http://localhost:1284/api/contacts/requests", { credentials: "include" })
+        ]);
+
+        if (!notificationsRes.ok) throw new Error("Failed to load notifications");
+        if (!contactRequestsRes.ok) throw new Error("Failed to load contact requests");
+
+        const [notificationsData, contactRequestsData] = await Promise.all([
+          notificationsRes.json(),
+          contactRequestsRes.json()
+        ]);
+
+        // Transform contact requests into notifications format
+        const contactNotifications = (contactRequestsData.requests || []).map((req: any) => ({
+          id: req.id,
+          type: "contact",
+          message: `${req.senderName || req.senderEmail} wants to connect with you`,
+          callId: null,
+          contactRequestId: req.id,
+          contactRequestStatus: "pending",
+          senderName: req.senderName,
+          senderEmail: req.senderEmail,
+          createdAt: new Date().toISOString() // Since we don't have the actual creation date
+        }));
+
+        // Combine both types of notifications
+        setNotifications([
+          ...contactNotifications,
+          ...(notificationsData.notifications || []).map((n: any) => ({ ...n, type: "call" }))
+        ]);
       } catch (err: any) {
         setError(err.message || "Unknown error");
       } finally {
@@ -84,6 +117,27 @@ const NotificationSection = () => {
     }
   };
 
+  const handleContactAction = async (requestId: string, action: "accept" | "reject") => {
+    if (!requestId) return;
+    setActionLoading(requestId);
+    try {
+      const res = await fetch(`http://localhost:1284/api/contacts/requests/${requestId}/${action}`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setNotifications((prev) => prev.filter((n) => n.contactRequestId !== requestId));
+      } else {
+        const data = await res.json();
+        setError(data.message || `Could not ${action} contact request`);
+      }
+    } catch (err: any) {
+      setError(err.message || "Unknown error");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-32 items-center justify-center">
@@ -104,7 +158,7 @@ const NotificationSection = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
         <h3 className="mb-2 text-lg font-medium">No notifications</h3>
-        <p className="text-muted-foreground">You have no call invitations yet.</p>
+        <p className="text-muted-foreground">You have no notifications yet.</p>
       </div>
     );
   }
@@ -116,6 +170,37 @@ const NotificationSection = () => {
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {notifications.map((n) => {
+          if (n.type === "contact") {
+            return (
+              <Card key={n.id} className="transition-shadow hover:shadow-md">
+                <CardHeader>
+                  <div className="font-semibold">{n.message}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {new Date(n.createdAt).toLocaleString()}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      onClick={() => handleContactAction(n.contactRequestId!, "accept")}
+                      disabled={actionLoading === n.contactRequestId}
+                    >
+                      Accept
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleContactAction(n.contactRequestId!, "reject")}
+                      disabled={actionLoading === n.contactRequestId}
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
+
+          // Call notifications
           const inviter = n.inviterName || n.inviterEmail || "Someone";
           const call = n.callName || "(no name)";
           const message = n.message || `${inviter} (${n.inviterEmail || "-"}) invites you to a call: ${call}`;
