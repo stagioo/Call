@@ -118,7 +118,7 @@ const NotificationSection = () => {
         {notifications.map((n) => {
           const inviter = n.inviterName || n.inviterEmail || "Someone";
           const call = n.callName || "(no name)";
-          const message = `${inviter} (${n.inviterEmail || "-"}) invites u to a call: ${call}`;
+          const message = n.message || `${inviter} (${n.inviterEmail || "-"}) invites you to a call: ${call}`;
           return (
             <Card key={n.id} className="transition-shadow hover:shadow-md">
               <CardHeader>
@@ -141,13 +141,21 @@ const NotificationSection = () => {
                       onClick={() => handleReject(n.invitationId ?? undefined)}
                       disabled={actionLoading === n.invitationId}
                     >
-                     reject
+                      Reject
                     </Button>
                   </div>
                 ) : n.invitationStatus === "accepted" ? (
                   <span className="text-green-600 font-medium">You've already joined</span>
                 ) : n.invitationStatus === "rejected" ? (
                   <span className="text-red-600 font-medium">You've declined the invitation</span>
+                ) : n.callId ? (
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      onClick={() => router.push(`/app/call/${n.callId}`)}
+                    >
+                      Join Meeting
+                    </Button>
+                  </div>
                 ) : null}
               </CardContent>
             </Card>

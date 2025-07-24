@@ -16,6 +16,7 @@ const callsRoutes = new Hono<{ Variables: ReqVariables }>();
 const createCallSchema = z.object({
   name: z.string().min(1),
   members: z.array(z.string().email()).min(1),
+  teamId: z.string().optional(),
 });
 
 function generateCallCode() {
@@ -117,10 +118,14 @@ callsRoutes.post("/create", async (c) => {
       console.log(`✅ [CALLS DEBUG] Invitation created for ${email}`);
 
       if (inviteeId) {
+        const notificationMessage = body.teamId
+          ? `${user.name || user.email} started a meeting in team: ${name}`
+          : `${user.name || user.email} is inviting you to a call: ${name}`;
+
         await db.insert(notifications).values({
           id: crypto.randomUUID(),
           userId: inviteeId,
-          message: `${user.name || user.email} hes inviting you to a call: ${name}`,
+          message: notificationMessage,
           callId,
           createdAt: new Date(),
         });
