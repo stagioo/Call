@@ -28,6 +28,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@call/ui/components/dropdown-menu";
+import { useRouter } from "next/navigation";
 
 export const TeamSection = () => {
   const { session, isLoading: sessionLoading } = useSession();
@@ -40,11 +41,42 @@ export const TeamSection = () => {
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [startingMeeting, setStartingMeeting] = useState<string | null>(null);
+  const router = useRouter();
 
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const startTeamMeeting = async (team: Team) => {
+    try {
+      setStartingMeeting(team.id);
+      const res = await fetch("http://localhost:1284/api/calls/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name: `${team.name} Meeting`,
+          members: team.members.map(m => m.email),
+          teamId: team.id
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.message || "Failed to start meeting");
+        return;
+      }
+
+      const data = await res.json();
+      router.push(`/app/call/${data.callId}`);
+    } catch (err) {
+      alert("Network error starting meeting");
+    } finally {
+      setStartingMeeting(null);
+    }
+  };
 
   const fetchTeams = async () => {
     try {
@@ -248,8 +280,13 @@ export const TeamSection = () => {
                 </div>
 
                 {/* Action Button */}
-                <Button className="w-full" variant="outline">
-                  Start Meeting
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => startTeamMeeting(team)}
+                  disabled={startingMeeting === team.id}
+                >
+                  {startingMeeting === team.id ? "Starting..." : "Start Meeting"}
                 </Button>
               </CardContent>
             </Card>

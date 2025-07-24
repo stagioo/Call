@@ -1,6 +1,7 @@
 import * as mediasoup from "mediasoup";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import os from "os";
 
 // --- Types -----
 type Consumer = mediasoup.types.Consumer;
@@ -32,6 +33,7 @@ export type MyProducer = {
   source: ProducerSource;
   producer: MediasoupProducer;
   paused: boolean;
+  muted?: boolean;
 };
 
 export type MyConsumer = {
@@ -71,6 +73,8 @@ export type MyRooms = Record<string, MyRoom>;
 const rooms: MyRooms = {};
 const peerSocketMap = new Map<WebSocket, string>(); // WebSocket -> peerId
 const peerRoomMap = new Map<string, string>(); // peerId -> roomId
+const workers: Worker[] = [];
+let nextWorkerIdx = 0;
 
 // basic configuration for mediasoup
 const mediasoupConfig = {
@@ -112,11 +116,18 @@ const mediasoupConfig = {
   },
 };
 
-let globalWorker: Worker;
-
 async function startMediasoup() {
-  globalWorker = await mediasoup.createWorker(mediasoupConfig.worker);
+  for (let i = 0; i < os.cpus().length; i++) {
+    const worker = await mediasoup.createWorker(mediasoupConfig.worker);
+    workers.push(worker);
+  }
   console.log("[mediasoup] Worker initialized");
+}
+
+function getNextWorker(): Worker {
+  const worker = workers[nextWorkerIdx]!;
+  nextWorkerIdx = (nextWorkerIdx + 1) % workers.length;
+  return worker;
 }
 
 startMediasoup().catch(console.error);
@@ -146,7 +157,8 @@ async function createRoom(roomId: string): Promise<MyRoom> {
 
   console.log(`[mediasoup] Creating room: ${roomId}`);
 
-  const router = await globalWorker.createRouter({
+  const worker = getNextWorker();
+  const router = await worker.createRouter({
     mediaCodecs: mediasoupConfig.router.mediaCodecs,
   });
 
@@ -158,7 +170,7 @@ async function createRoom(roomId: string): Promise<MyRoom> {
 
   const room: MyRoom = {
     id: roomId,
-    worker: globalWorker,
+    worker,
     router,
     audioLevelObserver,
     peers: {},
@@ -167,23 +179,26 @@ async function createRoom(roomId: string): Promise<MyRoom> {
   rooms[roomId] = room;
 
   // Handle audio level changes
-  audioLevelObserver.on("volumes", (volumes: MediasoupAudioLevelObserverVolume[]) => {
-    const volume = volumes[0];
-    if (volume && volume.producer.appData?.peerId) {
-      // Notify all peers in the room about audio levels
-      Object.values(room.peers).forEach((peer) => {
-        if (peer.ws.readyState === WebSocket.OPEN) {
-          peer.ws.send(
-            JSON.stringify({
-              type: "audioLevel",
-              peerId: volume.producer.appData.peerId,
-              volume: volume.volume,
-            })
-          );
-        }
-      });
+  audioLevelObserver.on(
+    "volumes",
+    (volumes: MediasoupAudioLevelObserverVolume[]) => {
+      const volume = volumes[0];
+      if (volume && volume.producer.appData?.peerId) {
+        // Notify all peers in the room about audio levels
+        Object.values(room.peers).forEach((peer) => {
+          if (peer.ws.readyState === WebSocket.OPEN) {
+            peer.ws.send(
+              JSON.stringify({
+                type: "audioLevel",
+                peerId: volume.producer.appData.peerId,
+                volume: volume.volume,
+              })
+            );
+          }
+        });
+      }
     }
-  });
+  );
 
   console.log(`[mediasoup] Room created: ${roomId}`);
   return room;
@@ -340,13 +355,16 @@ wss.on("connection", (ws: WebSocket) => {
           peer.connectionState = "connecting";
 
           // Get existing producers in the room
-          const existingProducers = Object.values(room.peers).reduce<Array<{
-            id: string;
-            peerId: string;
-            kind: mediasoup.types.MediaKind;
-            source: ProducerSource;
-            displayName: string;
-          }>>((acc, otherPeer) => {
+          const existingProducers = Object.values(room.peers).reduce<
+            Array<{
+              id: string;
+              peerId: string;
+              kind: mediasoup.types.MediaKind;
+              source: ProducerSource;
+              displayName: string;
+              muted: boolean;
+            }>
+          >((acc, otherPeer) => {
             if (otherPeer.id !== peerId) {
               otherPeer.producers.forEach((myProducer) => {
                 acc.push({
@@ -355,6 +373,7 @@ wss.on("connection", (ws: WebSocket) => {
                   kind: myProducer.producer.kind,
                   source: myProducer.source,
                   displayName: otherPeer.displayName,
+                  muted: myProducer.muted || false,
                 });
               });
             }
@@ -523,20 +542,21 @@ wss.on("connection", (ws: WebSocket) => {
             `[produce] Creating producer with kind: ${data.kind}, provided source: ${data.source}, detected source: ${detectedSource}, peer: ${peer.id}`
           );
 
-          const producer = await peer.sendTransport.produce({
+          const producer = (await peer.sendTransport.produce({
             kind: data.kind,
             rtpParameters: data.rtpParameters,
             appData: {
               peerId: peer.id,
               source: detectedSource,
             },
-          }) as MediasoupProducer;
+          })) as MediasoupProducer;
 
           const myProducer: MyProducer = {
             id: producer.id,
             source: detectedSource,
             producer,
             paused: false,
+            muted: false,
           };
 
           peer.producers.set(producer.id, myProducer);
@@ -590,6 +610,7 @@ wss.on("connection", (ws: WebSocket) => {
             kind: producer.kind,
             source: myProducer.source,
             displayName: peer.displayName,
+            muted: myProducer.muted || false,
           };
 
           console.log(
@@ -727,6 +748,7 @@ wss.on("connection", (ws: WebSocket) => {
               peerId: targetPeer.id,
               displayName: targetPeer.displayName,
               source: myProducer.source,
+              muted: myProducer.muted || false,
             };
 
             console.log(
@@ -744,6 +766,100 @@ wss.on("connection", (ws: WebSocket) => {
               })
             );
           }
+          break;
+        }
+
+        case "setProducerMuted": {
+          console.log(`[setProducerMuted] Received request:`, data);
+
+          const peer = getPeerFromSocket(ws);
+          if (!peer) {
+            console.log(`[setProducerMuted] Peer not found for socket`);
+            ws.send(
+              JSON.stringify({
+                reqId: data.reqId,
+                error: "Peer not found",
+              })
+            );
+            return;
+          }
+
+          console.log(`[setProducerMuted] Found peer: ${peer.id}`);
+
+          const { producerId, muted } = data;
+          console.log(
+            `[setProducerMuted] Looking for producer: ${producerId}, setting muted to: ${muted}`
+          );
+          console.log(
+            `[setProducerMuted] Available producers:`,
+            Array.from(peer.producers.keys())
+          );
+
+          const myProducer = peer.producers.get(producerId);
+
+          if (!myProducer) {
+            console.log(
+              `[setProducerMuted] Producer ${producerId} not found for peer ${peer.id}`
+            );
+            ws.send(
+              JSON.stringify({
+                reqId: data.reqId,
+                error: "Producer not found",
+              })
+            );
+            return;
+          }
+
+          console.log(
+            `[setProducerMuted] Found producer, current muted state: ${myProducer.muted}, setting to: ${muted}`
+          );
+          myProducer.muted = muted;
+
+          const roomId = peerRoomMap.get(peer.id);
+          const room = getRoom(roomId!);
+
+          if (room) {
+            console.log(
+              `[setProducerMuted] Notifying other peers in room: ${roomId}`
+            );
+            let notifiedCount = 0;
+
+            // Notify other peers
+            Object.values(room.peers).forEach((otherPeer) => {
+              if (
+                otherPeer.id !== peer.id &&
+                otherPeer.ws.readyState === WebSocket.OPEN
+              ) {
+                console.log(
+                  `[setProducerMuted] Notifying peer: ${otherPeer.id}`
+                );
+                otherPeer.ws.send(
+                  JSON.stringify({
+                    type: "producerMuted",
+                    peerId: peer.id,
+                    producerId,
+                    muted,
+                  })
+                );
+                notifiedCount++;
+              }
+            });
+
+            console.log(`[setProducerMuted] Notified ${notifiedCount} peers`);
+          } else {
+            console.log(
+              `[setProducerMuted] Room not found for peer: ${peer.id}`
+            );
+          }
+
+          console.log(`[setProducerMuted] Sending success response`);
+          ws.send(
+            JSON.stringify({
+              reqId: data.reqId,
+              type: "setProducerMutedResponse",
+              success: true,
+            })
+          );
           break;
         }
 
@@ -852,7 +968,10 @@ wss.on("connection", (ws: WebSocket) => {
           if (room) {
             // Notify other peers about producer closure
             Object.values(room.peers).forEach((otherPeer) => {
-              if (otherPeer.id !== peer.id && otherPeer.ws.readyState === WebSocket.OPEN) {
+              if (
+                otherPeer.id !== peer.id &&
+                otherPeer.ws.readyState === WebSocket.OPEN
+              ) {
                 otherPeer.ws.send(
                   JSON.stringify({
                     type: "producerClosed",
@@ -868,6 +987,57 @@ wss.on("connection", (ws: WebSocket) => {
             JSON.stringify({
               reqId: data.reqId,
               type: "closeProducerResponse",
+              success: true,
+            })
+          );
+          break;
+        }
+
+        case "chat": {
+          const peer = getPeerFromSocket(ws);
+          if (!peer) {
+            ws.send(
+              JSON.stringify({
+                reqId: data.reqId,
+                error: "Peer not found",
+              })
+            );
+            return;
+          }
+
+          const roomId = peerRoomMap.get(peer.id);
+          const room = getRoom(roomId!);
+          if (!room) {
+            ws.send(
+              JSON.stringify({
+                reqId: data.reqId,
+                error: "Room not found",
+              })
+            );
+            return;
+          }
+
+          const chatMessage = {
+            type: "chat",
+            message: data.message,
+            peerId: peer.id,
+            displayName: peer.displayName,
+          };
+
+          console.log(
+            `[mediasoup] Broadcasting chat message from peer: ${peer.id}`
+          );
+
+          Object.values(room.peers).forEach((otherPeer) => {
+            if (otherPeer.ws.readyState === WebSocket.OPEN) {
+              otherPeer.ws.send(JSON.stringify(chatMessage));
+            }
+          });
+
+          ws.send(
+            JSON.stringify({
+              reqId: data.reqId,
+              type: "chatResponse",
               success: true,
             })
           );

@@ -6,8 +6,9 @@ import {
   callInvitations,
   notifications,
   user as userTable,
+  callParticipants,
 } from "@call/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, desc } from "drizzle-orm";
 import type { ReqVariables } from "../../index.js";
 
 const callsRoutes = new Hono<{ Variables: ReqVariables }>();
@@ -15,6 +16,7 @@ const callsRoutes = new Hono<{ Variables: ReqVariables }>();
 const createCallSchema = z.object({
   name: z.string().min(1),
   members: z.array(z.string().email()).min(1),
+  teamId: z.string().optional(),
 });
 
 function generateCallCode() {
@@ -116,10 +118,14 @@ callsRoutes.post("/create", async (c) => {
       console.log(`✅ [CALLS DEBUG] Invitation created for ${email}`);
 
       if (inviteeId) {
+        const notificationMessage = body.teamId
+          ? `${user.name || user.email} started a meeting in team: ${name}`
+          : `${user.name || user.email} is inviting you to a call: ${name}`;
+
         await db.insert(notifications).values({
           id: crypto.randomUUID(),
           userId: inviteeId,
-          message: `${user.name || user.email} hes inviting you to a call: ${name}`,
+          message: notificationMessage,
           callId,
           createdAt: new Date(),
         });
@@ -177,6 +183,73 @@ callsRoutes.patch("/invitations/:id/reject", async (c) => {
     .where(eq(callInvitations.id, invitationId));
 
   return c.json({ message: "Invitation rejected" });
+});
+
+// GET /api/calls/participated
+callsRoutes.get("/participated", async (c) => {
+  try {
+    const user = c.get("user");
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    // Get all calls where user was a participant
+    const participatedCalls = await db
+      .select({
+        id: calls.id,
+        name: calls.name,
+        joinedAt: callParticipants.joinedAt,
+      })
+      .from(callParticipants)
+      .innerJoin(calls, eq(callParticipants.callId, calls.id))
+      .where(eq(callParticipants.userId, user.id as string))
+      .orderBy(desc(callParticipants.joinedAt));
+
+    return c.json({ calls: participatedCalls });
+  } catch (error) {
+    console.error("Error fetching participated calls:", error);
+    return c.json({ error: "Failed to fetch call history" }, 500);
+  }
+});
+
+// POST /api/calls/record-participation
+callsRoutes.post("/record-participation", async (c) => {
+  try {
+    const user = c.get("user");
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const body = await c.req.json();
+    const { callId } = body;
+
+    if (!callId) {
+      return c.json({ error: "Call ID is required" }, 400);
+    }
+
+    // Check if call exists
+    const call = await db.query.calls.findFirst({
+      where: eq(calls.id, callId),
+    });
+
+    if (!call) {
+      return c.json({ error: "Call not found" }, 404);
+    }
+
+    // Record participation (ignore if already recorded)
+    await db
+      .insert(callParticipants)
+      .values({
+        callId,
+        userId: user.id as string,
+      })
+      .onConflictDoNothing();
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error recording call participation:", error);
+    return c.json({ error: "Failed to record participation" }, 500);
+  }
 });
 
 export default callsRoutes;

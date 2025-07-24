@@ -2,6 +2,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useMediasoupClient } from "@/hooks/useMediasoupClient";
+import { MicOff } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { ChatSidebar } from "@/components/rooms/chat-sidebar";
+import { cn } from "@call/ui/lib/utils";
 
 function generateUserId() {
   if (typeof window !== "undefined") {
@@ -33,64 +37,50 @@ const MediaControls = ({
   onHangup,
   isScreenSharing,
   onToggleScreenShare,
+  onToggleCamera,
+  onToggleMic,
+  isMicOn,
+  onToggleChat,
 }: {
   localStream: MediaStream | null;
   joined: boolean;
   onHangup: () => void;
   isScreenSharing: boolean;
   onToggleScreenShare: () => void;
+  onToggleCamera: () => void;
+  onToggleMic: () => void;
+  isMicOn: boolean;
+  onToggleChat: () => void;
 }) => {
   const [isCameraOn, setIsCameraOn] = useState(true);
-  const [isMicOn, setIsMicOn] = useState(true);
 
   // Update states when localStream changes
   useEffect(() => {
     if (localStream) {
       const videoTracks = localStream.getVideoTracks();
-      const audioTracks = localStream.getAudioTracks();
 
       if (videoTracks.length > 0 && videoTracks[0]) {
         setIsCameraOn(videoTracks[0].enabled);
       }
-      if (audioTracks.length > 0 && audioTracks[0]) {
-        setIsMicOn(audioTracks[0].enabled);
-      }
     }
   }, [localStream]);
 
-  const toggleCamera = () => {
-    if (localStream) {
-      const videoTracks = localStream.getVideoTracks();
-      videoTracks.forEach((track) => {
-        track.enabled = !isCameraOn;
-        console.log(`[MediaControls] Video track enabled: ${track.enabled}`);
-      });
-      setIsCameraOn((prev) => !prev);
-    }
-  };
-
-  const toggleMic = () => {
-    if (localStream) {
-      const audioTracks = localStream.getAudioTracks();
-      audioTracks.forEach((track) => {
-        track.enabled = !isMicOn;
-        console.log(`[MediaControls] Audio track enabled: ${track.enabled}`);
-      });
-      setIsMicOn((prev) => !prev);
-    }
+  const handleToggleCamera = () => {
+    onToggleCamera();
+    setIsCameraOn((prev) => !prev);
   };
 
   return (
     <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 gap-4 rounded-lg">
       <button
         className={`rounded px-4 py-2 ${isCameraOn ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"}`}
-        onClick={toggleCamera}
+        onClick={handleToggleCamera}
       >
         {isCameraOn ? "Turn off camera" : "Turn on camera"}
       </button>
       <button
         className={`rounded px-4 py-2 ${isMicOn ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"}`}
-        onClick={toggleMic}
+        onClick={onToggleMic}
       >
         {isMicOn ? "Turn off microphone" : "Turn on microphone"}
       </button>
@@ -99,6 +89,12 @@ const MediaControls = ({
         onClick={onToggleScreenShare}
       >
         {isScreenSharing ? "Stop sharing" : "Share screen"}
+      </button>
+      <button
+        className="rounded bg-blue-600 px-4 py-2 text-white"
+        onClick={onToggleChat}
+      >
+        <MessageCircle className="h-5 w-5" />
       </button>
       <button
         className="rounded bg-red-600 px-4 py-2 text-white"
@@ -121,6 +117,21 @@ interface RemoteStream {
   producerId?: string;
 }
 
+const recordCallParticipation = async (callId: string) => {
+  try {
+    await fetch("http://localhost:1284/api/calls/record-participation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ callId }),
+    });
+  } catch (error) {
+    console.error("Error recording call participation:", error);
+  }
+};
+
 export default function CallPreviewPage() {
   const params = useParams();
   const callId = params?.id as string;
@@ -136,6 +147,9 @@ export default function CallPreviewPage() {
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const screenProducerRef = useRef<any>(null);
+  const localAudioProducerId = useRef<string | null>(null);
+  const [isLocalMicOn, setIsLocalMicOn] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Mediasoup hooks with cleanupAll
   const {
@@ -151,7 +165,8 @@ export default function CallPreviewPage() {
     connected,
     socket,
     device,
-    currentRoomId,
+    setProducerMuted,
+    activeSpeakerId,
   } = useMediasoupClient();
 
   // Local state for remote consumers
@@ -303,16 +318,45 @@ export default function CallPreviewPage() {
         return;
       }
 
+      const audioProducer = myProducers.find((p) => p.track?.kind === "audio");
+      if (audioProducer) {
+        localAudioProducerId.current = audioProducer.id;
+      }
+
       setMyProducerIds(myProducers.map((p: any) => p.id));
       setJoined(true);
       console.log(
         "[Call] Successfully joined with producers:",
         myProducers.map((p) => p.id)
       );
+
+      // Record participation after successfully joining
+      await recordCallParticipation(callId);
     } catch (error) {
       console.error("Error joining call:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       alert(`Failed to join call: ${errorMessage}`);
+    }
+  };
+
+  const toggleCamera = () => {
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+      }
+    }
+  };
+
+  const toggleMic = () => {
+    if (localStream && localAudioProducerId.current) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setProducerMuted(localAudioProducerId.current, !audioTrack.enabled);
+        setIsLocalMicOn(audioTrack.enabled);
+      }
     }
   };
 
@@ -321,7 +365,10 @@ export default function CallPreviewPage() {
     try {
       if (screenStream) {
         // First, close screen share producer if exists
-        if (screenProducerRef.current && socket?.readyState === WebSocket.OPEN) {
+        if (
+          screenProducerRef.current &&
+          socket?.readyState === WebSocket.OPEN
+        ) {
           const producerId = screenProducerRef.current.id;
           socket.send(
             JSON.stringify({
@@ -331,7 +378,7 @@ export default function CallPreviewPage() {
             })
           );
           // Remove from myProducerIds
-          setMyProducerIds(prev => prev.filter(id => id !== producerId));
+          setMyProducerIds((prev) => prev.filter((id) => id !== producerId));
           screenProducerRef.current = null;
         }
 
@@ -357,7 +404,10 @@ export default function CallPreviewPage() {
             const currentStream = screenStream;
             if (currentStream) {
               // First, close screen share producer if exists
-              if (screenProducerRef.current && socket?.readyState === WebSocket.OPEN) {
+              if (
+                screenProducerRef.current &&
+                socket?.readyState === WebSocket.OPEN
+              ) {
                 const producerId = screenProducerRef.current.id;
                 socket.send(
                   JSON.stringify({
@@ -367,7 +417,9 @@ export default function CallPreviewPage() {
                   })
                 );
                 // Remove from myProducerIds
-                setMyProducerIds(prev => prev.filter(id => id !== producerId));
+                setMyProducerIds((prev) =>
+                  prev.filter((id) => id !== producerId)
+                );
                 screenProducerRef.current = null;
               }
 
@@ -392,14 +444,19 @@ export default function CallPreviewPage() {
           try {
             const producers = await produce(stream, { source: "screen" });
             const firstProducer = producers?.[0];
-            if (producers && producers.length > 0 && firstProducer && "id" in firstProducer) {
+            if (
+              producers &&
+              producers.length > 0 &&
+              firstProducer &&
+              "id" in firstProducer
+            ) {
               screenProducerRef.current = firstProducer;
               setMyProducerIds((prev) => [...prev, firstProducer.id]);
             }
           } catch (error) {
             console.error("Error producing screen share:", error);
             // Cleanup if production fails
-            stream.getTracks().forEach(track => track.stop());
+            stream.getTracks().forEach((track) => track.stop());
             setScreenStream(null);
             setIsScreenSharing(false);
           }
@@ -430,7 +487,7 @@ export default function CallPreviewPage() {
       ) {
         console.log(`[Call] Consuming existing producer: ${producer.id}`);
         consumedProducers.current.add(producer.id);
-        consume(producer.id, device.rtpCapabilities);
+        consume(producer.id, device.rtpCapabilities, undefined, producer.muted);
       } else {
         console.log(
           `[Call] Skipping producer ${producer.id}: already consumed or own producer`
@@ -461,7 +518,7 @@ export default function CallPreviewPage() {
               `[Call] Consuming new producer: ${data.id} from peer: ${data.peerId}`
             );
             consumedProducers.current.add(data.id);
-            consume(data.id, device.rtpCapabilities);
+            consume(data.id, device.rtpCapabilities, undefined, data.muted);
           } else {
             console.log(`[Call] Producer ${data.id} already consumed`);
           }
@@ -616,7 +673,10 @@ export default function CallPreviewPage() {
       const stream: MediaStream = screenStream;
       const handleStreamEnded = () => {
         // First, close screen share producer if exists
-        if (screenProducerRef.current && socket?.readyState === WebSocket.OPEN) {
+        if (
+          screenProducerRef.current &&
+          socket?.readyState === WebSocket.OPEN
+        ) {
           const producerId = screenProducerRef.current.id;
           socket.send(
             JSON.stringify({
@@ -626,7 +686,7 @@ export default function CallPreviewPage() {
             })
           );
           // Remove from myProducerIds
-          setMyProducerIds(prev => prev.filter(id => id !== producerId));
+          setMyProducerIds((prev) => prev.filter((id) => id !== producerId));
           screenProducerRef.current = null;
         }
 
@@ -740,7 +800,8 @@ export default function CallPreviewPage() {
       })),
     });
 
-    const isValidVideoStream = isVideoSource && isVideoKind && hasValidTrack && isNotScreenShare;
+    const isValidVideoStream =
+      isVideoSource && isVideoKind && hasValidTrack && isNotScreenShare;
 
     console.log("[Call] Video stream valid:", isValidVideoStream);
     return isValidVideoStream;
@@ -768,11 +829,21 @@ export default function CallPreviewPage() {
       source: stream.source,
       kind: stream.kind,
       hasValidTrack,
-      peerId: stream.peerId
+      peerId: stream.peerId,
     });
 
     return isValidScreenStream;
   });
+
+  const peerAudioStatus = hookRemoteStreams.reduce(
+    (acc, stream) => {
+      if (stream.kind === "audio") {
+        acc[stream.peerId] = { muted: stream.muted };
+      }
+      return acc;
+    },
+    {} as Record<string, { muted: boolean }>
+  );
 
   console.log("[Call] Filtered video streams:", remoteVideoStreams);
   console.log("[Call] Filtered screen streams:", remoteScreenStreams);
@@ -838,7 +909,12 @@ export default function CallPreviewPage() {
                   autoPlay
                   playsInline
                   muted
-                  className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                  className={cn(
+                    "h-[240px] w-[320px] rounded-lg bg-black shadow-lg",
+                    activeSpeakerId && activeSpeakerId === userId
+                      ? "ring-2 ring-red-500 ring-offset-2 ring-offset-black"
+                      : ""
+                  )}
                   ref={(el) => {
                     if (el && localStream) {
                       console.log(
@@ -873,9 +949,12 @@ export default function CallPreviewPage() {
                     }
                   }}
                 />
-                <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
-                  You ({displayName})
-                </span>
+                <div className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-white">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">You ({displayName})</span>
+                    {!isLocalMicOn && <MicOff size={12} />}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -933,12 +1012,19 @@ export default function CallPreviewPage() {
                   }
                 );
 
+                const isSpeaking = activeSpeakerId === peerId;
+
                 return (
                   <div className="relative" key={producerId || peerId}>
                     <video
                       autoPlay
                       playsInline
-                      className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                      className={cn(
+                        "h-[240px] w-[320px] rounded-lg bg-black shadow-lg",
+                        isSpeaking
+                          ? "ring-2 ring-red-500 ring-offset-2 ring-offset-black"
+                          : ""
+                      )}
                       ref={(el) => {
                         if (el && stream) {
                           console.log(
@@ -970,9 +1056,14 @@ export default function CallPreviewPage() {
                         }
                       }}
                     />
-                    <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
-                      {peerDisplayName || "User"}
-                    </span>
+                    <div className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-white">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs">
+                          {peerDisplayName || "User"}
+                        </span>
+                        {peerAudioStatus[peerId]?.muted && <MicOff size={12} />}
+                      </div>
+                    </div>
                   </div>
                 );
               }
@@ -1066,6 +1157,17 @@ export default function CallPreviewPage() {
             onHangup={handleHangup}
             isScreenSharing={isScreenSharing}
             onToggleScreenShare={handleToggleScreenShare}
+            onToggleCamera={toggleCamera}
+            onToggleMic={toggleMic}
+            isMicOn={isLocalMicOn}
+            onToggleChat={() => setIsChatOpen(!isChatOpen)}
+          />
+          <ChatSidebar
+            open={isChatOpen}
+            onOpenChange={setIsChatOpen}
+            socket={socket}
+            userId={userId}
+            displayName={displayName}
           />
         </div>
       )}
