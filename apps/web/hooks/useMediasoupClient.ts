@@ -582,11 +582,6 @@ export function useMediasoupClient() {
 
         const stream = new MediaStream([consumer.track]);
 
-        consumer.on("@close", () => {
-          console.log(`[mediasoup] Consumer closed: ${consumer.id}`);
-          cleanupConsumer(producerId);
-        });
-
         // Usar @close en lugar de producerclose ya que es el evento correcto según los tipos
         consumer.on("@close", () => {
           console.log(
