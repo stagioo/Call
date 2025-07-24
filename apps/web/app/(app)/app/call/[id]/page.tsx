@@ -3,6 +3,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useMediasoupClient } from "@/hooks/useMediasoupClient";
 import { MicOff } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { ChatSidebar } from "@/components/rooms/chat-sidebar";
 
 function generateUserId() {
   if (typeof window !== "undefined") {
@@ -37,6 +39,7 @@ const MediaControls = ({
   onToggleCamera,
   onToggleMic,
   isMicOn,
+  onToggleChat,
 }: {
   localStream: MediaStream | null;
   joined: boolean;
@@ -46,6 +49,7 @@ const MediaControls = ({
   onToggleCamera: () => void;
   onToggleMic: () => void;
   isMicOn: boolean;
+  onToggleChat: () => void;
 }) => {
   const [isCameraOn, setIsCameraOn] = useState(true);
 
@@ -86,6 +90,12 @@ const MediaControls = ({
         {isScreenSharing ? "Stop sharing" : "Share screen"}
       </button>
       <button
+        className="rounded bg-blue-600 px-4 py-2 text-white"
+        onClick={onToggleChat}
+      >
+        <MessageCircle className="h-5 w-5" />
+      </button>
+      <button
         className="rounded bg-red-600 px-4 py-2 text-white"
         onClick={onHangup}
       >
@@ -106,6 +116,21 @@ interface RemoteStream {
   producerId?: string;
 }
 
+const recordCallParticipation = async (callId: string) => {
+  try {
+    await fetch("http://localhost:1284/api/calls/record-participation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ callId }),
+    });
+  } catch (error) {
+    console.error("Error recording call participation:", error);
+  }
+};
+
 export default function CallPreviewPage() {
   const params = useParams();
   const callId = params?.id as string;
@@ -123,6 +148,7 @@ export default function CallPreviewPage() {
   const screenProducerRef = useRef<any>(null);
   const localAudioProducerId = useRef<string | null>(null);
   const [isLocalMicOn, setIsLocalMicOn] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Mediasoup hooks with cleanupAll
   const {
@@ -301,6 +327,9 @@ export default function CallPreviewPage() {
         "[Call] Successfully joined with producers:",
         myProducers.map((p) => p.id)
       );
+
+      // Record participation after successfully joining
+      await recordCallParticipation(callId);
     } catch (error) {
       console.error("Error joining call:", error);
       const errorMessage =
@@ -1117,6 +1146,14 @@ export default function CallPreviewPage() {
             onToggleCamera={toggleCamera}
             onToggleMic={toggleMic}
             isMicOn={isLocalMicOn}
+            onToggleChat={() => setIsChatOpen(!isChatOpen)}
+          />
+          <ChatSidebar
+            open={isChatOpen}
+            onOpenChange={setIsChatOpen}
+            socket={socket}
+            userId={userId}
+            displayName={displayName}
           />
         </div>
       )}
