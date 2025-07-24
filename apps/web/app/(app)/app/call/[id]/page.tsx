@@ -5,6 +5,7 @@ import { useMediasoupClient } from "@/hooks/useMediasoupClient";
 import { MicOff } from "lucide-react";
 import { MessageCircle } from "lucide-react";
 import { ChatSidebar } from "@/components/rooms/chat-sidebar";
+import { cn } from "@call/ui/lib/utils";
 
 function generateUserId() {
   if (typeof window !== "undefined") {
@@ -165,6 +166,7 @@ export default function CallPreviewPage() {
     socket,
     device,
     setProducerMuted,
+    activeSpeakerId,
   } = useMediasoupClient();
 
   // Local state for remote consumers
@@ -907,7 +909,12 @@ export default function CallPreviewPage() {
                   autoPlay
                   playsInline
                   muted
-                  className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                  className={cn(
+                    "h-[240px] w-[320px] rounded-lg bg-black shadow-lg",
+                    activeSpeakerId && activeSpeakerId === userId
+                      ? "ring-2 ring-red-500 ring-offset-2 ring-offset-black"
+                      : ""
+                  )}
                   ref={(el) => {
                     if (el && localStream) {
                       console.log(
@@ -1005,12 +1012,19 @@ export default function CallPreviewPage() {
                   }
                 );
 
+                const isSpeaking = activeSpeakerId === peerId;
+
                 return (
                   <div className="relative" key={producerId || peerId}>
                     <video
                       autoPlay
                       playsInline
-                      className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                      className={cn(
+                        "h-[240px] w-[320px] rounded-lg bg-black shadow-lg",
+                        isSpeaking
+                          ? "ring-2 ring-red-500 ring-offset-2 ring-offset-black"
+                          : ""
+                      )}
                       ref={(el) => {
                         if (el && stream) {
                           console.log(
