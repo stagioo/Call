@@ -1,8 +1,9 @@
-import RequestsDashboard from "@/components/app/section/requests-dashboard";
+import ContactsList from "@/components/app/section/contacts-list";
+
 export default function ContactPage() {
   return (
     <>
-      <RequestsDashboard />
+      <ContactsList />
     </>
   );
 } 
