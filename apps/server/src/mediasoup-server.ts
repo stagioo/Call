@@ -1,6 +1,7 @@
 import * as mediasoup from "mediasoup";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import os from "os";
 
 // --- Types -----
 type Consumer = mediasoup.types.Consumer;
@@ -72,6 +73,8 @@ export type MyRooms = Record<string, MyRoom>;
 const rooms: MyRooms = {};
 const peerSocketMap = new Map<WebSocket, string>(); // WebSocket -> peerId
 const peerRoomMap = new Map<string, string>(); // peerId -> roomId
+const workers: Worker[] = [];
+let nextWorkerIdx = 0;
 
 // basic configuration for mediasoup
 const mediasoupConfig = {
@@ -113,11 +116,18 @@ const mediasoupConfig = {
   },
 };
 
-let globalWorker: Worker;
-
 async function startMediasoup() {
-  globalWorker = await mediasoup.createWorker(mediasoupConfig.worker);
+  for (let i = 0; i < os.cpus().length; i++) {
+    const worker = await mediasoup.createWorker(mediasoupConfig.worker);
+    workers.push(worker);
+  }
   console.log("[mediasoup] Worker initialized");
+}
+
+function getNextWorker(): Worker {
+  const worker = workers[nextWorkerIdx]!;
+  nextWorkerIdx = (nextWorkerIdx + 1) % workers.length;
+  return worker;
 }
 
 startMediasoup().catch(console.error);
@@ -147,7 +157,8 @@ async function createRoom(roomId: string): Promise<MyRoom> {
 
   console.log(`[mediasoup] Creating room: ${roomId}`);
 
-  const router = await globalWorker.createRouter({
+  const worker = getNextWorker();
+  const router = await worker.createRouter({
     mediaCodecs: mediasoupConfig.router.mediaCodecs,
   });
 
@@ -159,7 +170,7 @@ async function createRoom(roomId: string): Promise<MyRoom> {
 
   const room: MyRoom = {
     id: roomId,
-    worker: globalWorker,
+    worker,
     router,
     audioLevelObserver,
     peers: {},
