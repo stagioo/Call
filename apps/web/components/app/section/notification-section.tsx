@@ -216,6 +216,161 @@ const NotificationSection = () => {
 
   // Only show notifications in 'All notifications' tab for now
   const renderContent = () => {
+    if (activeTab === "calls") {
+      // Show only call invitation notifications that are NOT team meetings
+      const callInvites = notifications.filter(
+        (n) => n.type === "call" && n.invitationId && !(typeof n.message === "string" && n.message.includes("started a meeting in team"))
+      );
+      if (callInvites.length === 0) {
+        return (
+          <div className="flex h-32 items-center justify-center text-muted-foreground">
+            No call invitations.
+          </div>
+        );
+      }
+      return (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {callInvites.map((n) => {
+            const inviter = n.inviterName || n.inviterEmail || "Someone";
+            const call = n.callName || "(no name)";
+            const message =
+              n.message ||
+              `${inviter} (${n.inviterEmail || "-"}) invites you to a call: ${call}`;
+            return (
+              <Card key={n.id} className="transition-shadow hover:shadow-md">
+                <CardHeader>
+                  <div className="font-semibold">{message}</div>
+                  <div className="text-muted-foreground mt-1 text-xs">
+                    {new Date(n.createdAt).toLocaleString()}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {n.invitationStatus === "pending" && n.invitationId ? (
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        onClick={() =>
+                          handleAccept(n.invitationId ?? undefined, n.callId)
+                        }
+                        disabled={actionLoading === n.invitationId}
+                      >
+                        Join
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleReject(n.invitationId ?? undefined)}
+                        disabled={actionLoading === n.invitationId}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  ) : n.invitationStatus === "accepted" ? (
+                    <span className="font-medium text-green-600">
+                      You've already joined
+                    </span>
+                  ) : n.invitationStatus === "rejected" ? (
+                    <span className="font-medium text-red-600">
+                      You've declined the invitation
+                    </span>
+                  ) : n.callId ? (
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        onClick={() => router.push(`/app/call/${n.callId}`)}
+                      >
+                        Join Meeting
+                      </Button>
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      );
+    }
+    if (activeTab === "teams") {
+      // Show only team call notifications
+      const teamCallNotifications = notifications.filter(
+        (n) => n.type === "call" && typeof n.message === "string" && n.message.includes("started a meeting in team")
+      );
+      if (teamCallNotifications.length === 0) {
+        return (
+          <div className="flex h-32 items-center justify-center text-muted-foreground">
+            No team call notifications.
+          </div>
+        );
+      }
+      return (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {teamCallNotifications.map((n) => (
+            <Card key={n.id} className="transition-shadow hover:shadow-md">
+              <CardHeader>
+                <div className="font-semibold">{n.message}</div>
+                <div className="text-muted-foreground mt-1 text-xs">
+                  {new Date(n.createdAt).toLocaleString()}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {n.callId && (
+                  <div className="mt-2 flex gap-2">
+                    <Button onClick={() => router.push(`/app/call/${n.callId}`)}>
+                      Join Meeting
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+    if (activeTab === "contacts") {
+      // Show only contact invitation notifications
+      const contactInvites = notifications.filter(
+        (n) => n.type === "contact"
+      );
+      if (contactInvites.length === 0) {
+        return (
+          <div className="flex h-32 items-center justify-center text-muted-foreground">
+            No contact invitations.
+          </div>
+        );
+      }
+      return (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {contactInvites.map((n) => (
+            <Card key={n.id} className="transition-shadow hover:shadow-md">
+              <CardHeader>
+                <div className="font-semibold">{n.message}</div>
+                <div className="text-muted-foreground mt-1 text-xs">
+                  {new Date(n.createdAt).toLocaleString()}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mt-2 flex gap-2">
+                  <Button
+                    onClick={() =>
+                      handleContactAction(n.contactRequestId!, "accept")
+                    }
+                    disabled={actionLoading === n.contactRequestId}
+                  >
+                    Accept
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      handleContactAction(n.contactRequestId!, "reject")
+                    }
+                    disabled={actionLoading === n.contactRequestId}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+    }
     if (activeTab !== "all") {
       // Placeholder for future content
       return (
