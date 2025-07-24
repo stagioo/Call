@@ -982,6 +982,57 @@ wss.on("connection", (ws: WebSocket) => {
           break;
         }
 
+        case "chat": {
+          const peer = getPeerFromSocket(ws);
+          if (!peer) {
+            ws.send(
+              JSON.stringify({
+                reqId: data.reqId,
+                error: "Peer not found",
+              })
+            );
+            return;
+          }
+
+          const roomId = peerRoomMap.get(peer.id);
+          const room = getRoom(roomId!);
+          if (!room) {
+            ws.send(
+              JSON.stringify({
+                reqId: data.reqId,
+                error: "Room not found",
+              })
+            );
+            return;
+          }
+
+          const chatMessage = {
+            type: "chat",
+            message: data.message,
+            peerId: peer.id,
+            displayName: peer.displayName,
+          };
+
+          console.log(
+            `[mediasoup] Broadcasting chat message from peer: ${peer.id}`
+          );
+
+          Object.values(room.peers).forEach((otherPeer) => {
+            if (otherPeer.ws.readyState === WebSocket.OPEN) {
+              otherPeer.ws.send(JSON.stringify(chatMessage));
+            }
+          });
+
+          ws.send(
+            JSON.stringify({
+              reqId: data.reqId,
+              type: "chatResponse",
+              success: true,
+            })
+          );
+          break;
+        }
+
         default:
           ws.send(
             JSON.stringify({

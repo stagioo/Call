@@ -3,6 +3,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useMediasoupClient } from "@/hooks/useMediasoupClient";
 import { MicOff } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { ChatSidebar } from "@/components/rooms/chat-sidebar";
 
 function generateUserId() {
   if (typeof window !== "undefined") {
@@ -37,6 +39,7 @@ const MediaControls = ({
   onToggleCamera,
   onToggleMic,
   isMicOn,
+  onToggleChat,
 }: {
   localStream: MediaStream | null;
   joined: boolean;
@@ -46,6 +49,7 @@ const MediaControls = ({
   onToggleCamera: () => void;
   onToggleMic: () => void;
   isMicOn: boolean;
+  onToggleChat: () => void;
 }) => {
   const [isCameraOn, setIsCameraOn] = useState(true);
 
@@ -84,6 +88,12 @@ const MediaControls = ({
         onClick={onToggleScreenShare}
       >
         {isScreenSharing ? "Stop sharing" : "Share screen"}
+      </button>
+      <button
+        className="rounded bg-blue-600 px-4 py-2 text-white"
+        onClick={onToggleChat}
+      >
+        <MessageCircle className="h-5 w-5" />
       </button>
       <button
         className="rounded bg-red-600 px-4 py-2 text-white"
@@ -138,6 +148,7 @@ export default function CallPreviewPage() {
   const screenProducerRef = useRef<any>(null);
   const localAudioProducerId = useRef<string | null>(null);
   const [isLocalMicOn, setIsLocalMicOn] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Mediasoup hooks with cleanupAll
   const {
@@ -1135,6 +1146,14 @@ export default function CallPreviewPage() {
             onToggleCamera={toggleCamera}
             onToggleMic={toggleMic}
             isMicOn={isLocalMicOn}
+            onToggleChat={() => setIsChatOpen(!isChatOpen)}
+          />
+          <ChatSidebar
+            open={isChatOpen}
+            onOpenChange={setIsChatOpen}
+            socket={socket}
+            userId={userId}
+            displayName={displayName}
           />
         </div>
       )}
