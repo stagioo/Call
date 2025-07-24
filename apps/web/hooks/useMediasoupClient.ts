@@ -126,6 +126,9 @@ export function useMediasoupClient() {
   const [remoteStreams, setRemoteStreams] = useState<RemoteStream[]>([]);
   const [peers, setPeers] = useState<Peer[]>([]);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
+  // Active Speaker
+  const [activeSpeakerId, setActiveSpeakerId] = useState<string | null>(null);
+  const activeSpeakerTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Generate or get user ID
   const [userId] = useState(() => {
@@ -274,6 +277,32 @@ export function useMediasoupClient() {
       return () => clearTimeout(timeoutId);
     }
   }, [connected, cleanupAll, currentRoomId]);
+
+  // Handle Audio levels
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleAudioLevel = (data: { peerId: string; volume: number }) => {
+      if (activeSpeakerTimerRef.current) {
+        clearTimeout(activeSpeakerTimerRef.current);
+      }
+
+      setActiveSpeakerId(data.peerId);
+      activeSpeakerTimerRef.current = setTimeout(() => {
+        setActiveSpeakerId(null);
+      }, 1500);
+    };
+
+    addEventHandler("audioLevel", handleAudioLevel);
+
+    return () => {
+      removeEventHandler("audioLevel");
+
+      if (activeSpeakerTimerRef.current) {
+        clearTimeout(activeSpeakerTimerRef.current);
+      }
+    };
+  }, [socket, addEventHandler, removeEventHandler]);
 
   // Handle peer and producer events
   useEffect(() => {
@@ -764,5 +793,6 @@ export function useMediasoupClient() {
     userId,
     displayName,
     setProducerMuted,
+    activeSpeakerId,
   };
 }
