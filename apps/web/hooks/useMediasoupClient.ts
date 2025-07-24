@@ -7,6 +7,7 @@ import type {
   TransportOptions,
   RtpCapabilities,
   RtpParameters,
+  RtpEncodingParameters,
 } from "mediasoup-client/types";
 import { useSocket } from "./useSocket";
 
@@ -477,6 +478,76 @@ export function useMediasoupClient() {
 
       console.log(`[mediasoup] Producing ${activeTracks.length} tracks`);
 
+      // Define encodings for webcam video
+      const webcamEncodings: RtpEncodingParameters[] = [
+        { rid: "r0", maxBitrate: 100000, scalabilityMode: "S1T3" },
+        { rid: "r1", maxBitrate: 300000, scalabilityMode: "S1T3" },
+        { rid: "r2", maxBitrate: 900000, scalabilityMode: "S1T3" },
+      ];
+
+      const screenEncodings: RtpEncodingParameters[] = [
+        { rid: "r0", maxBitrate: 1500000 },
+        { rid: "r1", maxBitrate: 4500000 },
+      ];
+
+      const producers = [];
+      const source = options?.source;
+
+      // Handle audio track
+      const audioTrack = stream.getAudioTracks()[0];
+      if (audioTrack) {
+        try {
+          console.log(
+            `[mediasoup] Producing audio track from source : ${source || "mic"}`
+          );
+          const audioProducer = await sendTransportRef.current.produce({
+            track: audioTrack,
+            appData: {
+              source: source || "mic",
+              kind: "audio",
+              peerId: userId,
+            },
+          });
+          producers.push(audioProducer);
+          console.log(
+            `[mediasoup] Audio produced created: ${audioProducer.id}`
+          );
+        } catch (e) {
+          console.error(`Error producing audio track: `, e);
+        }
+      }
+
+      // Handle video track with appropriate simulcast settings
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        try {
+          const videoSource = source === "screen" ? "screen" : "webcam";
+          console.log(
+            `[mediasoup] Producing video track from source: ${videoSource}`
+          );
+
+          const videoProducer = await sendTransportRef.current.produce({
+            track: videoTrack,
+            encodings:
+              videoSource === "screen" ? screenEncodings : webcamEncodings,
+            codecOptions: {
+              videoGoogleStartBitrate: 1000,
+            },
+            appData: {
+              source: videoSource,
+              kind: "video",
+              peerId: userId,
+            },
+          });
+          producers.push(videoProducer);
+          console.log(
+            `[mediasoup] Video producer created: ${videoProducer.id}`
+          );
+        } catch (e) {
+          console.error(`Error producing video track:`, e);
+        }
+      }
+
       // Always update localStream for camera/webcam streams to ensure UI shows the stream
       if (
         !options?.source ||
@@ -485,31 +556,6 @@ export function useMediasoupClient() {
       ) {
         console.log("[mediasoup] Setting local stream for display");
         setLocalStream(stream);
-      }
-
-      const producers = [];
-      for (const track of activeTracks) {
-        try {
-          console.log(
-            `[mediasoup] Producing track: ${track.kind}, enabled: ${track.enabled}, readyState: ${track.readyState}`
-          );
-
-          const producer = await sendTransportRef.current.produce({
-            track,
-            appData: {
-              source:
-                options?.source || (track.kind === "audio" ? "mic" : "webcam"),
-              kind: track.kind,
-              peerId: userId,
-            },
-          });
-          producers.push(producer);
-          console.log(
-            `[mediasoup] Producer created: ${producer.id}, kind: ${track.kind}, source: ${producer.appData.source}`
-          );
-        } catch (e) {
-          console.error(`Error producing ${track.kind} track:`, e);
-        }
       }
 
       console.log(
