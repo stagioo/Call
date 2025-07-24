@@ -199,4 +199,27 @@ contactsRoutes.get("/", async (c) => {
   }
 });
 
+contactsRoutes.delete("/:id", async (c) => {
+  const user = c.get("user")!;
+  const userId = user.id;
+  const contactId = c.req.param("id");
+
+  try {
+    await db.transaction(async (tx) => {
+      // Delete both sides of the contact relationship
+      await tx.delete(contacts).where(
+        or(
+          and(eq(contacts.userId, userId), eq(contacts.contactId, contactId)),
+          and(eq(contacts.userId, contactId), eq(contacts.contactId, userId))
+        )
+      );
+    });
+
+    return c.json({ message: "Contact deleted successfully." });
+  } catch (err) {
+    console.error("[DELETE /:id] Error:", err);
+    return c.json({ message: "An unexpected error occurred." }, 500);
+  }
+});
+
 export default contactsRoutes;

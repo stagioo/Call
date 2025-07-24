@@ -18,6 +18,7 @@ const sectionMap = [
   { path: "/app/contact", title: "Contact" },
   { path: "/app/schedule", title: "Schedule" },
   { path: "/app/notifications", title: "Notifications" },
+  { path: "/app/profile", title: "Profile" },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

@@ -1,13 +1,20 @@
 import { zValidator } from "@hono/zod-validator";
 import { emailSchema } from "@/validators";
-import { user } from "@call/db/schema";
+import { user as userTable } from "@call/db/schema";
 import { auth } from "@call/auth/auth";
 import type { Context } from "hono";
 import { eq } from "drizzle-orm";
 import { db } from "@call/db";
 import { Hono } from "hono";
+import { z } from "zod";
+import type { ReqVariables } from "../../index.js";
+import { createId } from "@paralleldrive/cuid2";
 
-const authRouter = new Hono();
+const authRouter = new Hono<{ Variables: ReqVariables }>();
+
+const updateProfileSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
+});
 
 authRouter.post(
   "/check-email",
@@ -17,9 +24,9 @@ authRouter.post(
       const { email } = await c.req.json<{ email: string }>();
 
       const existingUser = await db
-        .select({ id: user.id })
-        .from(user)
-        .where(eq(user.email, email.toLowerCase().trim()))
+        .select({ id: userTable.id })
+        .from(userTable)
+        .where(eq(userTable.email, email.toLowerCase().trim()))
         .limit(1);
 
       return c.json({ exists: existingUser.length > 0 });
@@ -36,6 +43,83 @@ authRouter.on(["POST", "GET"], "/*", async (c: Context) => {
   } catch (error) {
     console.error("Auth handler error:", error);
     return c.json({ error: "Authentication failed" }, 500);
+  }
+});
+
+authRouter.patch("/update-profile", async (c) => {
+  const user = c.get("user");
+  if (!user) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+
+  try {
+    const body = await c.req.json();
+    const result = updateProfileSchema.safeParse(body);
+
+    if (!result.success) {
+      return c.json({ message: result.error.errors[0]?.message || "Invalid input" }, 400);
+    }
+
+    const { name } = result.data;
+
+    await db
+      .update(userTable)
+      .set({ name, updatedAt: new Date() })
+      .where(eq(userTable.id, user.id));
+
+    return c.json({ message: "Profile updated successfully" });
+  } catch (err) {
+    console.error("[PATCH /update-profile] Error:", err);
+    return c.json({ message: "An unexpected error occurred" }, 500);
+  }
+});
+
+// Handle profile image upload
+authRouter.patch("/update-profile-image", async (c) => {
+  const user = c.get("user");
+  if (!user) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+
+  try {
+    const formData = await c.req.formData();
+    const image = formData.get("image") as File;
+
+    if (!image) {
+      return c.json({ message: "No image provided" }, 400);
+    }
+
+    // Validate file type
+    if (!image.type.startsWith("image/")) {
+      return c.json({ message: "File must be an image" }, 400);
+    }
+
+    // Validate file size (max 5MB)
+    if (image.size > 5 * 1024 * 1024) {
+      return c.json({ message: "Image size must be less than 5MB" }, 400);
+    }
+
+    // Convert image to base64
+    const buffer = await image.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    const dataUrl = `data:${image.type};base64,${base64}`;
+
+    // Update user profile with the new image
+    await db
+      .update(userTable)
+      .set({ 
+        image: dataUrl,
+        updatedAt: new Date() 
+      })
+      .where(eq(userTable.id, user.id));
+
+    return c.json({ 
+      message: "Profile image updated successfully",
+      image: dataUrl
+    });
+  } catch (err) {
+    console.error("[PATCH /update-profile-image] Error:", err);
+    return c.json({ message: "An unexpected error occurred" }, 500);
   }
 });
 
