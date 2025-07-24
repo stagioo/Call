@@ -50,6 +50,34 @@
       "when": 1752692528608,
       "tag": "0006_quick_jimmy_woo",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1753355849663,
+      "tag": "0007_great_peter_quill",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1753358411240,
+      "tag": "0008_nervous_mystique",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1753358734680,
+      "tag": "0009_wonderful_misty_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1753358893772,
+      "tag": "0010_luxuriant_the_fury",
+      "breakpoints": true
     }
   ]
 }
