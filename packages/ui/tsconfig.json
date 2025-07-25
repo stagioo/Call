@@ -1,6 +1,9 @@
 {
   "extends": "@call/typescript-config/react-library",
   "compilerOptions": {
+    "module": "ESNext",
+    "target": "ES2022",
+
     "baseUrl": ".",
     "paths": {
       "@call/ui/*": ["./src/*"]

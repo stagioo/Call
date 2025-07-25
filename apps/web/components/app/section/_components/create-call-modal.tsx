@@ -60,19 +60,20 @@ export function CreateCallModal({ onClose, onCallCreated }: {
       setError("Meeting name is required");
       return;
     }
-    if (selectedMembers.length === 0) {
-      setError("Select at least one contact");
-      return;
-    }
+    // if (selectedMembers.length === 0) {
+    //   setError("Select at least one contact");
+    //   return;
+    // }
     setLoading(true);
     try {
       const res = await fetch("http://localhost:1284/api/calls/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name: meetingName.trim(), members: selectedMembers }),
+        body: JSON.stringify({ name: meetingName.trim(), members: selectedMembers.length > 0 ? selectedMembers : undefined }),
       });
       const data = await res.json();
+      console.log("🔍 [CALLS DEBUG] Response:", data);
       if (!res.ok) {
         setError(data?.error || "Failed to create call");
       } else {
@@ -111,7 +112,7 @@ export function CreateCallModal({ onClose, onCallCreated }: {
               />
             </div>
             <div className="grid gap-2">
-              <Label>Select Contacts</Label>
+              <Label>Select Contacts (optional)</Label>
               <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
                 {contacts.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">

@@ -11,7 +11,9 @@
     "FRONTEND_URL",
     "BACKEND_URL",
     "RESEND_API_KEY",
-    "EMAIL_FROM"
+    "EMAIL_FROM",
+    "SUPABASE_URL",
+    "SUPABASE_ANON_KEY"
   ],
   "tasks": {
     "build": {
