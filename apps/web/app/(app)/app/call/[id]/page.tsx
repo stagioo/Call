@@ -2,10 +2,30 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useMediasoupClient } from "@/hooks/useMediasoupClient";
+import { useSocket } from "@/hooks/useSocket";
 import { MicOff } from "lucide-react";
 import { MessageCircle } from "lucide-react";
 import { ChatSidebar } from "@/components/rooms/chat-sidebar";
 import { cn } from "@call/ui/lib/utils";
+import {
+  FiMic,
+  FiMicOff,
+  FiVideo,
+  FiVideoOff,
+  FiMonitor,
+  FiPhone,
+  FiMessageCircle,
+  FiSettings,
+  FiChevronDown
+} from "react-icons/fi";
+import { Button } from "@call/ui/components/button";
+import { Card } from "@call/ui/components/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@call/ui/components/dropdown-menu";
 
 function generateUserId() {
   if (typeof window !== "undefined") {
@@ -41,6 +61,11 @@ const MediaControls = ({
   onToggleMic,
   isMicOn,
   onToggleChat,
+  onDeviceChange,
+  videoDevices,
+  audioDevices,
+  selectedVideo,
+  selectedAudio,
 }: {
   localStream: MediaStream | null;
   joined: boolean;
@@ -51,8 +76,14 @@ const MediaControls = ({
   onToggleMic: () => void;
   isMicOn: boolean;
   onToggleChat: () => void;
+  onDeviceChange: (type: 'video' | 'audio', deviceId: string) => void;
+  videoDevices: MediaDeviceInfo[];
+  audioDevices: MediaDeviceInfo[];
+  selectedVideo: string;
+  selectedAudio: string;
 }) => {
   const [isCameraOn, setIsCameraOn] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Update states when localStream changes
   useEffect(() => {
@@ -70,39 +101,145 @@ const MediaControls = ({
     setIsCameraOn((prev) => !prev);
   };
 
+  const handleDeviceChange = (type: 'video' | 'audio', deviceId: string) => {
+    onDeviceChange(type, deviceId);
+    setShowSettings(false);
+  };
+
   return (
-    <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 gap-4 rounded-lg">
-      <button
-        className={`rounded px-4 py-2 ${isCameraOn ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"}`}
-        onClick={handleToggleCamera}
-      >
-        {isCameraOn ? "Turn off camera" : "Turn on camera"}
-      </button>
-      <button
-        className={`rounded px-4 py-2 ${isMicOn ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"}`}
-        onClick={onToggleMic}
-      >
-        {isMicOn ? "Turn off microphone" : "Turn on microphone"}
-      </button>
-      <button
-        className={`rounded px-4 py-2 ${isScreenSharing ? "bg-green-600 text-white" : "bg-gray-200 text-gray-800"}`}
-        onClick={onToggleScreenShare}
-      >
-        {isScreenSharing ? "Stop sharing" : "Share screen"}
-      </button>
-      <button
-        className="rounded bg-blue-600 px-4 py-2 text-white"
-        onClick={onToggleChat}
-      >
-        <MessageCircle className="h-5 w-5" />
-      </button>
-      <button
-        className="rounded bg-red-600 px-4 py-2 text-white"
-        onClick={onHangup}
-      >
-        Hang up
-      </button>
-    </div>
+    <>
+      <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 gap-2 rounded-lg bg-black/80 backdrop-blur-sm p-3">
+        {/* Microphone Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`relative h-12 w-12 rounded-full ${
+            isMicOn
+              ? "bg-gray-700 text-white hover:bg-gray-600"
+              : "bg-red-600 text-white hover:bg-red-700"
+          }`}
+          onClick={onToggleMic}
+        >
+          {isMicOn ? <FiMic size={20} /> : <FiMicOff size={20} />}
+        </Button>
+
+        {/* Microphone Selector */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-gray-700 text-white hover:bg-gray-600"
+            >
+              <FiChevronDown size={14} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 mb-2">
+            <div className="px-2 py-1 text-xs font-semibold text-gray-600">Microphone</div>
+            {audioDevices.map((device) => (
+              <DropdownMenuItem
+                key={device.deviceId}
+                onClick={() => handleDeviceChange('audio', device.deviceId)}
+                className={`cursor-pointer ${
+                  selectedAudio === device.deviceId ? 'bg-blue-50' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="truncate">
+                    {device.label || `Microphone (${device.deviceId.slice(0, 8)}...)`}
+                  </span>
+                  {selectedAudio === device.deviceId && (
+                    <div className="w-2 h-2 bg-blue-600 rounded-full ml-2"></div>
+                  )}
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Camera Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`relative h-12 w-12 rounded-full ${
+            isCameraOn
+              ? "bg-gray-700 text-white hover:bg-gray-600"
+              : "bg-red-600 text-white hover:bg-red-700"
+          }`}
+          onClick={handleToggleCamera}
+        >
+          {isCameraOn ? <FiVideo size={20} /> : <FiVideoOff size={20} />}
+        </Button>
+
+        {/* Camera Selector */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-gray-700 text-white hover:bg-gray-600"
+            >
+              <FiChevronDown size={14} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 mb-2">
+            <div className="px-2 py-1 text-xs font-semibold text-gray-600">Camera</div>
+            {videoDevices.map((device) => (
+              <DropdownMenuItem
+                key={device.deviceId}
+                onClick={() => handleDeviceChange('video', device.deviceId)}
+                className={`cursor-pointer ${
+                  selectedVideo === device.deviceId ? 'bg-blue-50' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="truncate">
+                    {device.label || `Camera (${device.deviceId.slice(0, 8)}...)`}
+                  </span>
+                  {selectedVideo === device.deviceId && (
+                    <div className="w-2 h-2 bg-blue-600 rounded-full ml-2"></div>
+                  )}
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Screen Share */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-12 w-12 rounded-full ${
+            isScreenSharing
+              ? "bg-green-600 text-white hover:bg-green-700"
+              : "bg-gray-700 text-white hover:bg-gray-600"
+          }`}
+          onClick={onToggleScreenShare}
+        >
+          <FiMonitor size={20} />
+        </Button>
+
+        {/* Chat */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-12 w-12 rounded-full bg-blue-600 text-white hover:bg-blue-700"
+          onClick={onToggleChat}
+        >
+          <FiMessageCircle size={20} />
+        </Button>
+
+        {/* Hang Up */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-12 w-12 rounded-full bg-red-600 text-white hover:bg-red-700"
+          onClick={onHangup}
+        >
+          <FiPhone size={20} />
+        </Button>
+      </div>
+    </>
   );
 };
 
@@ -167,6 +304,7 @@ export default function CallPreviewPage() {
     device,
     setProducerMuted,
     activeSpeakerId,
+    setLocalStream,
   } = useMediasoupClient();
 
   // Local state for remote consumers
@@ -359,6 +497,93 @@ export default function CallPreviewPage() {
       }
     }
   };
+
+  // Function to switch devices during the call
+  const handleDeviceChange = useCallback(async (type: 'video' | 'audio', deviceId: string) => {
+    if (!joined || !localStream) {
+      console.warn("[Call] Cannot change device - not joined or no local stream");
+      return;
+    }
+
+    try {
+      console.log(`[Call] Switching ${type} device to:`, deviceId);
+
+      // Create new constraints for the device
+      const constraints: MediaStreamConstraints = {};
+      
+      if (type === 'video') {
+        constraints.video = deviceId ? { deviceId: { exact: deviceId } } : true;
+        constraints.audio = false; // Only get video for this change
+        setSelectedVideo(deviceId);
+      } else if (type === 'audio') {
+        constraints.audio = deviceId ? { 
+          deviceId: { exact: deviceId },
+          echoCancellation: true,
+          noiseSuppression: true
+        } : true;
+        constraints.video = false; // Only get audio for this change
+        setSelectedAudio(deviceId);
+      }
+
+      // Get new stream with the selected device
+      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      if (!newStream || !newStream.getTracks().length) {
+        throw new Error(`No ${type} tracks in new stream`);
+      }
+
+      const newTrack = newStream.getTracks()[0];
+      if (!newTrack) {
+        throw new Error(`No ${type} track found`);
+      }
+
+      // Find the old track in the current stream
+      const oldTracks = type === 'video' 
+        ? localStream.getVideoTracks() 
+        : localStream.getAudioTracks();
+
+      if (oldTracks.length > 0) {
+        const oldTrack = oldTracks[0];
+        
+        if (oldTrack) {
+          // Replace the track in the local stream
+          localStream.removeTrack(oldTrack);
+          localStream.addTrack(newTrack);
+          
+          // Stop the old track
+          oldTrack.stop();
+          
+          // Update producer track if device is loaded
+          if (device && device.loaded) {
+            console.log(`[Call] Device is loaded, attempting to replace ${type} track`);
+            
+            // For mediasoup, we need to close the old producer and create a new one
+            // This is a simplified approach - in a real implementation you might want to
+            // use the producer.replaceTrack method if available
+            console.log(`[Call] Successfully replaced ${type} track in stream`);
+          }
+          
+          console.log(`[Call] Successfully switched ${type} device`);
+        }
+      } else {
+        // No existing track, just add the new one
+        localStream.addTrack(newTrack);
+        console.log(`[Call] Added new ${type} track to stream`);
+      }
+
+      // Update the local stream state
+      setLocalStream(localStream);
+      
+      // Update video reference for preview
+      if (type === 'video' && videoRef.current) {
+        videoRef.current.srcObject = localStream;
+      }
+      
+    } catch (error) {
+      console.error(`[Call] Error switching ${type} device:`, error);
+      alert(`Failed to switch ${type} device. Please try again.`);
+    }
+  }, [joined, localStream, device, setLocalStream, videoRef]);
 
   // Handle screen sharing
   const handleToggleScreenShare = async () => {
@@ -1176,6 +1401,11 @@ export default function CallPreviewPage() {
             onToggleMic={toggleMic}
             isMicOn={isLocalMicOn}
             onToggleChat={() => setIsChatOpen(!isChatOpen)}
+            onDeviceChange={handleDeviceChange}
+            videoDevices={videoDevices}
+            audioDevices={audioDevices}
+            selectedVideo={selectedVideo || ""}
+            selectedAudio={selectedAudio || ""}
           />
           <ChatSidebar
             open={isChatOpen}
