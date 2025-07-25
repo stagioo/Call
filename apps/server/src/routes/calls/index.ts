@@ -15,7 +15,7 @@ const callsRoutes = new Hono<{ Variables: ReqVariables }>();
 
 const createCallSchema = z.object({
   name: z.string().min(1),
-  members: z.array(z.string().email()).min(1),
+  members: z.array(z.string().email()).optional(),
   teamId: z.string().optional(),
 });
 
@@ -66,7 +66,7 @@ callsRoutes.post("/create", async (c) => {
   const users = await db
     .select()
     .from(userTable)
-    .where(inArray(userTable.email, members));
+    .where(inArray(userTable.email, members || []));
   console.log("👥 [CALLS DEBUG] Found users:", users.length);
   const emailToUserId = new Map(users.map((u) => [u.email, u.id]));
 
@@ -99,7 +99,7 @@ callsRoutes.post("/create", async (c) => {
   // Insert invitations and notifications
   console.log("📧 [CALLS DEBUG] Creating invitations and notifications...");
   try {
-    for (const email of members) {
+    for (const email of members || []) {
       const inviteeId = emailToUserId.get(email);
       console.log(
         `📨 [CALLS DEBUG] Processing invitation for ${email}, inviteeId: ${inviteeId}`
