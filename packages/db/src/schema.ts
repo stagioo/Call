@@ -229,6 +229,7 @@ export const callParticipants = pgTable(
     joinedAt: timestamp("joined_at")
       .$defaultFn(() => new Date())
       .notNull(),
+    leftAt: timestamp("left_at"),
   },
   (table) => [
     index("call_participants_call_id_idx").on(table.callId),

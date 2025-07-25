@@ -15,7 +15,7 @@ const callsRoutes = new Hono<{ Variables: ReqVariables }>();
 
 const createCallSchema = z.object({
   name: z.string().min(1),
-  members: z.array(z.string().email()).min(1),
+  members: z.array(z.string().email()).optional(),
   teamId: z.string().optional(),
 });
 
@@ -66,7 +66,7 @@ callsRoutes.post("/create", async (c) => {
   const users = await db
     .select()
     .from(userTable)
-    .where(inArray(userTable.email, members));
+    .where(inArray(userTable.email, members || []));
   console.log("👥 [CALLS DEBUG] Found users:", users.length);
   const emailToUserId = new Map(users.map((u) => [u.email, u.id]));
 
@@ -99,7 +99,7 @@ callsRoutes.post("/create", async (c) => {
   // Insert invitations and notifications
   console.log("📧 [CALLS DEBUG] Creating invitations and notifications...");
   try {
-    for (const email of members) {
+    for (const email of members || []) {
       const inviteeId = emailToUserId.get(email);
       console.log(
         `📨 [CALLS DEBUG] Processing invitation for ${email}, inviteeId: ${inviteeId}`
@@ -199,6 +199,7 @@ callsRoutes.get("/participated", async (c) => {
         id: calls.id,
         name: calls.name,
         joinedAt: callParticipants.joinedAt,
+        leftAt: callParticipants.leftAt,
       })
       .from(callParticipants)
       .innerJoin(calls, eq(callParticipants.callId, calls.id))
@@ -249,6 +250,37 @@ callsRoutes.post("/record-participation", async (c) => {
   } catch (error) {
     console.error("Error recording call participation:", error);
     return c.json({ error: "Failed to record participation" }, 500);
+  }
+});
+
+// POST /api/calls/record-leave
+callsRoutes.post("/record-leave", async (c) => {
+  try {
+    const user = c.get("user");
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const body = await c.req.json();
+    const { callId } = body;
+
+    if (!callId) {
+      return c.json({ error: "Call ID is required" }, 400);
+    }
+
+    // Update the leftAt timestamp for the user's participation record
+    await db
+      .update(callParticipants)
+      .set({ leftAt: new Date() })
+      .where(
+        eq(callParticipants.callId, callId) && 
+        eq(callParticipants.userId, user.id as string)
+      );
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error recording call leave:", error);
+    return c.json({ error: "Failed to record leave time" }, 500);
   }
 });
 

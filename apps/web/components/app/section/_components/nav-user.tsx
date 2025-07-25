@@ -103,7 +103,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             {/* Account management section */}
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/app/profile")}>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>

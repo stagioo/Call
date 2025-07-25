@@ -584,7 +584,22 @@ export default function CallPreviewPage() {
   }, [hookRemoteStreams]);
 
   // Handle leaving the call
-  const handleHangup = useCallback(() => {
+  const handleHangup = useCallback(async () => {
+    try {
+      // Record that the user is leaving the call
+      await fetch("http://localhost:1284/api/calls/record-leave", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ callId }),
+      });
+    } catch (error) {
+      console.error("Failed to record call leave:", error);
+      // Continue with hangup even if recording fails
+    }
+
     // Stop screen sharing if active
     if (screenStream) {
       screenStream.getTracks().forEach((track) => {
