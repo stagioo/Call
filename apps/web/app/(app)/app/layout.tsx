@@ -12,6 +12,15 @@ import { ModalContact } from "@/components/app/section/_components/modal-contact
 import { CreateTeamModal } from "@/components/app/section/_components/create-team-modal";
 import { useState } from "react";
 import { CreateCallModal } from "@/components/app/section/_components/create-call-modal";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+} from "@call/ui/components/alert-dialog";
 const sectionMap = [
   { path: "/app/call", title: "Call" },
   { path: "/app/teams", title: "Teams" },
@@ -32,6 +41,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     sectionMap.find((s) => pathname?.startsWith(s.path))?.title || "Call";
 
   const handleSectionSelect = (title: string) => {
+    if (title === "Schedule") {
+      toast.info("This section will be available soon.");
+      return;
+    }
     const section = sectionMap.find((s) => s.title === title);
     if (section) {
       router.push(section.path);
