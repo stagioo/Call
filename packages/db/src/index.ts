@@ -4,7 +4,6 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import schema from "./schema";
 
-// Cargar .env desde la raíz del workspace
 config({ path: resolve(process.cwd(), "../../.env") });
 
 const pool = new Pool({
