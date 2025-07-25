@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardContent } from "@call/ui/components/card";
 import { Button } from "@call/ui/components/button";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, formatDuration, intervalToDuration } from "date-fns";
 import { FiPhone } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 // import { es } from "date-fns/locale";
@@ -10,7 +10,29 @@ interface Call {
   id: string;
   name: string;
   joinedAt: string;
+  leftAt: string | null;
 }
+
+const formatCallDuration = (joinedAt: string, leftAt: string | null) => {
+  const start = new Date(joinedAt);
+  
+  // If leftAt is null, the call hasn't ended properly - show as unknown duration
+  if (!leftAt) {
+    return 'Unknown duration';
+  }
+  
+  const end = new Date(leftAt);
+  
+  const duration = intervalToDuration({ start, end });
+  
+  // Format duration in a human-readable way
+  const parts = [];
+  if (duration.hours && duration.hours > 0) parts.push(`${duration.hours}h`);
+  if (duration.minutes && duration.minutes > 0) parts.push(`${duration.minutes}m`);
+  if (duration.seconds && duration.seconds > 0) parts.push(`${duration.seconds}s`);
+  
+  return parts.length > 0 ? parts.join(' ') : '< 1s';
+};
 
 export function CallHistory() {
   const [calls, setCalls] = useState<Call[]>([]);
@@ -66,9 +88,12 @@ export function CallHistory() {
     );
   }
 
+  // Remove duplicate calls by id
+  const uniqueCalls = Array.from(new Map(calls.map(call => [call.id, call])).values());
+
   return (
-    <div className="space-y-8 max-w-full mx-auto  flex flex-wrap items-center">
-      {calls.map((call) => (
+    <div className="space-y-8 max-w-full mx-auto flex flex-wrap items-center">
+      {uniqueCalls.map((call) => (
         <Card
           key={call.id}
           className="transition-shadow hover:shadow-lg border border-muted/60 bg-muted/40 px-8 py-7 mx-auto min-w-[340px]"
@@ -91,9 +116,17 @@ export function CallHistory() {
                   📋
                 </Button>
               </div>
-              <time className="text-xs text-muted-foreground mt-3">
-                {formatDistanceToNow(new Date(call.joinedAt), { addSuffix: true })}
-              </time>
+              <div className="flex flex-col items-center gap-1">
+                <time className="text-xs text-muted-foreground">
+                  {call.leftAt 
+                    ? formatDistanceToNow(new Date(call.leftAt), { addSuffix: true })
+                    : "Call in progress"
+                  }
+                </time>
+                <span className="text-xs font-medium text-primary">
+                  Duration: {formatCallDuration(call.joinedAt, call.leftAt)}
+                </span>
+              </div>
             </div>
           </CardHeader>
         </Card>
