@@ -13,7 +13,7 @@ const CallSection = () => {
   return (
     <div className="max-w-2xl mx-auto mt-8 p-6 bg-background rounded-lg shadow">
       <Tabs value={section} onValueChange={setSection}>
-        <TabsList className="w-full mb-6">
+        <TabsList className="w-full mb-6 flex justify-center ">
           {SECTIONS.map((s) => (
             <TabsTrigger key={s.key} value={s.key} className="flex-1">
               {s.label}
