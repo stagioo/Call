@@ -198,6 +198,7 @@ callsRoutes.get("/participated", async (c) => {
       .select({
         id: calls.id,
         name: calls.name,
+        creatorId: calls.creatorId,
         joinedAt: callParticipants.joinedAt,
         leftAt: callParticipants.leftAt,
       })
