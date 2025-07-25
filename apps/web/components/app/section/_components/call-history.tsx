@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardContent } from "@call/ui/components/card";
 import { Button } from "@call/ui/components/button";
+import { Input } from "@call/ui/components/input";
 import { formatDistanceToNow, formatDuration, intervalToDuration } from "date-fns";
-import { FiPhone } from "react-icons/fi";
+import { FiPhone, FiSearch, FiX } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 // import { es } from "date-fns/locale";
 
@@ -38,6 +39,7 @@ export function CallHistory() {
   const [calls, setCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -58,6 +60,19 @@ export function CallHistory() {
 
     fetchCalls();
   }, []);
+
+  // Filter calls based on search query
+  const filteredCalls = calls.filter(call => 
+    call.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    call.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Remove duplicate calls by id
+  const uniqueCalls = Array.from(new Map(filteredCalls.map(call => [call.id, call])).values());
+
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
 
   if (loading) {
     return (
@@ -80,57 +95,100 @@ export function CallHistory() {
     );
   }
 
-  if (calls.length === 0) {
-    return (
-      <div className="text-center p-8 text-muted-foreground">
-        No call history yet
-      </div>
-    );
-  }
-
-  // Remove duplicate calls by id
-  const uniqueCalls = Array.from(new Map(calls.map(call => [call.id, call])).values());
-
   return (
-    <div className="space-y-8 max-w-full mx-auto flex flex-wrap items-center">
-      {uniqueCalls.map((call) => (
-        <Card
-          key={call.id}
-          className="transition-shadow hover:shadow-lg border border-muted/60 bg-muted/40 px-8 py-7 mx-auto min-w-[340px]"
-        >
-          <CardHeader className="p-0 border-0 bg-transparent">
-            <div className="flex flex-col items-center gap-4 w-full">
-              <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary mb-2">
-                <FiPhone size={28} />
-              </span>
-              <h3 className="text-xl font-semibold leading-tight break-words text-center">{call.name}</h3>
-              <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-                <span className="font-mono">ID: {call.id}</span>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="p-1 text-xs"
-                  title="Copy Call ID"
-                  onClick={() => navigator.clipboard.writeText(call.id)}
-                >
-                  📋
-                </Button>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <time className="text-xs text-muted-foreground">
-                  {call.leftAt 
-                    ? formatDistanceToNow(new Date(call.leftAt), { addSuffix: true })
-                    : "Call in progress"
-                  }
-                </time>
-                <span className="text-xs font-medium text-primary">
-                  Duration: {formatCallDuration(call.joinedAt, call.leftAt)}
-                </span>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-      ))}
+    <div className="space-y-6">
+      {/* Search Bar */}
+      <div className="relative max-w-md mx-auto">
+        <div className="relative">
+          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Search calls by name or ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-10"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={clearSearch}
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
+            >
+              <FiX className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Results */}
+      {uniqueCalls.length === 0 ? (
+        <div className="text-center p-8 text-muted-foreground">
+          {searchQuery ? (
+            <>
+              <p>No calls found for "{searchQuery}"</p>
+              <Button 
+                variant="ghost" 
+                onClick={clearSearch}
+                className="mt-2"
+              >
+                Clear search
+              </Button>
+            </>
+          ) : (
+            "No call history yet"
+          )}
+        </div>
+      ) : (
+        <>
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground text-center">
+              Found {uniqueCalls.length} call{uniqueCalls.length === 1 ? '' : 's'} for "{searchQuery}"
+            </p>
+          )}
+          
+          <div className="space-y-8 max-w-full mx-auto flex flex-wrap items-center">
+            {uniqueCalls.map((call) => (
+              <Card
+                key={call.id}
+                className="transition-shadow hover:shadow-lg border border-muted/60 bg-muted/40 px-8 py-7 mx-auto min-w-[340px]"
+              >
+                <CardHeader className="p-0 border-0 bg-transparent">
+                  <div className="flex flex-col items-center gap-4 w-full">
+                    <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary mb-2">
+                      <FiPhone size={28} />
+                    </span>
+                    <h3 className="text-xl font-semibold leading-tight break-words text-center">{call.name}</h3>
+                    <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                      <span className="font-mono">ID: {call.id}</span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="p-1 text-xs"
+                        title="Copy Call ID"
+                        onClick={() => navigator.clipboard.writeText(call.id)}
+                      >
+                        📋
+                      </Button>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <time className="text-xs text-muted-foreground">
+                        {call.leftAt 
+                          ? formatDistanceToNow(new Date(call.leftAt), { addSuffix: true })
+                          : "Call in progress"
+                        }
+                      </time>
+                      <span className="text-xs font-medium text-primary">
+                        Duration: {formatCallDuration(call.joinedAt, call.leftAt)}
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 } 
