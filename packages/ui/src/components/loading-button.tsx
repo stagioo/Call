@@ -23,13 +23,17 @@ const LoadingButton = forwardRef<HTMLButtonElement, LoadingButtonProps>(
         {...props}
       >
         <div className="grid grid-cols-1 grid-rows-1 place-items-center">
-          <Loader
-            className={cn(
-              "h-4 w-4 animate-spin transition-opacity duration-200",
-              loading ? "opacity-100" : "opacity-0"
-            )}
+          <span
             style={{ gridArea: "1 / 1" }}
-          />
+            className="flex items-center justify-center"
+          >
+            <Loader
+              className={cn(
+                "size-4 animate-spin transition-opacity duration-200",
+                loading ? "opacity-100" : "opacity-0"
+              )}
+            />
+          </span>
 
           <span
             className={cn(

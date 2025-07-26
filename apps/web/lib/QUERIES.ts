@@ -8,6 +8,15 @@ export const CONTACTS_QUERY = {
     }
     throw new Error("Failed to fetch contacts");
   },
+  createContact: async (data: { email: string }) => {
+    const res = await apiClient.post("/contacts/invite", {
+      receiverEmail: data.email,
+    });
+    if (res.status === 200) {
+      return res.data;
+    }
+    throw new Error("Failed to create contact");
+  },
 };
 
 export const CALLS_QUERY = {

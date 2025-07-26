@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type ModalType = "create-team" | "add-member" | "start-call";
+type ModalType = "create-team" | "add-member" | "start-call" | "create-contact";
 
 interface ModalStore {
   type: ModalType | null;
