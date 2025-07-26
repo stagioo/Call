@@ -589,6 +589,64 @@ callsRoutes.post("/:id/reject-join", async (c) => {
   }
 });
 
+// DELETE /api/calls/participated/:callId
+callsRoutes.delete("/participated/:callId", async (c) => {
+  try {
+    const user = c.get("user");
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const callId = c.req.param("callId");
+    if (!callId) {
+      return c.json({ error: "Call ID is required" }, 400);
+    }
+
+    console.log(`[DELETE-CALL-PARTICIPATION] Deleting participation for user ${user.id} in call ${callId}`);
+
+    // Delete the specific participation record
+    const result = await db
+      .delete(callParticipants)
+      .where(
+        and(
+          eq(callParticipants.callId, callId),
+          eq(callParticipants.userId, user.id as string)
+        )
+      );
+
+    console.log(`[DELETE-CALL-PARTICIPATION] Delete result:`, result);
+
+    return c.json({ success: true, message: "Call participation deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting call participation:", error);
+    return c.json({ error: "Failed to delete call participation" }, 500);
+  }
+});
+
+// DELETE /api/calls/participated
+callsRoutes.delete("/participated", async (c) => {
+  try {
+    const user = c.get("user");
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    console.log(`[DELETE-HISTORY] Deleting call history for user ${user.id}`);
+
+    // Delete all participation records for this user
+    const result = await db
+      .delete(callParticipants)
+      .where(eq(callParticipants.userId, user.id as string));
+
+    console.log(`[DELETE-HISTORY] Delete result:`, result);
+
+    return c.json({ success: true, message: "Call history deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting call history:", error);
+    return c.json({ error: "Failed to delete call history" }, 500);
+  }
+});
+
 // GET /api/calls/:id/creator
 callsRoutes.get("/:id/creator", async (c) => {
   try {

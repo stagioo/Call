@@ -3,8 +3,15 @@ import { Card, CardHeader, CardContent } from "@call/ui/components/card";
 import { Button } from "@call/ui/components/button";
 import { Input } from "@call/ui/components/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@call/ui/components/tabs";
+import { Separator } from "@call/ui/components/separator";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@call/ui/components/dropdown-menu";
 import { formatDistanceToNow, formatDuration, intervalToDuration } from "date-fns";
-import { FiPhone, FiSearch, FiX, FiUsers, FiUser, FiGrid } from "react-icons/fi";
+import { FiPhone, FiSearch, FiX, FiUsers, FiUser, FiGrid, FiTrash2, FiMoreVertical } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { useSession } from "../../../../hooks/useSession";
 // import { es } from "date-fns/locale";
@@ -46,6 +53,7 @@ export function CallHistory() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [isDeleting, setIsDeleting] = useState(false);
   const { session } = useSession();
   const router = useRouter();
 
@@ -99,6 +107,53 @@ export function CallHistory() {
     setSearchQuery("");
   };
 
+  const deleteHistory = async () => {
+    if (!confirm("¿Estás seguro de que quieres borrar todo tu historial de llamadas? Esta acción no se puede deshacer.")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch("http://localhost:1284/api/calls/participated", {
+        method: "DELETE",
+        credentials: "include",
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to delete call history");
+      }
+
+      // Clear the calls from state
+      setCalls([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error deleting call history");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const deleteCallParticipation = async (callId: string) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar esta llamada del historial?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:1284/api/calls/participated/${callId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to delete call participation");
+      }
+
+      // Remove the call from state
+      setCalls(prev => prev.filter(call => call.id !== callId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error deleting call participation");
+    }
+  };
+
   const getFilterCounts = () => {
     const myCalls = calls.filter(call => call.creatorId === session?.user?.id).length;
     const sharedWithMe = calls.filter(call => call.creatorId !== session?.user?.id).length;
@@ -135,27 +190,46 @@ export function CallHistory() {
 
     return (
     <div className="space-y-6">
-      {/* Search Bar */}
-      <div className="relative max-w-md mx-auto">
-        <div className="relative">
-          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            type="text"
-            placeholder="Search calls by name or ID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-10"
-          />
-          {searchQuery && (
+      {/* Header with Search Bar and Delete Button */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold">Call History</h2>
+          {calls.length > 0 && (
             <Button
-              variant="ghost"
-              size="icon"
-              onClick={clearSearch}
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
+              variant="destructive"
+              size="sm"
+              onClick={deleteHistory}
+              disabled={isDeleting}
+              className="flex items-center gap-2"
             >
-              <FiX className="h-4 w-4" />
+              <FiTrash2 className="h-4 w-4" />
+              {isDeleting ? "Deleting..." : "Delete History"}
             </Button>
           )}
+        </div>
+        
+        {/* Search Bar */}
+        <div className="relative max-w-md mx-auto">
+          <div className="relative">
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              type="text"
+              placeholder="Search calls by name or ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={clearSearch}
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
+              >
+                <FiX className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -211,8 +285,32 @@ export function CallHistory() {
       {uniqueCalls.map((call) => (
         <Card
           key={call.id}
-          className="transition-shadow hover:shadow-lg border border-muted/60 bg-muted/40 px-8 py-7 mx-auto min-w-[340px]"
+          className="transition-shadow hover:shadow-lg border border-muted/60 bg-muted/40 px-8 py-7 mx-auto min-w-[340px] relative"
         >
+          {/* Three dots menu */}
+          <div className="absolute top-4 right-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-muted"
+                >
+                  <FiMoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => deleteCallParticipation(call.id)}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <FiTrash2 className="h-4 w-4 mr-2" />
+                  Eliminar del historial
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           <CardHeader className="p-0 border-0 bg-transparent">
             <div className="flex flex-col items-center gap-4 w-full">
               <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary mb-2">
@@ -231,31 +329,35 @@ export function CallHistory() {
                   📋
                 </Button>
               </div>
-                        {/* Call type indicator */}
-                        <div className="flex items-center gap-1 text-xs">
-                          {call.creatorId === session?.user?.id ? (
-                            <span className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                              <FiUser className="h-3 w-3" />
-                              Created by you
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                              <FiUsers className="h-3 w-3" />
-                              Shared with you
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-center gap-1">
-                          <time className="text-xs text-muted-foreground">
-                            {call.leftAt 
-                              ? formatDistanceToNow(new Date(call.leftAt), { addSuffix: true })
-                              : "Call in progress"
-                            }
-              </time>
-                          <span className="text-xs font-medium text-primary">
-                            Duration: {formatCallDuration(call.joinedAt, call.leftAt)}
-                          </span>
-                        </div>
+
+              {/* Horizontal Separator */}
+              <Separator className="w-full" />
+
+              {/* Call type indicator */}
+              <div className="flex items-center gap-1 text-xs">
+                {call.creatorId === session?.user?.id ? (
+                  <span className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                    <FiUser className="h-3 w-3" />
+                    Created by you
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                    <FiUsers className="h-3 w-3" />
+                    Shared with you
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <time className="text-xs text-muted-foreground">
+                  {call.leftAt 
+                    ? formatDistanceToNow(new Date(call.leftAt), { addSuffix: true })
+                    : "Call in progress"
+                  }
+                </time>
+                <span className="text-xs font-medium text-primary">
+                  Duration: {formatCallDuration(call.joinedAt, call.leftAt)}
+                </span>
+              </div>
             </div>
           </CardHeader>
         </Card>
