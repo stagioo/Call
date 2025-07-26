@@ -1,22 +1,18 @@
 "use client";
-import Link from "next/link";
-import * as React from "react";
-import { Phone, Calendar, Users, Contact, Bell } from "lucide-react";
-import { NavMain } from "./nav-main";
-import { NavUser } from "./nav-user";
+import { useSession } from "@/components/providers/session";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarRail,
-  SidebarFooter,
 } from "@call/ui/components/sidebar";
-
-// Importar useSession y useRouter
-import { useSession } from "@/hooks/useSession";
+import { Bell, Calendar, Contact, Phone, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import * as React from "react";
+import { NavMain } from "./nav-main";
+import { NavUser } from "./nav-user";
 
-// This is sample data.
 const data = {
   navMain: [
     {
@@ -56,7 +52,7 @@ export function AppSidebar({
   selectedSection: string;
   onSectionSelect: (title: string) => void;
 }) {
-  const { session, isLoading } = useSession();
+  const session = useSession();
   const router = useRouter();
 
   const navItems = data.navMain.map((item) => ({
@@ -67,22 +63,13 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        {session?.user ? (
-          <NavUser
-            user={{
-              name: session.user.name,
-              email: session.user.email,
-              avatar: session.user.image || "/avatars/default.jpg",
-            }}
-          />
-        ) : (
-          <button
-            className="bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-md px-4 py-2 transition"
-            onClick={() => router.push("/login")}
-          >
-            log in
-          </button>
-        )}
+        <NavUser
+          user={{
+            name: session.user.name,
+            email: session.user.email,
+            avatar: session.user.image || "/avatars/default.jpg",
+          }}
+        />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navItems} onSelect={onSectionSelect} />
