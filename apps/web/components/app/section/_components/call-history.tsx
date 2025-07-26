@@ -133,7 +133,7 @@ export function CallHistory() {
     );
   }
 
-  return (
+    return (
     <div className="space-y-6">
       {/* Search Bar */}
       <div className="relative max-w-md mx-auto">
@@ -208,29 +208,29 @@ export function CallHistory() {
               )}
               
               <div className="space-y-8 max-w-full mx-auto flex flex-wrap items-center">
-                {uniqueCalls.map((call) => (
-                  <Card
-                    key={call.id}
-                    className="transition-shadow hover:shadow-lg border border-muted/60 bg-muted/40 px-8 py-7 mx-auto min-w-[340px]"
-                  >
-                    <CardHeader className="p-0 border-0 bg-transparent">
-                      <div className="flex flex-col items-center gap-4 w-full">
-                        <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary mb-2">
-                          <FiPhone size={28} />
-                        </span>
-                        <h3 className="text-xl font-semibold leading-tight break-words text-center">{call.name}</h3>
-                        <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-                          <span className="font-mono">ID: {call.id}</span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="p-1 text-xs"
-                            title="Copy Call ID"
-                            onClick={() => navigator.clipboard.writeText(call.id)}
-                          >
-                            📋
-                          </Button>
-                        </div>
+      {uniqueCalls.map((call) => (
+        <Card
+          key={call.id}
+          className="transition-shadow hover:shadow-lg border border-muted/60 bg-muted/40 px-8 py-7 mx-auto min-w-[340px]"
+        >
+          <CardHeader className="p-0 border-0 bg-transparent">
+            <div className="flex flex-col items-center gap-4 w-full">
+              <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary mb-2">
+                <FiPhone size={28} />
+              </span>
+              <h3 className="text-xl font-semibold leading-tight break-words text-center">{call.name}</h3>
+              <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                <span className="font-mono">ID: {call.id}</span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="p-1 text-xs"
+                  title="Copy Call ID"
+                  onClick={() => navigator.clipboard.writeText(call.id)}
+                >
+                  📋
+                </Button>
+              </div>
                         {/* Call type indicator */}
                         <div className="flex items-center gap-1 text-xs">
                           {call.creatorId === session?.user?.id ? (
@@ -251,15 +251,15 @@ export function CallHistory() {
                               ? formatDistanceToNow(new Date(call.leftAt), { addSuffix: true })
                               : "Call in progress"
                             }
-                          </time>
+              </time>
                           <span className="text-xs font-medium text-primary">
                             Duration: {formatCallDuration(call.joinedAt, call.leftAt)}
                           </span>
                         </div>
-                      </div>
-                    </CardHeader>
-                  </Card>
-                ))}
+            </div>
+          </CardHeader>
+        </Card>
+      ))}
               </div>
             </>
           )}
