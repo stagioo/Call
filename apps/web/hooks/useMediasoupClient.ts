@@ -392,6 +392,50 @@ export function useMediasoupClient() {
     };
   }, [socket, addEventHandler, removeEventHandler, cleanupConsumer]);
 
+  // Handle peer joined
+  const handlePeerJoined = useCallback((data: any) => {
+    console.log("[mediasoup] Peer joined:", data);
+    setPeers((prev) => {
+      const exists = prev.some((p) => p.id === data.id);
+      if (exists) return prev;
+      return [...prev, data];
+    });
+  }, []);
+
+  // Handle peer left
+  const handlePeerLeft = useCallback((data: any) => {
+    console.log("[mediasoup] Peer left:", data);
+    setPeers((prev) => prev.filter((p) => p.id !== data.id));
+    setRemoteStreams((prev) => prev.filter((s) => s.peerId !== data.id));
+  }, []);
+
+  // Handle peer updated
+  const handlePeerUpdated = useCallback((data: any) => {
+    console.log("[mediasoup] Peer updated:", data);
+    setPeers((prev) => {
+      const index = prev.findIndex((p) => p.id === data.id);
+      if (index === -1) return prev;
+      const newPeers = [...prev];
+      newPeers[index] = { ...newPeers[index], ...data };
+      return newPeers;
+    });
+  }, []);
+
+  // Add event listeners
+  useEffect(() => {
+    if (!socket) return;
+
+    addEventHandler("peer-joined", handlePeerJoined);
+    addEventHandler("peer-left", handlePeerLeft);
+    addEventHandler("peer-updated", handlePeerUpdated);
+
+    return () => {
+      removeEventHandler("peer-joined");
+      removeEventHandler("peer-left");
+      removeEventHandler("peer-updated");
+    };
+  }, [socket, addEventHandler, removeEventHandler, handlePeerJoined, handlePeerLeft, handlePeerUpdated]);
+
   // Load mediasoup device
   const loadDevice = useCallback(async (rtpCapabilities: RtpCapabilities) => {
     let device = deviceRef.current;

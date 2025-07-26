@@ -7,6 +7,7 @@ import {
   notifications,
   user as userTable,
   callParticipants,
+  callJoinRequests,
 } from "@call/db/schema";
 import { eq, inArray, desc, and } from "drizzle-orm";
 import type { ReqVariables } from "../../index.js";
@@ -290,109 +291,59 @@ callsRoutes.get("/:id/check-access", async (c) => {
   try {
     const callId = c.req.param("id");
     const user = c.get("user");
-    
+
     if (!user || !user.id) {
-      return c.json({ error: "Unauthorized" }, 401);
+      return c.json({ hasAccess: false, isCreator: false }, 200);
     }
 
-    // Check if call exists
+    // Check if user is the creator
     const callResult = await db
-      .select({
-        id: calls.id,
-        name: calls.name,
-        creatorId: calls.creatorId,
-        createdAt: calls.createdAt,
-      })
+      .select({ creatorId: calls.creatorId })
       .from(calls)
       .where(eq(calls.id, callId))
       .limit(1);
 
     if (!callResult || callResult.length === 0) {
-      return c.json({ 
-        exists: false, 
-        error: "Call not found" 
-      }, 404);
+      return c.json({ error: "Call not found" }, 404);
     }
 
     const call = callResult[0];
-    if (!call) {
-      return c.json({ 
-        exists: false, 
-        error: "Call not found" 
-      }, 404);
+    const isCreator = call.creatorId === user.id;
+
+    if (isCreator) {
+      return c.json({ hasAccess: true, isCreator: true }, 200);
     }
 
-    // Get creator information
-    const creatorResult = await db
-      .select({
-        id: userTable.id,
-        name: userTable.name,
-        email: userTable.email,
-      })
-      .from(userTable)
-      .where(eq(userTable.id, call.creatorId))
-      .limit(1);
-
-    const creator = creatorResult.length > 0 ? creatorResult[0] : null;
-
-    // Check if user is the creator
-    if (call.creatorId === user.id) {
-      return c.json({
-        exists: true,
-        hasAccess: true,
-        isCreator: true,
-        call: {
-          id: call.id,
-          name: call.name,
-          createdAt: call.createdAt,
-          creator: creator,
-        },
-      });
-    }
-
-    // Check if user has been invited
-    const invitationResult = await db
+    // Check if user has an invitation
+    const invitation = await db
       .select()
       .from(callInvitations)
       .where(
         and(
           eq(callInvitations.callId, callId),
-          eq(callInvitations.inviteeId, user.id as string)
+          eq(callInvitations.inviteeId, user.id),
+          eq(callInvitations.status, "accepted")
         )
       )
       .limit(1);
 
-    const invitation = invitationResult.length > 0 ? invitationResult[0] : null;
-    if (invitation && invitation.status === "accepted") {
-      return c.json({
-        exists: true,
-        hasAccess: true,
-        isCreator: false,
-        isInvited: true,
-        call: {
-          id: call.id,
-          name: call.name,
-          createdAt: call.createdAt,
-          creator: creator,
-        },
-      });
-    }
+    // Check if user has an approved join request
+    const joinRequest = await db
+      .select()
+      .from(callJoinRequests)
+      .where(
+        and(
+          eq(callJoinRequests.callId, callId),
+          eq(callJoinRequests.requesterId, user.id),
+          eq(callJoinRequests.status, "approved")
+        )
+      )
+      .limit(1);
 
-    // User is not invited - needs permission
-    return c.json({
-      exists: true,
-      hasAccess: false,
-      isCreator: false,
-      isInvited: false,
-      needsPermission: true,
-      call: {
-        id: call.id,
-        name: call.name,
-        createdAt: call.createdAt,
-        creator: creator,
-      },
-    });
-
+    return c.json({ 
+      hasAccess: invitation.length > 0 || joinRequest.length > 0,
+      isCreator: false 
+    }, 200);
   } catch (error) {
     console.error("Error checking call access:", error);
     return c.json({ error: "Failed to check access" }, 500);
@@ -404,18 +355,14 @@ callsRoutes.post("/:id/request-join", async (c) => {
   try {
     const callId = c.req.param("id");
     const user = c.get("user");
-    
+
     if (!user || !user.id) {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
     // Check if call exists
     const callResult = await db
-      .select({
-        id: calls.id,
-        name: calls.name,
-        creatorId: calls.creatorId,
-      })
+      .select({ creatorId: calls.creatorId })
       .from(calls)
       .where(eq(calls.id, callId))
       .limit(1);
@@ -424,54 +371,87 @@ callsRoutes.post("/:id/request-join", async (c) => {
       return c.json({ error: "Call not found" }, 404);
     }
 
-    const call = callResult[0];
-    if (!call) {
-      return c.json({ error: "Call not found" }, 404);
-    }
-
-    // Check if there's already a pending request from this user
-    const existingNotification = await db
+    // Check if user already has a pending request
+    const existingRequest = await db
       .select()
-      .from(notifications)
+      .from(callJoinRequests)
       .where(
         and(
-          eq(notifications.callId, callId),
-          eq(notifications.userId, call.creatorId)
+          eq(callJoinRequests.callId, callId),
+          eq(callJoinRequests.requesterId, user.id),
+          eq(callJoinRequests.status, "pending")
         )
       )
       .limit(1);
 
-    // Delete existing notification if any to avoid duplicates
-    if (existingNotification.length > 0) {
-      await db
-        .delete(notifications)
-        .where(
-          and(
-            eq(notifications.callId, callId),
-            eq(notifications.userId, call.creatorId)
-          )
-        );
+    if (existingRequest.length > 0) {
+      return c.json({ error: "You already have a pending request" }, 400);
     }
 
-    // Create notification for the creator with requester info embedded
-    const notificationId = crypto.randomUUID();
-    await db.insert(notifications).values({
-      id: notificationId,
-      userId: call.creatorId,
-      message: `${user.name || user.email}:${user.id} wants to join your call: ${call.name}`,
-      callId: callId,
+    // Create join request
+    await db.insert(callJoinRequests).values({
+      callId,
+      requesterId: user.id,
+      status: "pending",
       createdAt: new Date(),
     });
 
-    return c.json({ 
-      success: true, 
-      message: "Join request sent to call creator",
-      requestId: notificationId,
-    });
-
+    return c.json({ success: true });
   } catch (error) {
-    console.error("Error requesting to join call:", error);
-    return c.json({ error: "Failed to send join request" }, 500);
+    console.error("Error requesting join:", error);
+    return c.json({ error: "Failed to send request" }, 500);
+  }
+});
+
+// GET /api/calls/:id/join-requests
+callsRoutes.get("/:id/join-requests", async (c) => {
+  try {
+    const callId = c.req.param("id");
+    const user = c.get("user");
+
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    // Check if user is the creator
+    const callResult = await db
+      .select({ creatorId: calls.creatorId })
+      .from(calls)
+      .where(eq(calls.id, callId))
+      .limit(1);
+
+    if (!callResult || callResult.length === 0 || !callResult[0]) {
+      return c.json({ error: "Call not found" }, 404);
+    }
+
+    const call = callResult[0];
+    if (call.creatorId !== user.id) {
+      return c.json({ error: "Only call creator can view join requests" }, 403);
+    }
+
+    // Get join requests with user information
+    const requests = await db
+      .select({
+        id: callJoinRequests.id,
+        userId: userTable.id,
+        userName: userTable.name,
+        userEmail: userTable.email,
+        timestamp: callJoinRequests.createdAt,
+      })
+      .from(callJoinRequests)
+      .innerJoin(userTable, eq(callJoinRequests.requesterId, userTable.id))
+      .where(
+        and(
+          eq(callJoinRequests.callId, callId),
+          eq(callJoinRequests.status, "pending")
+        )
+      )
+      .orderBy(desc(callJoinRequests.createdAt));
+
+    return c.json({ requests });
+  } catch (error) {
+    console.error("Error getting join requests:", error);
+    return c.json({ error: "Failed to get requests" }, 500);
   }
 });
 
@@ -494,144 +474,31 @@ callsRoutes.post("/:id/approve-join", async (c) => {
       .where(eq(calls.id, callId))
       .limit(1);
 
-    if (!callResult || callResult.length === 0) {
+    if (!callResult || callResult.length === 0 || !callResult[0]) {
       return c.json({ error: "Call not found" }, 404);
     }
 
     const call = callResult[0];
-    if (!call || call.creatorId !== user.id) {
+    if (call.creatorId !== user.id) {
       return c.json({ error: "Only call creator can approve join requests" }, 403);
     }
 
-    // Get requester information
-    const requesterResult = await db
-      .select({
-        id: userTable.id,
-        email: userTable.email,
-      })
-      .from(userTable)
-      .where(eq(userTable.id, requesterId))
-      .limit(1);
-
-    if (!requesterResult || requesterResult.length === 0) {
-      return c.json({ error: "Requester not found" }, 404);
-    }
-
-    const requester = requesterResult[0];
-    if (!requester) {
-      return c.json({ error: "Requester not found" }, 404);
-    }
-
-    // Create invitation for the requester
-    await db.insert(callInvitations).values({
-      id: crypto.randomUUID(),
-      callId: callId,
-      inviteeId: requesterId,
-      inviteeEmail: requester.email,
-      status: "accepted",
-      createdAt: new Date(),
-    });
-
-    // Delete the notification request
+    // Update join request status
     await db
-      .delete(notifications)
+      .update(callJoinRequests)
+      .set({ status: "approved" })
       .where(
         and(
-          eq(notifications.callId, callId),
-          eq(notifications.userId, call.creatorId)
+          eq(callJoinRequests.callId, callId),
+          eq(callJoinRequests.requesterId, requesterId),
+          eq(callJoinRequests.status, "pending")
         )
       );
 
-    return c.json({ 
-      success: true, 
-      message: "User approved to join call" 
-    });
-
+    return c.json({ success: true });
   } catch (error) {
     console.error("Error approving join request:", error);
-    return c.json({ error: "Failed to approve join request" }, 500);
-  }
-});
-
-// GET /api/calls/:id/join-requests
-callsRoutes.get("/:id/join-requests", async (c) => {
-  try {
-    const callId = c.req.param("id");
-    const user = c.get("user");
-    
-    if (!user || !user.id) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-
-    // Check if user is the creator
-    const callResult = await db
-      .select({ creatorId: calls.creatorId })
-      .from(calls)
-      .where(eq(calls.id, callId))
-      .limit(1);
-
-    if (!callResult || callResult.length === 0) {
-      return c.json({ error: "Call not found" }, 404);
-    }
-
-    const call = callResult[0];
-    if (!call || call.creatorId !== user.id) {
-      return c.json({ error: "Only call creator can view join requests" }, 403);
-    }
-
-    // Get pending join requests from notifications
-    const requests = await db
-      .select({
-        id: notifications.id,
-        message: notifications.message,
-        createdAt: notifications.createdAt,
-      })
-      .from(notifications)
-      .where(
-        and(
-          eq(notifications.callId, callId),
-          eq(notifications.userId, call.creatorId)
-        )
-      )
-      .orderBy(desc(notifications.createdAt));
-
-    // Extract requester info from notifications
-    const joinRequests = await Promise.all(
-      requests
-        .filter(req => req.message.includes("wants to join"))
-        .map(async (req) => {
-          // Extract requester info from message format: "Name:userId wants to join..."
-          const match = req.message.match(/^(.+?):([^:]+) wants to join/);
-          if (!match) return null;
-
-          const [, requesterName, requesterId] = match;
-          if (!requesterId) return null;
-          
-          // Get requester email
-          const requesterInfo = await db
-            .select({ email: userTable.email })
-            .from(userTable)
-            .where(eq(userTable.id, requesterId))
-            .limit(1);
-
-          return {
-            id: req.id,
-            userId: requesterId,
-            userName: requesterName,
-            userEmail: requesterInfo.length > 0 ? requesterInfo[0]?.email || "" : "",
-            timestamp: req.createdAt,
-          };
-        })
-    );
-
-    // Filter out null values
-    const validRequests = joinRequests.filter(req => req !== null);
-
-    return c.json({ requests: validRequests });
-
-  } catch (error) {
-    console.error("Error fetching join requests:", error);
-    return c.json({ error: "Failed to fetch join requests" }, 500);
+    return c.json({ error: "Failed to approve request" }, 500);
   }
 });
 
@@ -641,7 +508,7 @@ callsRoutes.post("/:id/reject-join", async (c) => {
     const callId = c.req.param("id");
     const user = c.get("user");
     const body = await c.req.json();
-    const { requestId } = body;
+    const { requesterId } = body;
     
     if (!user || !user.id) {
       return c.json({ error: "Unauthorized" }, 401);
@@ -654,28 +521,31 @@ callsRoutes.post("/:id/reject-join", async (c) => {
       .where(eq(calls.id, callId))
       .limit(1);
 
-    if (!callResult || callResult.length === 0) {
+    if (!callResult || callResult.length === 0 || !callResult[0]) {
       return c.json({ error: "Call not found" }, 404);
     }
 
     const call = callResult[0];
-    if (!call || call.creatorId !== user.id) {
+    if (call.creatorId !== user.id) {
       return c.json({ error: "Only call creator can reject join requests" }, 403);
     }
 
-    // Delete the notification (request)
+    // Update join request status
     await db
-      .delete(notifications)
-      .where(eq(notifications.id, requestId));
+      .update(callJoinRequests)
+      .set({ status: "rejected" })
+      .where(
+        and(
+          eq(callJoinRequests.callId, callId),
+          eq(callJoinRequests.requesterId, requesterId),
+          eq(callJoinRequests.status, "pending")
+        )
+      );
 
-    return c.json({ 
-      success: true, 
-      message: "Join request rejected" 
-    });
-
+    return c.json({ success: true });
   } catch (error) {
     console.error("Error rejecting join request:", error);
-    return c.json({ error: "Failed to reject join request" }, 500);
+    return c.json({ error: "Failed to reject request" }, 500);
   }
 });
 

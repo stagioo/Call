@@ -16,7 +16,9 @@ import {
   FiPhone,
   FiMessageCircle,
   FiSettings,
-  FiChevronDown
+  FiChevronDown,
+  FiUsers,
+  FiPhoneOff
 } from "react-icons/fi";
 import { Button } from "@call/ui/components/button";
 import { Card } from "@call/ui/components/card";
@@ -27,6 +29,7 @@ import {
   DropdownMenuTrigger
 } from "@call/ui/components/dropdown-menu";
 import { useSession } from "@/hooks/useSession";
+import { ParticipantsSidebar } from "@/components/rooms/participants-sidebar";
 
 function generateUserId() {
   if (typeof window !== "undefined") {
@@ -62,6 +65,7 @@ const MediaControls = ({
   onToggleMic,
   isMicOn,
   onToggleChat,
+  onToggleParticipants,
   onDeviceChange,
   videoDevices,
   audioDevices,
@@ -77,6 +81,7 @@ const MediaControls = ({
   onToggleMic: () => void;
   isMicOn: boolean;
   onToggleChat: () => void;
+  onToggleParticipants: () => void;
   onDeviceChange: (type: 'video' | 'audio', deviceId: string) => void;
   videoDevices: MediaDeviceInfo[];
   audioDevices: MediaDeviceInfo[];
@@ -220,24 +225,34 @@ const MediaControls = ({
           <FiMonitor size={20} />
         </Button>
 
-        {/* Chat */}
+        {/* Participants Button */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-12 w-12 rounded-full bg-blue-600 text-white hover:bg-blue-700"
+          className="relative h-12 w-12 rounded-full bg-gray-700 text-white hover:bg-gray-600"
+          onClick={onToggleParticipants}
+        >
+          <FiUsers size={20} />
+        </Button>
+
+        {/* Chat Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative h-12 w-12 rounded-full bg-gray-700 text-white hover:bg-gray-600"
           onClick={onToggleChat}
         >
           <FiMessageCircle size={20} />
         </Button>
 
-        {/* Hang Up */}
+        {/* Hangup Button */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-12 w-12 rounded-full bg-red-600 text-white hover:bg-red-700"
+          className="relative h-12 w-12 rounded-full bg-red-600 text-white hover:bg-red-700"
           onClick={onHangup}
         >
-          <FiPhone size={20} />
+          <FiPhoneOff size={20} />
         </Button>
       </div>
     </>
@@ -289,6 +304,66 @@ export default function CallPreviewPage() {
   const localAudioProducerId = useRef<string | null>(null);
   const [isLocalMicOn, setIsLocalMicOn] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isParticipantsSidebarOpen, setIsParticipantsSidebarOpen] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [isRequestingAccess, setIsRequestingAccess] = useState(false);
+
+  // Check access status periodically when not joined
+  useEffect(() => {
+    if (joined || !session?.user?.id) return;
+
+    const checkAccess = async () => {
+      try {
+        const response = await fetch(`http://localhost:1284/api/calls/${callId}/check-access`, {
+          credentials: "include",
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setHasAccess(data.hasAccess);
+          setIsCreator(data.isCreator);
+        }
+      } catch (error) {
+        console.error("Error checking call access:", error);
+      }
+    };
+
+    checkAccess();
+    const interval = setInterval(checkAccess, 3000); // Check every 3 seconds
+    return () => clearInterval(interval);
+  }, [callId, session?.user?.id, joined]);
+
+  // Request access to join the call
+  const handleRequestAccess = async () => {
+    if (!callId || !session?.user?.id) {
+      alert("You must be logged in to request access");
+      return;
+    }
+
+    setIsRequestingAccess(true);
+    try {
+      const response = await fetch(`http://localhost:1284/api/calls/${callId}/request-join`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        alert("Request sent! Please wait for the host to approve.");
+      } else {
+        const data = await response.json();
+        alert(data.error || "Failed to send request");
+      }
+    } catch (error) {
+      console.error("Error requesting access:", error);
+      alert("Failed to send request");
+    } finally {
+      setIsRequestingAccess(false);
+    }
+  };
 
   // Mediasoup hooks with cleanupAll
   const {
@@ -1098,105 +1173,73 @@ export default function CallPreviewPage() {
           <div className="flex w-full max-w-xs flex-col gap-4">
             <label className="font-semibold">Camera</label>
             <select
-              className="rounded border px-2 py-1"
               value={selectedVideo}
               onChange={(e) => setSelectedVideo(e.target.value)}
+              className="rounded-md border p-2"
             >
-              <option value="">Select camera</option>
-              {videoDevices.map((d) => (
-                <option key={d.deviceId} value={d.deviceId}>
-                  {d.label || `Camera (${d.deviceId})`}
+              {videoDevices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Camera ${device.deviceId}`}
                 </option>
               ))}
             </select>
-            <label className="mt-2 font-semibold">Microphone</label>
+
+            <label className="font-semibold">Microphone</label>
             <select
-              className="rounded border px-2 py-1"
               value={selectedAudio}
               onChange={(e) => setSelectedAudio(e.target.value)}
+              className="rounded-md border p-2"
             >
-              <option value="">Select microphone</option>
-              {audioDevices.map((d) => (
-                <option key={d.deviceId} value={d.deviceId}>
-                  {d.label || `Microphone (${d.deviceId})`}
+              {audioDevices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Microphone ${device.deviceId}`}
                 </option>
               ))}
             </select>
-          </div>
-          <div className="flex h-[240px] w-[320px] items-center justify-center overflow-hidden rounded-lg bg-black shadow-lg">
+
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
-              className="h-full w-full object-cover"
+              className="aspect-video w-full rounded-lg bg-black"
             />
+
+            {hasAccess ? (
+              <Button onClick={handleJoin} disabled={!connected}>
+                Join Call
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleRequestAccess} 
+                disabled={!connected || isRequestingAccess}
+                variant="secondary"
+              >
+                {isRequestingAccess ? "Sending Request..." : "Request Access"}
+              </Button>
+            )}
           </div>
-          <button
-            className="mt-4 rounded bg-blue-600 px-6 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
-            onClick={handleJoin}
-            disabled={!connected}
-          >
-            {connected ? "Join the call" : "Connecting..."}
-          </button>
         </>
       ) : (
-        <div className="flex w-full flex-col items-center gap-4">
-          <div className="text-lg font-semibold">In call</div>
-          <div className="flex w-full flex-wrap justify-center gap-4">
-            {/* Local video */}
+        <>
+          <div className="relative flex flex-wrap items-start justify-center gap-4">
+            {/* Local camera */}
             {localStream && (
               <div className="relative">
                 <video
                   autoPlay
                   playsInline
                   muted
-                  className={cn(
-                    "h-[240px] w-[320px] rounded-lg bg-black shadow-lg",
-                    activeSpeakerId && activeSpeakerId === userId
-                      ? "ring-2 ring-red-500 ring-offset-2 ring-offset-black"
-                      : ""
-                  )}
+                  className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
                   ref={(el) => {
                     if (el && localStream) {
-                      console.log(
-                        "[Call] Setting local video element with stream:",
-                        {
-                          streamId: localStream.id,
-                          active: localStream.active,
-                          videoTracks: localStream
-                            .getVideoTracks()
-                            .map((t) => ({
-                              id: t.id,
-                              kind: t.kind,
-                              enabled: t.enabled,
-                              readyState: t.readyState,
-                              muted: t.muted,
-                            })),
-                        }
-                      );
                       el.srcObject = localStream;
-                      el.onloadedmetadata = () => {
-                        console.log("[Call] Local video metadata loaded");
-                        el.play().catch((e) =>
-                          console.warn("Error playing local video:", e)
-                        );
-                      };
-                      el.oncanplay = () => {
-                        console.log("[Call] Local video can play");
-                      };
-                      el.onerror = (e) => {
-                        console.error("[Call] Local video error:", e);
-                      };
                     }
                   }}
                 />
-                <div className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-white">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs">You ({displayName})</span>
-                    {!isLocalMicOn && <MicOff size={12} />}
-                  </div>
-                </div>
+                <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+                  You
+                </span>
               </div>
             )}
 
@@ -1403,12 +1446,14 @@ export default function CallPreviewPage() {
             onToggleMic={toggleMic}
             isMicOn={isLocalMicOn}
             onToggleChat={() => setIsChatOpen(!isChatOpen)}
+            onToggleParticipants={() => setIsParticipantsSidebarOpen(!isParticipantsSidebarOpen)}
             onDeviceChange={handleDeviceChange}
             videoDevices={videoDevices}
             audioDevices={audioDevices}
             selectedVideo={selectedVideo || ""}
             selectedAudio={selectedAudio || ""}
           />
+
           <ChatSidebar
             open={isChatOpen}
             onOpenChange={setIsChatOpen}
@@ -1416,7 +1461,22 @@ export default function CallPreviewPage() {
             userId={userId}
             displayName={displayName}
           />
-        </div>
+
+          <ParticipantsSidebar
+            open={isParticipantsSidebarOpen}
+            onOpenChange={setIsParticipantsSidebarOpen}
+            callId={callId}
+            isCreator={isCreator}
+            participants={peers.map(peer => ({
+              id: peer.id,
+              displayName: peer.displayName,
+              isCreator: peer.id === userId && isCreator,
+              isMicOn: true, // TODO: Get actual mic status
+              isCameraOn: true, // TODO: Get actual camera status
+            }))}
+            currentUserId={userId}
+          />
+        </>
       )}
     </div>
   );

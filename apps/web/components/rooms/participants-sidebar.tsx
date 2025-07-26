@@ -15,7 +15,8 @@ import {
   FiMicOff, 
   FiVideo, 
   FiVideoOff,
-  FiStar
+  FiStar,
+  FiClock
 } from "react-icons/fi";
 
 interface Participant {
@@ -55,6 +56,9 @@ export function ParticipantsSidebar({
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Find creator participant
+  const creator = participants.find(p => p.isCreator);
+
   // Fetch join requests (only for creators)
   useEffect(() => {
     if (!isCreator || !open) return;
@@ -81,10 +85,8 @@ export function ParticipantsSidebar({
     return () => clearInterval(interval);
   }, [callId, isCreator, open]);
 
-  const handleApproveRequest = async (requestId: string, userId: string) => {
+  const handleApproveRequest = async (userId: string) => {
     setLoading(true);
-    console.log("[Participants] Approving request:", { requestId, userId });
-    
     try {
       const response = await fetch(`http://localhost:1284/api/calls/${callId}/approve-join`, {
         method: "POST",
@@ -95,19 +97,11 @@ export function ParticipantsSidebar({
         body: JSON.stringify({ requesterId: userId }),
       });
 
-      console.log("[Participants] Approve response status:", response.status);
-      
       if (response.ok) {
-        console.log("[Participants] Request approved successfully");
-        // Remove the request from the list immediately
-        setJoinRequests(prev => {
-          const filtered = prev.filter(req => req.id !== requestId);
-          console.log("[Participants] Updated requests:", filtered);
-          return filtered;
-        });
+        // Remove the request from the list
+        setJoinRequests(prev => prev.filter(req => req.userId !== userId));
       } else {
         const data = await response.json();
-        console.error("[Participants] Approval failed:", data);
         alert(data.error || "Failed to approve request");
       }
     } catch (error) {
@@ -118,7 +112,7 @@ export function ParticipantsSidebar({
     }
   };
 
-  const handleRejectRequest = async (requestId: string) => {
+  const handleRejectRequest = async (userId: string) => {
     setLoading(true);
     try {
       const response = await fetch(`http://localhost:1284/api/calls/${callId}/reject-join`, {
@@ -127,12 +121,12 @@ export function ParticipantsSidebar({
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ requestId }),
+        body: JSON.stringify({ requesterId: userId }),
       });
 
       if (response.ok) {
         // Remove the request from the list
-        setJoinRequests(prev => prev.filter(req => req.id !== requestId));
+        setJoinRequests(prev => prev.filter(req => req.userId !== userId));
       } else {
         const data = await response.json();
         alert(data.error || "Failed to reject request");
@@ -158,12 +152,57 @@ export function ParticipantsSidebar({
         <div className="mt-6 space-y-6">
           {/* Current Participants */}
           <div>
+            {/* Meeting Creator */}
+            {creator && (
+              <div className="mb-4">
+                <h3 className="font-medium mb-3 flex items-center gap-2">
+                  <FiStar className="h-4 w-4 text-yellow-500" />
+                  Meeting Creator
+                </h3>
+                <div
+                  className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100"
+                >
+                  <Avatar className="h-10 w-10">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+                      {creator.displayName.charAt(0).toUpperCase()}
+                    </div>
+                  </Avatar>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium truncate">
+                        {creator.id === currentUserId ? `${creator.displayName} (You)` : creator.displayName}
+                      </p>
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
+                        <FiStar className="h-3 w-3 mr-1" />
+                        Creator
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      {creator.isMicOn ? (
+                        <FiMic className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <FiMicOff className="h-3 w-3 text-red-500" />
+                      )}
+                      {creator.isCameraOn ? (
+                        <FiVideo className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <FiVideoOff className="h-3 w-3 text-red-500" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <h3 className="font-medium mb-3 flex items-center gap-2">
               <FiUsers className="h-4 w-4" />
-              In Call ({participants.length})
+              {creator && creator.id !== currentUserId ? "Other Participants" : "Participants"} ({participants.filter(p => !p.isCreator).length})
             </h3>
             <div className="space-y-2">
-              {participants.map((participant) => (
+              {participants
+                .filter(p => !p.isCreator)
+                .map((participant) => (
                 <div
                   key={participant.id}
                   className={`flex items-center gap-3 p-2 rounded-lg ${
@@ -181,9 +220,6 @@ export function ParticipantsSidebar({
                       <p className="text-sm font-medium truncate">
                         {participant.id === currentUserId ? `${participant.displayName} (You)` : participant.displayName}
                       </p>
-                      {participant.isCreator && (
-                        <FiStar className="h-3 w-3 text-yellow-600" />
-                      )}
                     </div>
                     <div className="flex items-center gap-1 mt-1">
                       {participant.isMicOn ? (
@@ -243,16 +279,17 @@ export function ParticipantsSidebar({
                             <p className="text-xs text-muted-foreground truncate">
                               {request.userEmail}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                              <FiClock className="h-3 w-3" />
                               {new Date(request.timestamp).toLocaleTimeString()}
-                            </p>
+                            </div>
                           </div>
                         </div>
                         
                         <div className="flex gap-2 mt-3">
                           <Button
                             size="sm"
-                            onClick={() => handleApproveRequest(request.id, request.userId)}
+                            onClick={() => handleApproveRequest(request.userId)}
                             disabled={loading}
                             className="flex-1"
                           >
@@ -262,7 +299,7 @@ export function ParticipantsSidebar({
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleRejectRequest(request.id)}
+                            onClick={() => handleRejectRequest(request.userId)}
                             disabled={loading}
                             className="flex-1"
                           >
