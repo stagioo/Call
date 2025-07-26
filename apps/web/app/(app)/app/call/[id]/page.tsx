@@ -26,6 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@call/ui/components/dropdown-menu";
+import { useSession } from "@/hooks/useSession";
 
 function generateUserId() {
   if (typeof window !== "undefined") {
@@ -271,9 +272,10 @@ const recordCallParticipation = async (callId: string) => {
 
 export default function CallPreviewPage() {
   const params = useParams();
+  const { session } = useSession();
   const callId = params?.id as string;
   const userId = generateUserId();
-  const displayName = generateDisplayName();
+  const displayName = session?.user?.name || generateDisplayName();
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<string | undefined>();

@@ -179,8 +179,7 @@ export function ParticipantsSidebar({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium truncate">
-                        {participant.displayName}
-                        {participant.id === currentUserId && " (You)"}
+                        {participant.id === currentUserId ? `${participant.displayName} (You)` : participant.displayName}
                       </p>
                       {participant.isCreator && (
                         <FiStar className="h-3 w-3 text-yellow-600" />

@@ -10,6 +10,7 @@ import type {
   RtpEncodingParameters,
 } from "mediasoup-client/types";
 import { useSocket } from "./useSocket";
+import { useSession } from "@/hooks/useSession";
 
 interface Peer {
   id: string;
@@ -116,6 +117,7 @@ function useWsRequest(socket: WebSocket | null) {
 
 export function useMediasoupClient() {
   const { socket, connected } = useSocket();
+  const { session } = useSession();
   const { sendRequest, addEventHandler, removeEventHandler } =
     useWsRequest(socket);
   const deviceRef = useRef<Device | null>(null);
@@ -143,8 +145,11 @@ export function useMediasoupClient() {
     return "";
   });
 
-  // Generate display name
-  const [displayName] = useState(() => {
+  // Get display name from session or generate one
+  const [displayName, setDisplayName] = useState(() => {
+    if (session?.user?.name) {
+      return session.user.name;
+    }
     if (typeof window !== "undefined") {
       let name = localStorage.getItem("display-name");
       if (!name) {
@@ -155,6 +160,13 @@ export function useMediasoupClient() {
     }
     return "Anonymous";
   });
+
+  // Update display name when session changes
+  useEffect(() => {
+    if (session?.user?.name) {
+      setDisplayName(session.user.name);
+    }
+  }, [session?.user?.name]);
 
   // Producer muted
   const setProducerMuted = useCallback(
