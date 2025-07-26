@@ -2,10 +2,10 @@
 
 import type React from "react";
 
-import { forwardRef } from "react";
-import { Loader2 } from "lucide-react";
-import { cn } from "@call/ui/lib/utils";
 import { Button } from "@call/ui/components/button";
+import { cn } from "@call/ui/lib/utils";
+import { Loader } from "lucide-react";
+import { forwardRef } from "react";
 
 interface LoadingButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -23,8 +23,7 @@ const LoadingButton = forwardRef<HTMLButtonElement, LoadingButtonProps>(
         {...props}
       >
         <div className="grid grid-cols-1 grid-rows-1 place-items-center">
-          {/* Loading spinner - only visible when loading */}
-          <Loader2
+          <Loader
             className={cn(
               "h-4 w-4 animate-spin transition-opacity duration-200",
               loading ? "opacity-100" : "opacity-0"
