@@ -2,10 +2,10 @@ import { Geist, Geist_Mono, Lora } from "next/font/google";
 
 import "@call/ui/globals.css";
 import "@livekit/components-styles";
-import { Providers } from "@/components/providers";
+import { ThemeAndQueryProviders } from "@/components/providers/theme-and-query";
 import { siteConfig } from "@/lib/site";
 import type { Metadata } from "next";
-import { Databuddy } from '@databuddy/sdk';
+import { Databuddy } from "@databuddy/sdk";
 
 const fontSans = Geist({
   subsets: ["latin"],
@@ -21,9 +21,6 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 });
-
-
-
 
 export const metadata: Metadata = {
   title: {
@@ -87,7 +84,6 @@ export const metadata: Metadata = {
   manifest: `${siteConfig.url}/site.webmanifest`,
 };
 
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -103,7 +99,7 @@ export default function RootLayout({
       <body
         className={`${fontSans.variable} ${fontLora.variable} ${fontMono.variable} custom_scrollbar font-sans antialiased transition-all duration-300`}
       >
-        <Providers>
+        <ThemeAndQueryProviders>
           {children}
           <Databuddy
             clientId="ciU4COouaNeeu56duBjT7"
@@ -119,7 +115,7 @@ export default function RootLayout({
             trackErrors={true}
             enableBatching={true}
           />
-        </Providers>
+        </ThemeAndQueryProviders>
       </body>
     </html>
   );

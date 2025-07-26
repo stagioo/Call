@@ -9,7 +9,7 @@ import type {
   RtpParameters,
   RtpEncodingParameters,
 } from "mediasoup-client/types";
-import { useSocket } from "./useSocket";
+import { useSocketContext } from "@/components/providers/socket";
 import { useSession } from "@/hooks/useSession";
 
 interface Peer {
@@ -117,7 +117,7 @@ function useWsRequest(socket: WebSocket | null) {
 }
 
 export function useMediasoupClient() {
-  const { socket, connected } = useSocket();
+  const { socket, connected } = useSocketContext();
   const { session } = useSession();
   const { sendRequest, addEventHandler, removeEventHandler } =
     useWsRequest(socket);
@@ -436,7 +436,14 @@ export function useMediasoupClient() {
       removeEventHandler("peer-left");
       removeEventHandler("peer-updated");
     };
-  }, [socket, addEventHandler, removeEventHandler, handlePeerJoined, handlePeerLeft, handlePeerUpdated]);
+  }, [
+    socket,
+    addEventHandler,
+    removeEventHandler,
+    handlePeerJoined,
+    handlePeerLeft,
+    handlePeerUpdated,
+  ]);
 
   // Load mediasoup device
   const loadDevice = useCallback(async (rtpCapabilities: RtpCapabilities) => {
