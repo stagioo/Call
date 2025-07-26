@@ -14,6 +14,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Providers } from "@/components/providers";
+import Modals from "@/components/modal";
 
 const sectionMap = [
   { path: "/app/call", title: "Call" },
@@ -115,6 +116,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           )}
         </SidebarInset>
       </SidebarProvider>
+      <Modals />
     </Providers>
   );
 }
