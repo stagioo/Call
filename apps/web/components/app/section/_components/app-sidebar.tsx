@@ -100,7 +100,7 @@ export function AppSidebar({
       <SidebarFooter className="p-4">
         <SidebarMenu>
           {data.navFooter.map((item) => (
-            <SidebarMenuItem>
+            <SidebarMenuItem key={item.title}>
               <SidebarMenuButton tooltip={item.title}>
                 {item.icon && <item.icon />}
                 <span

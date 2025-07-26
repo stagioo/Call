@@ -9,6 +9,7 @@ import {
   SidebarMenuItem,
 } from "@call/ui/components/sidebar";
 import type { JSX } from "react";
+import { useModal } from "@/hooks/use-modal";
 
 export function NavMain({
   items,
@@ -26,6 +27,8 @@ export function NavMain({
   }[];
   onSelect?: (title: string) => void;
 }) {
+  const { onOpen } = useModal();
+
   return (
     <SidebarGroup>
       <SidebarMenu className="flex flex-col">
@@ -33,7 +36,7 @@ export function NavMain({
           <SidebarMenuButton
             tooltip="Start Call"
             isActive={true}
-            className="bg-red-500"
+            onClick={() => onOpen("start-call")}
           >
             <Icons.plus />
             <span>Start Call</span>

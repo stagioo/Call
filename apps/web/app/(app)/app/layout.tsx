@@ -1,8 +1,8 @@
 "use client";
 import { AppSidebar } from "@/components/app/section/_components/app-sidebar";
-import { CreateCallModal } from "@/components/app/section/_components/create-call-modal";
-import { CreateTeamModal } from "@/components/app/section/_components/create-team-modal";
 import { ModalContact } from "@/components/app/section/_components/modal-contact";
+import { Providers } from "@/components/providers";
+import { useModal } from "@/hooks/use-modal";
 import { Button } from "@call/ui/components/button";
 import { Separator } from "@call/ui/components/separator";
 import {
@@ -13,7 +13,6 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Providers } from "@/components/providers";
 
 const sectionMap = [
   { path: "/app/call", title: "Call" },
@@ -28,8 +27,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [showContactModal, setShowContactModal] = useState(false);
-  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
-  const [showCallModal, setShowCallModal] = useState(false);
+  const { onOpen } = useModal();
 
   const selectedSection =
     sectionMap.find((s) => pathname?.startsWith(s.path))?.title || "Call";
@@ -43,10 +41,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (section) {
       router.push(section.path);
     }
-  };
-
-  const handleTeamCreated = () => {
-    window.location.reload();
   };
 
   return (
@@ -68,17 +62,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
               <div>
                 {selectedSection === "Call" && (
-                  <Button onClick={() => setShowCallModal(true)}>
+                  <Button onClick={() => onOpen("start-call")}>
                     Start Call
                   </Button>
                 )}
                 {selectedSection === "Teams" && (
-                  <Button onClick={() => setShowCreateTeamModal(true)}>
+                  <Button onClick={() => onOpen("create-team")}>
                     Create Team
                   </Button>
                 )}
                 {selectedSection === "Contact" && (
-                  <Button onClick={() => setShowContactModal(true)}>
+                  <Button onClick={() => onOpen("create-contact")}>
                     Add Contact
                   </Button>
                 )}
@@ -89,30 +83,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4">{children}</div>
-          {showContactModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="relative">
-                <ModalContact onClose={() => setShowContactModal(false)} />
-              </div>
-            </div>
-          )}
-          {showCreateTeamModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="relative">
-                <CreateTeamModal
-                  onClose={() => setShowCreateTeamModal(false)}
-                  onTeamCreated={handleTeamCreated}
-                />
-              </div>
-            </div>
-          )}
-          {showCallModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="relative">
-                <CreateCallModal onClose={() => setShowCallModal(false)} />
-              </div>
-            </div>
-          )}
         </SidebarInset>
       </SidebarProvider>
     </Providers>
