@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/app/section/_components/app-sidebar";
 import { CreateCallModal } from "@/components/app/section/_components/create-call-modal";
 import { CreateTeamModal } from "@/components/app/section/_components/create-team-modal";
 import { ModalContact } from "@/components/app/section/_components/modal-contact";
+import { Providers } from "@/components/providers";
 import { Button } from "@call/ui/components/button";
 import { Separator } from "@call/ui/components/separator";
 import {
@@ -13,8 +14,6 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Providers } from "@/components/providers";
-import Modals from "@/components/modal";
 
 const sectionMap = [
   { path: "/app/call", title: "Call" },
@@ -116,7 +115,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           )}
         </SidebarInset>
       </SidebarProvider>
-      <Modals />
     </Providers>
   );
 }

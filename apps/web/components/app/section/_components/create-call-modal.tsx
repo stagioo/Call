@@ -12,7 +12,10 @@ interface Contact {
   email: string;
 }
 
-export function CreateCallModal({ onClose, onCallCreated }: {
+export function CreateCallModal({
+  onClose,
+  onCallCreated,
+}: {
   onClose?: () => void;
   onCallCreated?: (callId: string) => void;
 }) {
@@ -26,26 +29,9 @@ export function CreateCallModal({ onClose, onCallCreated }: {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  useEffect(() => { setMounted(true); }, []);
-
   useEffect(() => {
-    if (!mounted) return;
-    const fetchContacts = async () => {
-      try {
-        const res = await fetch("http://localhost:1284/api/contacts", 
-          { 
-            credentials: "include", 
-          });
-        if (res.ok) {
-          const data = await res.json();
-          setContacts(data.contacts || []);
-        }
-      } catch (err) {
-        setError("Failed to fetch contacts");
-      }
-    };
-    fetchContacts();
-  }, [mounted]);
+    setMounted(true);
+  }, []);
 
   const handleMemberToggle = (email: string) => {
     setSelectedMembers((prev) =>
@@ -60,17 +46,16 @@ export function CreateCallModal({ onClose, onCallCreated }: {
       setError("Meeting name is required");
       return;
     }
-    // if (selectedMembers.length === 0) {
-    //   setError("Select at least one contact");
-    //   return;
-    // }
     setLoading(true);
     try {
       const res = await fetch("http://localhost:1284/api/calls/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name: meetingName.trim(), members: selectedMembers.length > 0 ? selectedMembers : undefined }),
+        body: JSON.stringify({
+          name: meetingName.trim(),
+          members: selectedMembers.length > 0 ? selectedMembers : undefined,
+        }),
       });
       const data = await res.json();
       console.log("🔍 [CALLS DEBUG] Response:", data);
@@ -107,48 +92,64 @@ export function CreateCallModal({ onClose, onCallCreated }: {
                 placeholder="Enter meeting name"
                 required
                 value={meetingName}
-                onChange={e => setMeetingName(e.target.value)}
+                onChange={(e) => setMeetingName(e.target.value)}
                 disabled={loading || success}
               />
             </div>
             <div className="grid gap-2">
               <Label>Select Contacts (optional)</Label>
-              <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
+              <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-2">
                 {contacts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
+                  <p className="text-muted-foreground py-4 text-center text-sm">
                     No contacts available
                   </p>
                 ) : (
                   contacts.map((contact, index) => (
-                    <div key={`${contact.contactId}-${index}`} className="flex items-center justify-between p-2 hover:bg-muted rounded">
+                    <div
+                      key={`${contact.contactId}-${index}`}
+                      className="hover:bg-muted flex items-center justify-between rounded p-2"
+                    >
                       <div className="flex-1">
                         <p className="text-sm font-medium">{contact.name}</p>
-                        <p className="text-xs text-muted-foreground">{contact.email}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {contact.email}
+                        </p>
                       </div>
                       <Button
                         type="button"
-                        variant={selectedMembers.includes(contact.email) ? "default" : "outline"}
+                        variant={
+                          selectedMembers.includes(contact.email)
+                            ? "default"
+                            : "outline"
+                        }
                         size="sm"
                         onClick={() => handleMemberToggle(contact.email)}
                         disabled={loading || success}
                       >
-                        {selectedMembers.includes(contact.email) ? "Invited" : "Invite"}
+                        {selectedMembers.includes(contact.email)
+                          ? "Invited"
+                          : "Invite"}
                       </Button>
                     </div>
                   ))
                 )}
               </div>
             </div>
-            {error && <div className="text-red-500 text-sm">{error}</div>}
+            {error && <div className="text-sm text-red-500">{error}</div>}
             {success && callId && (
-              <div className="text-green-600 text-sm text-center">
-                Call created!<br />
+              <div className="text-center text-sm text-green-600">
+                Call created!
+                <br />
                 <span className="font-mono text-lg">{callId}</span>
               </div>
             )}
           </div>
-          <CardFooter className="flex-col gap-2 mt-6">
-            <Button type="submit" className="w-full" disabled={loading || success}>
+          <CardFooter className="mt-6 flex-col gap-2">
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || success}
+            >
               {loading ? "Creating..." : success ? "Created!" : "Start Call"}
             </Button>
             <Button
@@ -165,4 +166,4 @@ export function CreateCallModal({ onClose, onCallCreated }: {
       </CardContent>
     </Card>
   );
-} 
+}
