@@ -1,26 +1,15 @@
-// This file defines the main navigation section for the sidebar, including collapsible menu items and submenus.
 "use client";
 
-import { ChevronRight, type LucideIcon } from "lucide-react";
-
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@call/ui/components/collapsible";
+import { Collapsible } from "@call/ui/components/collapsible";
+import { Icons, type IconProps } from "@call/ui/components/icons";
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@call/ui/components/sidebar";
+import type { JSX } from "react";
 
-
-// NavMain receives an array of navigation items, each with optional sub-items.
 export function NavMain({
   items,
   onSelect,
@@ -28,7 +17,7 @@ export function NavMain({
   items: {
     title: string;
     url: string;
-    icon?: LucideIcon;
+    icon?: (props: IconProps) => JSX.Element;
     isActive?: boolean;
     items?: {
       title: string;
@@ -38,11 +27,18 @@ export function NavMain({
   onSelect?: (title: string) => void;
 }) {
   return (
-    // SidebarGroup groups the navigation section
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
-      <SidebarMenu>
-        {/* Render each main navigation item, possibly with collapsible sub-items */}
+      <SidebarMenu className="flex flex-col">
+        <SidebarMenuItem className="mb-2">
+          <SidebarMenuButton
+            tooltip="Start Call"
+            isActive={true}
+            className="bg-red-500"
+          >
+            <Icons.plus />
+            <span>Start Call</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
         {items.map((item) => (
           <Collapsible
             key={item.title}

@@ -1,49 +1,68 @@
 "use client";
-import Link from "next/link";
-import * as React from "react";
-import { Phone, Calendar, Users, Contact, Bell } from "lucide-react";
-import { NavMain } from "./nav-main";
-import { NavUser } from "./nav-user";
+import { useSession } from "@/components/providers/session";
+import { siteConfig } from "@/lib/site";
+import { Icons } from "@call/ui/components/icons";
 import {
   Sidebar,
   SidebarContent,
-  SidebarHeader,
-  SidebarRail,
   SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
 } from "@call/ui/components/sidebar";
-
-// Importar useSession y useRouter
-import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
+import * as React from "react";
+import { NavMain } from "./nav-main";
+import { NavUser } from "./nav-user";
+import { cn } from "@call/ui/lib/utils";
 
-// This is sample data.
 const data = {
   navMain: [
     {
       title: "Call",
       url: "#",
-      icon: Phone,
-      isActive: true,
+      icon: Icons.phoneIcon,
     },
     {
       title: "Schedule",
       url: "#",
-      icon: Calendar,
+      icon: Icons.scheduleIcon,
     },
     {
       title: "Teams",
       url: "#",
-      icon: Users,
+      icon: Icons.peopleIcon,
     },
     {
       title: "Contact",
       url: "#",
-      icon: Contact,
+      icon: Icons.contactsIcon,
     },
     {
       title: "Notifications",
       url: "#",
-      icon: Bell,
+      icon: Icons.notificationsIcon,
+    },
+  ],
+  navFooter: [
+    {
+      title: "Settings",
+      url: "/app/settings",
+      icon: Icons.settings,
+      type: "link",
+    },
+    {
+      title: "Discord",
+      url: siteConfig.links.discord,
+      icon: Icons.sidebarDiscordIcon,
+      type: "link",
+    },
+    {
+      title: "Thoughts?",
+      icon: Icons.thoughtsIcon,
+      type: "button",
     },
   ],
 };
@@ -56,7 +75,7 @@ export function AppSidebar({
   selectedSection: string;
   onSectionSelect: (title: string) => void;
 }) {
-  const { session, isLoading } = useSession();
+  const session = useSession();
   const router = useRouter();
 
   const navItems = data.navMain.map((item) => ({
@@ -67,27 +86,35 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        {session?.user ? (
-          <NavUser
-            user={{
-              name: session.user.name,
-              email: session.user.email,
-              avatar: session.user.image || "/avatars/default.jpg",
-            }}
-          />
-        ) : (
-          <button
-            className="bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-md px-4 py-2 transition"
-            onClick={() => router.push("/login")}
-          >
-            log in
-          </button>
-        )}
+        <NavUser
+          user={{
+            name: session.user.name,
+            email: session.user.email,
+            avatar: session.user.image || "/avatars/default.jpg",
+          }}
+        />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navItems} onSelect={onSectionSelect} />
       </SidebarContent>
-      <SidebarFooter>sidebar footer</SidebarFooter>
+      <SidebarFooter className="p-4">
+        <SidebarMenu>
+          {data.navFooter.map((item) => (
+            <SidebarMenuItem>
+              <SidebarMenuButton tooltip={item.title}>
+                {item.icon && <item.icon />}
+                <span
+                  className={cn(
+                    item.title === "Thoughts?" && "font-medium text-[#FF6347]"
+                  )}
+                >
+                  {item.title}
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
