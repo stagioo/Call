@@ -16,15 +16,15 @@ export async function middleware(request: NextRequest) {
   try {
     const sessionCookie = getSessionCookie(request.headers);
 
-    // if (isProtected && !sessionCookie) {
-    //   const signInUrl = new URL("/login", request.url);
-    //   signInUrl.searchParams.set("redirect", pathname);
-    //   return NextResponse.redirect(signInUrl);
-    // }
+    if (isProtected && !sessionCookie) {
+      const signInUrl = new URL("/login", request.url);
+      signInUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(signInUrl);
+    }
 
-    // if (isPublic && sessionCookie && pathname !== "/") {
-    //   return NextResponse.redirect(new URL("/app", request.url));
-    // }
+    if (isPublic && sessionCookie && pathname !== "/") {
+      return NextResponse.redirect(new URL("/app", request.url));
+    }
   } catch (error) {
     console.error("Auth middleware error:", error);
     if (isProtected) {

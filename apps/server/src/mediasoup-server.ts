@@ -391,6 +391,7 @@ wss.on("connection", (ws: WebSocket) => {
                   type: "peerJoined",
                   peerId,
                   displayName,
+                  isCreator: room.peers[peerId]?.id === peerId,
                 })
               );
             }

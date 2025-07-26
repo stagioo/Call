@@ -40,6 +40,7 @@
       "inputs": ["$TURBO_DEFAULT$", ".env*"]
     },
     "db:push": {
+      "persistent": true,
       "cache": false,
       "env": ["DATABASE_URL"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"]

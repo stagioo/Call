@@ -278,6 +278,37 @@ export const notifications = pgTable("notifications", {
   userIdx: index("notifications_user_id_idx").on(table.userId),
 }));
 
+// Call Join Request Status Enum
+export const callJoinRequestStatusEnum = pgEnum("call_join_request_status", [
+  "pending",
+  "approved",
+  "rejected",
+]);
+
+// Call Join Requests Table
+export const callJoinRequests = pgTable(
+  "call_join_requests",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    callId: text("call_id")
+      .notNull()
+      .references(() => calls.id, { onDelete: "cascade" }),
+    requesterId: text("requester_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: callJoinRequestStatusEnum("status")
+      .notNull()
+      .$default(() => "pending"),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("call_join_requests_call_id_idx").on(table.callId),
+    index("call_join_requests_requester_id_idx").on(table.requesterId),
+  ]
+);
+
 const schema = {
   user,
   session,
@@ -293,6 +324,7 @@ const schema = {
   calls,
   callInvitations,
   notifications,
+  callJoinRequests,
 };
 
 export default schema;
