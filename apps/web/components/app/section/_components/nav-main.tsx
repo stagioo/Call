@@ -1,9 +1,7 @@
-// This file defines the main navigation section for the sidebar, including collapsible menu items and submenus.
 "use client";
 
-import { type LucideIcon } from "lucide-react";
-
 import { Collapsible } from "@call/ui/components/collapsible";
+import type { IconProps } from "@call/ui/components/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -11,8 +9,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@call/ui/components/sidebar";
+import type { JSX } from "react";
 
-// NavMain receives an array of navigation items, each with optional sub-items.
 export function NavMain({
   items,
   onSelect,
@@ -20,7 +18,7 @@ export function NavMain({
   items: {
     title: string;
     url: string;
-    icon?: LucideIcon;
+    icon?: (props: IconProps) => JSX.Element;
     isActive?: boolean;
     items?: {
       title: string;
@@ -30,7 +28,6 @@ export function NavMain({
   onSelect?: (title: string) => void;
 }) {
   return (
-    // SidebarGroup groups the navigation section
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
@@ -47,7 +44,6 @@ export function NavMain({
                 tooltip={item.title}
                 isActive={item.isActive}
                 onClick={() => onSelect?.(item.title)}
-                className="py-3!"
               >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>

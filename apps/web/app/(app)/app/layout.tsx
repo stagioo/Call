@@ -30,7 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [showContactModal, setShowContactModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
-  // Find the section that matches the current path
+
   const selectedSection =
     sectionMap.find((s) => pathname?.startsWith(s.path))?.title || "Call";
 
@@ -46,7 +46,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   const handleTeamCreated = () => {
-    // Refresh the page to show the new team
     window.location.reload();
   };
 
@@ -58,7 +57,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           onSectionSelect={handleSectionSelect}
         />
         <SidebarInset>
-          <header className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear">
+          <header className="dark:border-sidebar border-border flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear">
             <div className="flex w-full items-center justify-between gap-2 px-4">
               <div className="flex items-center">
                 <SidebarTrigger className="-ml-1" />
@@ -66,7 +65,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   orientation="vertical"
                   className="mr-2 data-[orientation=vertical]:h-4"
                 />
-                {/* Section title can be rendered by each page */}
               </div>
               <div>
                 {selectedSection === "Call" && (

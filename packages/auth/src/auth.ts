@@ -4,6 +4,7 @@ import { db } from "@call/db";
 import schema from "@call/db/schema";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { clear } from "console";
 
 if (!process.env.FRONTEND_URL || !process.env.BACKEND_URL) {
   throw new Error(
