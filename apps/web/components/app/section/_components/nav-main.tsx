@@ -1,10 +1,9 @@
 "use client";
 
 import { Collapsible } from "@call/ui/components/collapsible";
-import type { IconProps } from "@call/ui/components/icons";
+import { Icons, type IconProps } from "@call/ui/components/icons";
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -29,9 +28,17 @@ export function NavMain({
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
-      <SidebarMenu>
-        {/* Render each main navigation item, possibly with collapsible sub-items */}
+      <SidebarMenu className="flex flex-col">
+        <SidebarMenuItem className="mb-2">
+          <SidebarMenuButton
+            tooltip="Start Call"
+            isActive={true}
+            className="bg-red-500"
+          >
+            <Icons.plus />
+            <span>Start Call</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
         {items.map((item) => (
           <Collapsible
             key={item.title}
