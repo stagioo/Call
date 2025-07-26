@@ -194,7 +194,7 @@ callsRoutes.get("/participated", async (c) => {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    // Get all calls where user was a participant
+    // Get all calls where user was a participant with participant details
     const participatedCalls = await db
       .select({
         id: calls.id,
@@ -208,7 +208,28 @@ callsRoutes.get("/participated", async (c) => {
       .where(eq(callParticipants.userId, user.id as string))
       .orderBy(desc(callParticipants.joinedAt));
 
-    return c.json({ calls: participatedCalls });
+    // Get participants for each call
+    const callsWithParticipants = await Promise.all(
+      participatedCalls.map(async (call) => {
+        const participants = await db
+          .select({
+            id: userTable.id,
+            name: userTable.name,
+            email: userTable.email,
+            image: userTable.image,
+          })
+          .from(callParticipants)
+          .innerJoin(userTable, eq(callParticipants.userId, userTable.id))
+          .where(eq(callParticipants.callId, call.id));
+
+        return {
+          ...call,
+          participants,
+        };
+      })
+    );
+
+    return c.json({ calls: callsWithParticipants });
   } catch (error) {
     console.error("Error fetching participated calls:", error);
     return c.json({ error: "Failed to fetch call history" }, 500);

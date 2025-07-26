@@ -4,6 +4,7 @@ import { Button } from "@call/ui/components/button";
 import { Input } from "@call/ui/components/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@call/ui/components/tabs";
 import { Separator } from "@call/ui/components/separator";
+import { Avatar } from "@call/ui/components/avatar";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -16,12 +17,20 @@ import { useRouter } from "next/navigation";
 import { useSession } from "../../../../hooks/useSession";
 // import { es } from "date-fns/locale";
 
+interface Participant {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+}
+
 interface Call {
   id: string;
   name: string;
   creatorId: string;
   joinedAt: string;
   leftAt: string | null;
+  participants: Participant[];
 }
 
 type FilterType = "all" | "my-calls" | "shared-with-me";
@@ -45,6 +54,48 @@ const formatCallDuration = (joinedAt: string, leftAt: string | null) => {
   if (duration.seconds && duration.seconds > 0) parts.push(`${duration.seconds}s`);
   
   return parts.length > 0 ? parts.join(' ') : '< 1s';
+};
+
+const ParticipantAvatars = ({ participants }: { participants: Participant[] }) => {
+  const maxVisible = 4;
+  const visibleParticipants = participants.slice(0, maxVisible);
+  const remainingCount = participants.length - maxVisible;
+
+  return (
+    <div className="flex items-center justify-center gap-1">
+      <span className="text-xs text-muted-foreground mr-2">Participants:</span>
+      <div className="flex -space-x-2">
+        {visibleParticipants.map((participant) => (
+          <div key={participant.id} className="relative group">
+            <Avatar className="h-8 w-8 border-2 border-white dark:border-gray-900">
+              {participant.image ? (
+                <img 
+                  src={participant.image} 
+                  alt={participant.name || participant.email}
+                  className="h-full w-full object-cover rounded-full"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium">
+                  {(participant.name || participant.email).charAt(0).toUpperCase()}
+                </div>
+              )}
+            </Avatar>
+            {/* Tooltip */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              {participant.name || participant.email}
+            </div>
+          </div>
+        ))}
+        {remainingCount > 0 && (
+          <div className="h-8 w-8 bg-muted border-2 border-white dark:border-gray-900 rounded-full flex items-center justify-center">
+            <span className="text-xs text-muted-foreground font-medium">
+              +{remainingCount}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export function CallHistory() {
@@ -332,6 +383,9 @@ export function CallHistory() {
 
               {/* Horizontal Separator */}
               <Separator className="w-full" />
+
+              {/* Participants Avatars */}
+              <ParticipantAvatars participants={call.participants} />
 
               {/* Call type indicator */}
               <div className="flex items-center gap-1 text-xs">
