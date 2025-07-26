@@ -16,6 +16,7 @@ interface Peer {
   id: string;
   displayName: string;
   connectionState: string;
+  isCreator?: boolean;
 }
 
 interface Producer {
@@ -331,6 +332,7 @@ export function useMediasoupClient() {
             id: data.peerId,
             displayName: data.displayName,
             connectionState: "connected",
+            isCreator: data.isCreator,
           },
         ];
       });

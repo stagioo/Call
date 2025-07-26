@@ -308,7 +308,7 @@ callsRoutes.get("/:id/check-access", async (c) => {
     }
 
     const call = callResult[0];
-    const isCreator = call.creatorId === user.id;
+    const isCreator = call?.creatorId === user.id;
 
     if (isCreator) {
       return c.json({ hasAccess: true, isCreator: true }, 200);
@@ -546,6 +546,34 @@ callsRoutes.post("/:id/reject-join", async (c) => {
   } catch (error) {
     console.error("Error rejecting join request:", error);
     return c.json({ error: "Failed to reject request" }, 500);
+  }
+});
+
+// GET /api/calls/:id/creator
+callsRoutes.get("/:id/creator", async (c) => {
+  try {
+    const callId = c.req.param("id");
+
+    // Get call creator info
+    const result = await db
+      .select({
+        creatorId: calls.creatorId,
+        creatorName: userTable.name,
+        creatorEmail: userTable.email,
+      })
+      .from(calls)
+      .innerJoin(userTable, eq(calls.creatorId, userTable.id))
+      .where(eq(calls.id, callId))
+      .limit(1);
+
+    if (!result || result.length === 0) {
+      return c.json({ error: "Call not found" }, 404);
+    }
+
+    return c.json({ creator: result[0] });
+  } catch (error) {
+    console.error("Error getting call creator:", error);
+    return c.json({ error: "Failed to get creator info" }, 500);
   }
 });
 

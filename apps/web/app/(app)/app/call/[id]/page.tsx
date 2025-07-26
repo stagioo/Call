@@ -308,6 +308,27 @@ export default function CallPreviewPage() {
   const [isCreator, setIsCreator] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
   const [isRequestingAccess, setIsRequestingAccess] = useState(false);
+  const [creatorInfo, setCreatorInfo] = useState<{ creatorId: string; creatorName: string; creatorEmail: string } | null>(null);
+
+  // Fetch creator info
+  useEffect(() => {
+    const fetchCreatorInfo = async () => {
+      try {
+        const response = await fetch(`http://localhost:1284/api/calls/${callId}/creator`, {
+          credentials: "include",
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setCreatorInfo(data.creator);
+        }
+      } catch (error) {
+        console.error("Error fetching creator info:", error);
+      }
+    };
+
+    fetchCreatorInfo();
+  }, [callId]);
 
   // Check access status periodically when not joined
   useEffect(() => {
@@ -1467,13 +1488,54 @@ export default function CallPreviewPage() {
             onOpenChange={setIsParticipantsSidebarOpen}
             callId={callId}
             isCreator={isCreator}
-            participants={peers.map(peer => ({
-              id: peer.id,
-              displayName: peer.displayName,
-              isCreator: peer.id === userId && isCreator,
-              isMicOn: true, // TODO: Get actual mic status
-              isCameraOn: true, // TODO: Get actual camera status
-            }))}
+            participants={[
+              // Add creator if we have their info
+              ...(creatorInfo ? [{
+                id: creatorInfo.creatorId,
+                displayName: creatorInfo.creatorName || creatorInfo.creatorEmail,
+                isCreator: true,
+                isMicOn: creatorInfo.creatorId === userId ? isLocalMicOn : !peerAudioStatus[creatorInfo.creatorId]?.muted,
+                isCameraOn: (() => {
+                  const isLocalCreator = creatorInfo.creatorId === userId;
+                  
+                  // Si es el creador local
+                  if (isLocalCreator) {
+                    return localStream?.getVideoTracks().some(track => track.enabled) ?? false;
+                  }
+                  
+                  // Si es el creador remoto, buscar en los streams remotos
+                  const remoteStreams = hookRemoteStreams.filter(stream => 
+                    stream.peerId === creatorInfo.creatorId &&
+                    stream.kind === "video" &&
+                    stream.source === "webcam"
+                  );
+
+                  // Si encontramos algún stream de video del creador, significa que su cámara está activa
+                  return remoteStreams.length > 0;
+                })(),
+              }] : []),
+              // Add other peers (excluding creator)
+              ...peers
+                .filter(peer => peer.id !== creatorInfo?.creatorId)
+                .map(peer => {
+                  const isLocalPeer = peer.id === userId;
+                  const cameraEnabled = isLocalPeer
+                    ? localStream?.getVideoTracks().some(track => track.enabled) ?? false
+                    : hookRemoteStreams.some(stream => 
+                        stream.peerId === peer.id && 
+                        stream.kind === "video" && 
+                        stream.source === "webcam"
+                      );
+
+                  return {
+                    id: peer.id,
+                    displayName: peer.displayName,
+                    isCreator: false,
+                    isMicOn: isLocalPeer ? isLocalMicOn : !peerAudioStatus[peer.id]?.muted,
+                    isCameraOn: cameraEnabled,
+                  };
+                })
+            ]}
             currentUserId={userId}
           />
         </>

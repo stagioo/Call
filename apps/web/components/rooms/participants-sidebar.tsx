@@ -160,32 +160,32 @@ export function ParticipantsSidebar({
                   Meeting Creator
                 </h3>
                 <div
-                  className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-200 dark:border-blue-800"
                 >
                   <Avatar className="h-10 w-10">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-sm font-medium ring-2 ring-white dark:ring-gray-900">
                       {creator.displayName.charAt(0).toUpperCase()}
                     </div>
                   </Avatar>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium truncate">
+                      <p className="text-sm font-medium truncate text-gray-900 dark:text-gray-100">
                         {creator.id === currentUserId ? `${creator.displayName} (You)` : creator.displayName}
                       </p>
-                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 dark:hover:bg-yellow-900">
                         <FiStar className="h-3 w-3 mr-1" />
                         Creator
                       </Badge>
                     </div>
                     <div className="flex items-center gap-1 mt-1">
                       {creator.isMicOn ? (
-                        <FiMic className="h-3 w-3 text-green-600" />
+                        <FiMic className="h-3 w-3 text-green-600 dark:text-green-500" />
                       ) : (
                         <FiMicOff className="h-3 w-3 text-red-500" />
                       )}
                       {creator.isCameraOn ? (
-                        <FiVideo className="h-3 w-3 text-green-600" />
+                        <FiVideo className="h-3 w-3 text-green-600 dark:text-green-500" />
                       ) : (
                         <FiVideoOff className="h-3 w-3 text-red-500" />
                       )}
