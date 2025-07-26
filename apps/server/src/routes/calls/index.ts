@@ -230,6 +230,8 @@ callsRoutes.post("/record-participation", async (c) => {
       return c.json({ error: "Call ID is required" }, 400);
     }
 
+    console.log(`[RECORD-PARTICIPATION] Recording participation for user ${user.id} in call ${callId}`);
+
     // Check if call exists
     const call = await db.query.calls.findFirst({
       where: eq(calls.id, callId),
@@ -239,14 +241,32 @@ callsRoutes.post("/record-participation", async (c) => {
       return c.json({ error: "Call not found" }, 404);
     }
 
-    // Record participation (ignore if already recorded)
-    await db
-      .insert(callParticipants)
-      .values({
-        callId,
-        userId: user.id as string,
-      })
-      .onConflictDoNothing();
+    // Check if user is already recorded for this call
+    const existingParticipation = await db
+      .select()
+      .from(callParticipants)
+      .where(
+        and(
+          eq(callParticipants.callId, callId),
+          eq(callParticipants.userId, user.id as string)
+        )
+      )
+      .limit(1);
+
+    if (existingParticipation.length === 0) {
+      // Record participation only if not already recorded
+      const result = await db
+        .insert(callParticipants)
+        .values({
+          callId,
+          userId: user.id as string,
+          joinedAt: new Date(),
+        });
+
+      console.log(`[RECORD-PARTICIPATION] Insert result:`, result);
+    } else {
+      console.log(`[RECORD-PARTICIPATION] User already has participation record for this call`);
+    }
 
     return c.json({ success: true });
   } catch (error) {
@@ -263,21 +283,41 @@ callsRoutes.post("/record-leave", async (c) => {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    const body = await c.req.json();
-    const { callId } = body;
+    let callId;
+    
+    // Handle both JSON and beacon requests
+    try {
+      const body = await c.req.json();
+      callId = body.callId;
+    } catch (e) {
+      // If JSON parsing fails, try to get text (for beacon requests)
+      try {
+        const text = await c.req.text();
+        const parsed = JSON.parse(text);
+        callId = parsed.callId;
+      } catch (e2) {
+        return c.json({ error: "Invalid request body" }, 400);
+      }
+    }
 
     if (!callId) {
       return c.json({ error: "Call ID is required" }, 400);
     }
 
+    console.log(`[RECORD-LEAVE] Recording leave for user ${user.id} in call ${callId}`);
+
     // Update the leftAt timestamp for the user's participation record
-    await db
+    const result = await db
       .update(callParticipants)
       .set({ leftAt: new Date() })
       .where(
-        eq(callParticipants.callId, callId) && 
-        eq(callParticipants.userId, user.id as string)
+        and(
+          eq(callParticipants.callId, callId),
+          eq(callParticipants.userId, user.id as string)
+        )
       );
+
+    console.log(`[RECORD-LEAVE] Update result:`, result);
 
     return c.json({ success: true });
   } catch (error) {
@@ -546,6 +586,64 @@ callsRoutes.post("/:id/reject-join", async (c) => {
   } catch (error) {
     console.error("Error rejecting join request:", error);
     return c.json({ error: "Failed to reject request" }, 500);
+  }
+});
+
+// DELETE /api/calls/participated/:callId
+callsRoutes.delete("/participated/:callId", async (c) => {
+  try {
+    const user = c.get("user");
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const callId = c.req.param("callId");
+    if (!callId) {
+      return c.json({ error: "Call ID is required" }, 400);
+    }
+
+    console.log(`[DELETE-CALL-PARTICIPATION] Deleting participation for user ${user.id} in call ${callId}`);
+
+    // Delete the specific participation record
+    const result = await db
+      .delete(callParticipants)
+      .where(
+        and(
+          eq(callParticipants.callId, callId),
+          eq(callParticipants.userId, user.id as string)
+        )
+      );
+
+    console.log(`[DELETE-CALL-PARTICIPATION] Delete result:`, result);
+
+    return c.json({ success: true, message: "Call participation deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting call participation:", error);
+    return c.json({ error: "Failed to delete call participation" }, 500);
+  }
+});
+
+// DELETE /api/calls/participated
+callsRoutes.delete("/participated", async (c) => {
+  try {
+    const user = c.get("user");
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    console.log(`[DELETE-HISTORY] Deleting call history for user ${user.id}`);
+
+    // Delete all participation records for this user
+    const result = await db
+      .delete(callParticipants)
+      .where(eq(callParticipants.userId, user.id as string));
+
+    console.log(`[DELETE-HISTORY] Delete result:`, result);
+
+    return c.json({ success: true, message: "Call history deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting call history:", error);
+    return c.json({ error: "Failed to delete call history" }, 500);
   }
 });
 

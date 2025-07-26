@@ -972,8 +972,24 @@ export default function CallPreviewPage() {
 
   // Cleanup when component unmounts or user navigates away
   useEffect(() => {
-    const cleanup = () => {
+    const cleanup = async () => {
       console.log("[Call] Cleaning up component...");
+
+      // Record that the user is leaving the call if they were joined
+      if (joined) {
+        try {
+          await fetch("http://localhost:1284/api/calls/record-leave", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ callId }),
+          });
+        } catch (error) {
+          console.error("Failed to record call leave on cleanup:", error);
+        }
+      }
 
       // Stop preview stream
       if (previewStream) {
@@ -993,6 +1009,13 @@ export default function CallPreviewPage() {
 
     // Add beforeunload listener for page refresh/close
     const handleBeforeUnload = () => {
+      // For synchronous operation during page unload
+      if (joined) {
+        navigator.sendBeacon(
+          "http://localhost:1284/api/calls/record-leave",
+          JSON.stringify({ callId })
+        );
+      }
       cleanup();
     };
 
@@ -1003,7 +1026,7 @@ export default function CallPreviewPage() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       cleanup();
     };
-  }, [previewStream, screenStream]);
+  }, [previewStream, screenStream, joined, callId]);
 
   // Handle screen sharing cleanup
   useEffect(() => {
