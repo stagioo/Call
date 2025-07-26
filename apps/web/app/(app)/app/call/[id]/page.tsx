@@ -1,35 +1,30 @@
 "use client";
-import { useEffect, useRef, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
-import { useMediasoupClient } from "@/hooks/useMediasoupClient";
-import { useSocket } from "@/hooks/useSocket";
-import { MicOff } from "lucide-react";
-import { MessageCircle } from "lucide-react";
 import { ChatSidebar } from "@/components/rooms/chat-sidebar";
-import { cn } from "@call/ui/lib/utils";
-import {
-  FiMic,
-  FiMicOff,
-  FiVideo,
-  FiVideoOff,
-  FiMonitor,
-  FiPhone,
-  FiMessageCircle,
-  FiSettings,
-  FiChevronDown,
-  FiUsers,
-  FiPhoneOff
-} from "react-icons/fi";
+import { ParticipantsSidebar } from "@/components/rooms/participants-sidebar";
+import { useMediasoupClient } from "@/hooks/useMediasoupClient";
+import { useSession } from "@/hooks/useSession";
 import { Button } from "@call/ui/components/button";
-import { Card } from "@call/ui/components/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@call/ui/components/dropdown-menu";
-import { useSession } from "@/hooks/useSession";
-import { ParticipantsSidebar } from "@/components/rooms/participants-sidebar";
+import { cn } from "@call/ui/lib/utils";
+import { MicOff } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  FiChevronDown,
+  FiMessageCircle,
+  FiMic,
+  FiMicOff,
+  FiMonitor,
+  FiPhoneOff,
+  FiUsers,
+  FiVideo,
+  FiVideoOff,
+} from "react-icons/fi";
 
 function generateUserId() {
   if (typeof window !== "undefined") {
@@ -82,7 +77,7 @@ const MediaControls = ({
   isMicOn: boolean;
   onToggleChat: () => void;
   onToggleParticipants: () => void;
-  onDeviceChange: (type: 'video' | 'audio', deviceId: string) => void;
+  onDeviceChange: (type: "video" | "audio", deviceId: string) => void;
   videoDevices: MediaDeviceInfo[];
   audioDevices: MediaDeviceInfo[];
   selectedVideo: string;
@@ -107,14 +102,14 @@ const MediaControls = ({
     setIsCameraOn((prev) => !prev);
   };
 
-  const handleDeviceChange = (type: 'video' | 'audio', deviceId: string) => {
+  const handleDeviceChange = (type: "video" | "audio", deviceId: string) => {
     onDeviceChange(type, deviceId);
     setShowSettings(false);
   };
 
   return (
     <>
-      <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 gap-2 rounded-lg bg-black/80 backdrop-blur-sm p-3">
+      <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 gap-2 rounded-lg bg-black/80 p-3 backdrop-blur-sm">
         {/* Microphone Toggle */}
         <Button
           variant="ghost"
@@ -140,22 +135,25 @@ const MediaControls = ({
               <FiChevronDown size={14} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 mb-2">
-            <div className="px-2 py-1 text-xs font-semibold text-gray-600">Microphone</div>
+          <DropdownMenuContent className="mb-2 w-56">
+            <div className="px-2 py-1 text-xs font-semibold text-gray-600">
+              Microphone
+            </div>
             {audioDevices.map((device) => (
               <DropdownMenuItem
                 key={device.deviceId}
-                onClick={() => handleDeviceChange('audio', device.deviceId)}
+                onClick={() => handleDeviceChange("audio", device.deviceId)}
                 className={`cursor-pointer ${
-                  selectedAudio === device.deviceId ? 'bg-blue-50' : ''
+                  selectedAudio === device.deviceId ? "bg-blue-50" : ""
                 }`}
               >
-                <div className="flex items-center justify-between w-full">
+                <div className="flex w-full items-center justify-between">
                   <span className="truncate">
-                    {device.label || `Microphone (${device.deviceId.slice(0, 8)}...)`}
+                    {device.label ||
+                      `Microphone (${device.deviceId.slice(0, 8)}...)`}
                   </span>
                   {selectedAudio === device.deviceId && (
-                    <div className="w-2 h-2 bg-blue-600 rounded-full ml-2"></div>
+                    <div className="ml-2 h-2 w-2 rounded-full bg-blue-600"></div>
                   )}
                 </div>
               </DropdownMenuItem>
@@ -188,22 +186,25 @@ const MediaControls = ({
               <FiChevronDown size={14} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 mb-2">
-            <div className="px-2 py-1 text-xs font-semibold text-gray-600">Camera</div>
+          <DropdownMenuContent className="mb-2 w-56">
+            <div className="px-2 py-1 text-xs font-semibold text-gray-600">
+              Camera
+            </div>
             {videoDevices.map((device) => (
               <DropdownMenuItem
                 key={device.deviceId}
-                onClick={() => handleDeviceChange('video', device.deviceId)}
+                onClick={() => handleDeviceChange("video", device.deviceId)}
                 className={`cursor-pointer ${
-                  selectedVideo === device.deviceId ? 'bg-blue-50' : ''
+                  selectedVideo === device.deviceId ? "bg-blue-50" : ""
                 }`}
               >
-                <div className="flex items-center justify-between w-full">
+                <div className="flex w-full items-center justify-between">
                   <span className="truncate">
-                    {device.label || `Camera (${device.deviceId.slice(0, 8)}...)`}
+                    {device.label ||
+                      `Camera (${device.deviceId.slice(0, 8)}...)`}
                   </span>
                   {selectedVideo === device.deviceId && (
-                    <div className="w-2 h-2 bg-blue-600 rounded-full ml-2"></div>
+                    <div className="ml-2 h-2 w-2 rounded-full bg-blue-600"></div>
                   )}
                 </div>
               </DropdownMenuItem>
@@ -304,20 +305,28 @@ export default function CallPreviewPage() {
   const localAudioProducerId = useRef<string | null>(null);
   const [isLocalMicOn, setIsLocalMicOn] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isParticipantsSidebarOpen, setIsParticipantsSidebarOpen] = useState(false);
+  const [isParticipantsSidebarOpen, setIsParticipantsSidebarOpen] =
+    useState(false);
   const [isCreator, setIsCreator] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
   const [isRequestingAccess, setIsRequestingAccess] = useState(false);
-  const [creatorInfo, setCreatorInfo] = useState<{ creatorId: string; creatorName: string; creatorEmail: string } | null>(null);
+  const [creatorInfo, setCreatorInfo] = useState<{
+    creatorId: string;
+    creatorName: string;
+    creatorEmail: string;
+  } | null>(null);
 
   // Fetch creator info
   useEffect(() => {
     const fetchCreatorInfo = async () => {
       try {
-        const response = await fetch(`http://localhost:1284/api/calls/${callId}/creator`, {
-          credentials: "include",
-        });
-        
+        const response = await fetch(
+          `http://localhost:1284/api/calls/${callId}/creator`,
+          {
+            credentials: "include",
+          }
+        );
+
         if (response.ok) {
           const data = await response.json();
           setCreatorInfo(data.creator);
@@ -336,10 +345,13 @@ export default function CallPreviewPage() {
 
     const checkAccess = async () => {
       try {
-        const response = await fetch(`http://localhost:1284/api/calls/${callId}/check-access`, {
-          credentials: "include",
-        });
-        
+        const response = await fetch(
+          `http://localhost:1284/api/calls/${callId}/check-access`,
+          {
+            credentials: "include",
+          }
+        );
+
         if (response.ok) {
           const data = await response.json();
           setHasAccess(data.hasAccess);
@@ -364,13 +376,16 @@ export default function CallPreviewPage() {
 
     setIsRequestingAccess(true);
     try {
-      const response = await fetch(`http://localhost:1284/api/calls/${callId}/request-join`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
+      const response = await fetch(
+        `http://localhost:1284/api/calls/${callId}/request-join`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
+      );
 
       if (response.ok) {
         alert("Request sent! Please wait for the host to approve.");
@@ -597,91 +612,105 @@ export default function CallPreviewPage() {
   };
 
   // Function to switch devices during the call
-  const handleDeviceChange = useCallback(async (type: 'video' | 'audio', deviceId: string) => {
-    if (!joined || !localStream) {
-      console.warn("[Call] Cannot change device - not joined or no local stream");
-      return;
-    }
-
-    try {
-      console.log(`[Call] Switching ${type} device to:`, deviceId);
-
-      // Create new constraints for the device
-      const constraints: MediaStreamConstraints = {};
-      
-      if (type === 'video') {
-        constraints.video = deviceId ? { deviceId: { exact: deviceId } } : true;
-        constraints.audio = false; // Only get video for this change
-        setSelectedVideo(deviceId);
-      } else if (type === 'audio') {
-        constraints.audio = deviceId ? { 
-          deviceId: { exact: deviceId },
-          echoCancellation: true,
-          noiseSuppression: true
-        } : true;
-        constraints.video = false; // Only get audio for this change
-        setSelectedAudio(deviceId);
+  const handleDeviceChange = useCallback(
+    async (type: "video" | "audio", deviceId: string) => {
+      if (!joined || !localStream) {
+        console.warn(
+          "[Call] Cannot change device - not joined or no local stream"
+        );
+        return;
       }
 
-      // Get new stream with the selected device
-      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      if (!newStream || !newStream.getTracks().length) {
-        throw new Error(`No ${type} tracks in new stream`);
-      }
+      try {
+        console.log(`[Call] Switching ${type} device to:`, deviceId);
 
-      const newTrack = newStream.getTracks()[0];
-      if (!newTrack) {
-        throw new Error(`No ${type} track found`);
-      }
+        // Create new constraints for the device
+        const constraints: MediaStreamConstraints = {};
 
-      // Find the old track in the current stream
-      const oldTracks = type === 'video' 
-        ? localStream.getVideoTracks() 
-        : localStream.getAudioTracks();
-
-      if (oldTracks.length > 0) {
-        const oldTrack = oldTracks[0];
-        
-        if (oldTrack) {
-          // Replace the track in the local stream
-          localStream.removeTrack(oldTrack);
-          localStream.addTrack(newTrack);
-          
-          // Stop the old track
-          oldTrack.stop();
-          
-          // Update producer track if device is loaded
-          if (device && device.loaded) {
-            console.log(`[Call] Device is loaded, attempting to replace ${type} track`);
-            
-            // For mediasoup, we need to close the old producer and create a new one
-            // This is a simplified approach - in a real implementation you might want to
-            // use the producer.replaceTrack method if available
-            console.log(`[Call] Successfully replaced ${type} track in stream`);
-          }
-          
-          console.log(`[Call] Successfully switched ${type} device`);
+        if (type === "video") {
+          constraints.video = deviceId
+            ? { deviceId: { exact: deviceId } }
+            : true;
+          constraints.audio = false; // Only get video for this change
+          setSelectedVideo(deviceId);
+        } else if (type === "audio") {
+          constraints.audio = deviceId
+            ? {
+                deviceId: { exact: deviceId },
+                echoCancellation: true,
+                noiseSuppression: true,
+              }
+            : true;
+          constraints.video = false; // Only get audio for this change
+          setSelectedAudio(deviceId);
         }
-      } else {
-        // No existing track, just add the new one
-        localStream.addTrack(newTrack);
-        console.log(`[Call] Added new ${type} track to stream`);
-      }
 
-      // Update the local stream state
-      setLocalStream(localStream);
-      
-      // Update video reference for preview
-      if (type === 'video' && videoRef.current) {
-        videoRef.current.srcObject = localStream;
+        // Get new stream with the selected device
+        const newStream =
+          await navigator.mediaDevices.getUserMedia(constraints);
+
+        if (!newStream || !newStream.getTracks().length) {
+          throw new Error(`No ${type} tracks in new stream`);
+        }
+
+        const newTrack = newStream.getTracks()[0];
+        if (!newTrack) {
+          throw new Error(`No ${type} track found`);
+        }
+
+        // Find the old track in the current stream
+        const oldTracks =
+          type === "video"
+            ? localStream.getVideoTracks()
+            : localStream.getAudioTracks();
+
+        if (oldTracks.length > 0) {
+          const oldTrack = oldTracks[0];
+
+          if (oldTrack) {
+            // Replace the track in the local stream
+            localStream.removeTrack(oldTrack);
+            localStream.addTrack(newTrack);
+
+            // Stop the old track
+            oldTrack.stop();
+
+            // Update producer track if device is loaded
+            if (device && device.loaded) {
+              console.log(
+                `[Call] Device is loaded, attempting to replace ${type} track`
+              );
+
+              // For mediasoup, we need to close the old producer and create a new one
+              // This is a simplified approach - in a real implementation you might want to
+              // use the producer.replaceTrack method if available
+              console.log(
+                `[Call] Successfully replaced ${type} track in stream`
+              );
+            }
+
+            console.log(`[Call] Successfully switched ${type} device`);
+          }
+        } else {
+          // No existing track, just add the new one
+          localStream.addTrack(newTrack);
+          console.log(`[Call] Added new ${type} track to stream`);
+        }
+
+        // Update the local stream state
+        setLocalStream(localStream);
+
+        // Update video reference for preview
+        if (type === "video" && videoRef.current) {
+          videoRef.current.srcObject = localStream;
+        }
+      } catch (error) {
+        console.error(`[Call] Error switching ${type} device:`, error);
+        alert(`Failed to switch ${type} device. Please try again.`);
       }
-      
-    } catch (error) {
-      console.error(`[Call] Error switching ${type} device:`, error);
-      alert(`Failed to switch ${type} device. Please try again.`);
-    }
-  }, [joined, localStream, device, setLocalStream, videoRef]);
+    },
+    [joined, localStream, device, setLocalStream, videoRef]
+  );
 
   // Handle screen sharing
   const handleToggleScreenShare = async () => {
@@ -1254,8 +1283,8 @@ export default function CallPreviewPage() {
                 Join Call
               </Button>
             ) : (
-              <Button 
-                onClick={handleRequestAccess} 
+              <Button
+                onClick={handleRequestAccess}
                 disabled={!connected || isRequestingAccess}
                 variant="secondary"
               >
@@ -1490,7 +1519,9 @@ export default function CallPreviewPage() {
             onToggleMic={toggleMic}
             isMicOn={isLocalMicOn}
             onToggleChat={() => setIsChatOpen(!isChatOpen)}
-            onToggleParticipants={() => setIsParticipantsSidebarOpen(!isParticipantsSidebarOpen)}
+            onToggleParticipants={() =>
+              setIsParticipantsSidebarOpen(!isParticipantsSidebarOpen)
+            }
             onDeviceChange={handleDeviceChange}
             videoDevices={videoDevices}
             audioDevices={audioDevices}
@@ -1513,51 +1544,69 @@ export default function CallPreviewPage() {
             isCreator={isCreator}
             participants={[
               // Add creator if we have their info
-              ...(creatorInfo ? [{
-                id: creatorInfo.creatorId,
-                displayName: creatorInfo.creatorName || creatorInfo.creatorEmail,
-                isCreator: true,
-                isMicOn: creatorInfo.creatorId === userId ? isLocalMicOn : !peerAudioStatus[creatorInfo.creatorId]?.muted,
-                isCameraOn: (() => {
-                  const isLocalCreator = creatorInfo.creatorId === userId;
-                  
-                  // Si es el creador local
-                  if (isLocalCreator) {
-                    return localStream?.getVideoTracks().some(track => track.enabled) ?? false;
-                  }
-                  
-                  // Si es el creador remoto, buscar en los streams remotos
-                  const remoteStreams = hookRemoteStreams.filter(stream => 
-                    stream.peerId === creatorInfo.creatorId &&
-                    stream.kind === "video" &&
-                    stream.source === "webcam"
-                  );
+              ...(creatorInfo
+                ? [
+                    {
+                      id: creatorInfo.creatorId,
+                      displayName:
+                        creatorInfo.creatorName || creatorInfo.creatorEmail,
+                      isCreator: true,
+                      isMicOn:
+                        creatorInfo.creatorId === userId
+                          ? isLocalMicOn
+                          : !peerAudioStatus[creatorInfo.creatorId]?.muted,
+                      isCameraOn: (() => {
+                        const isLocalCreator = creatorInfo.creatorId === userId;
 
-                  // Si encontramos algún stream de video del creador, significa que su cámara está activa
-                  return remoteStreams.length > 0;
-                })(),
-              }] : []),
+                        // Si es el creador local
+                        if (isLocalCreator) {
+                          return (
+                            localStream
+                              ?.getVideoTracks()
+                              .some((track) => track.enabled) ?? false
+                          );
+                        }
+
+                        // Si es el creador remoto, buscar en los streams remotos
+                        const remoteStreams = hookRemoteStreams.filter(
+                          (stream) =>
+                            stream.peerId === creatorInfo.creatorId &&
+                            stream.kind === "video" &&
+                            stream.source === "webcam"
+                        );
+
+                        // Si encontramos algún stream de video del creador, significa que su cámara está activa
+                        return remoteStreams.length > 0;
+                      })(),
+                    },
+                  ]
+                : []),
               // Add other peers (excluding creator)
               ...peers
-                .filter(peer => peer.id !== creatorInfo?.creatorId)
-                .map(peer => {
+                .filter((peer) => peer.id !== creatorInfo?.creatorId)
+                .map((peer) => {
                   const isLocalPeer = peer.id === userId;
                   const cameraEnabled = isLocalPeer
-                    ? localStream?.getVideoTracks().some(track => track.enabled) ?? false
-                    : hookRemoteStreams.some(stream => 
-                        stream.peerId === peer.id && 
-                        stream.kind === "video" && 
-                        stream.source === "webcam"
+                    ? (localStream
+                        ?.getVideoTracks()
+                        .some((track) => track.enabled) ?? false)
+                    : hookRemoteStreams.some(
+                        (stream) =>
+                          stream.peerId === peer.id &&
+                          stream.kind === "video" &&
+                          stream.source === "webcam"
                       );
 
                   return {
                     id: peer.id,
                     displayName: peer.displayName,
                     isCreator: false,
-                    isMicOn: isLocalPeer ? isLocalMicOn : !peerAudioStatus[peer.id]?.muted,
+                    isMicOn: isLocalPeer
+                      ? isLocalMicOn
+                      : !peerAudioStatus[peer.id]?.muted,
                     isCameraOn: cameraEnabled,
                   };
-                })
+                }),
             ]}
             currentUserId={userId}
           />
