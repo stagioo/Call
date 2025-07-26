@@ -1,24 +1,16 @@
 // This file defines the main navigation section for the sidebar, including collapsible menu items and submenus.
 "use client";
 
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@call/ui/components/collapsible";
+import { Collapsible } from "@call/ui/components/collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@call/ui/components/sidebar";
-
 
 // NavMain receives an array of navigation items, each with optional sub-items.
 export function NavMain({
@@ -55,6 +47,7 @@ export function NavMain({
                 tooltip={item.title}
                 isActive={item.isActive}
                 onClick={() => onSelect?.(item.title)}
+                className="py-3!"
               >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
