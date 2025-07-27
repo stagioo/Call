@@ -1,25 +1,12 @@
-"use client";
 import CallSection from "@/components/app/section/call-section";
-import { useSocketContext } from "@/components/providers/socket";
+import { Suspense } from "react";
 
 export default function CallPage() {
-  const { connected } = useSocketContext();
   return (
     <>
-      <div style={{ position: "fixed", top: 10, right: 10, zIndex: 1000 }}>
-        <span
-          style={{
-            padding: "6px 12px",
-            borderRadius: 8,
-            background: connected ? "#22c55e" : "#ef4444",
-            color: "white",
-            fontWeight: 600,
-          }}
-        >
-          {connected ? "WebSocket connected" : "WebSocket disconnected"}
-        </span>
-      </div>
-      <CallSection />
+      <Suspense fallback={<div>Loading...</div>}>
+        <CallSection />
+      </Suspense>
     </>
   );
 }
