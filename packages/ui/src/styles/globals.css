@@ -42,6 +42,8 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
   --sidebar-inset: oklch(0.985 0 0);
+  --inset-accent: oklch(0.985 0 0);
+  --inset-accent-foreground: oklch(0.277 0 0);
 }
 
 .dark {
@@ -78,6 +80,8 @@
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
   --sidebar-inset: oklch(0.231 0 0);
+  --inset-accent: oklch(0.256 0 0);
+  --inset-accent-foreground: oklch(0.277 0 0);
 }
 
 @theme inline {
@@ -118,6 +122,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-inset: var(--sidebar-inset);
+  --color-inset-accent: var(--inset-accent);
+  --color-inset-accent-foreground: var(--inset-accent-foreground);
   --font-sans: var(--font-sans);
   --font-lora: var(--font-lora);
   --font-mono: var(--font-mono);

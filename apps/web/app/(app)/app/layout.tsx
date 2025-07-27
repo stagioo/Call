@@ -26,7 +26,6 @@ const sectionMap = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [showContactModal, setShowContactModal] = useState(false);
   const { onOpen } = useModal();
 
   const selectedSection =
