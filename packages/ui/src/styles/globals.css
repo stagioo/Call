@@ -41,11 +41,14 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-inset: oklch(0.985 0 0);
+  --inset-accent: oklch(0.985 0 0);
+  --inset-accent-foreground: oklch(0.277 0 0);
 }
 
 .dark {
   --background: oklch(0.145 0 0);
-  --foreground: oklch(100.00% 0.000 0);
+  --foreground: oklch(100% 0 0);
   --card: oklch(0.145 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);
@@ -54,7 +57,7 @@
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
+  --muted: oklch(0.409 0 0);
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
@@ -68,7 +71,7 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
+  --sidebar: oklch(0.191 0 10);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -76,6 +79,9 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+  --sidebar-inset: oklch(0.231 0 0);
+  --inset-accent: oklch(0.256 0 0);
+  --inset-accent-foreground: oklch(0.277 0 0);
 }
 
 @theme inline {
@@ -115,6 +121,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-inset: var(--sidebar-inset);
+  --color-inset-accent: var(--inset-accent);
+  --color-inset-accent-foreground: var(--inset-accent-foreground);
   --font-sans: var(--font-sans);
   --font-lora: var(--font-lora);
   --font-mono: var(--font-mono);
@@ -141,6 +150,10 @@
 .custom_scrollbar::-webkit-scrollbar-thumb {
   background-color: oklch(0.556 0 0);
   border-radius: 0;
+}
+
+button {
+  cursor: pointer;
 }
 
 @keyframes spin-once {
