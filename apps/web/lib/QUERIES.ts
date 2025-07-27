@@ -46,3 +46,13 @@ export const TEAMS_QUERY = {
     throw new Error("Failed to create team");
   },
 };
+
+export const THOUGHTS_QUERY = {
+  createThought: async (data: { type: string; description: string }) => {
+    const res = await apiClient.post("/thoughts/create", data);
+    if (res.status === 200) {
+      return res.data;
+    }
+    throw new Error("Failed to create thought");
+  },
+};
