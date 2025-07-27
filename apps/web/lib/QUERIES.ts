@@ -27,6 +27,13 @@ export const CALLS_QUERY = {
     }
     throw new Error("Failed to fetch calls");
   },
+  getCalls: async () => {
+    const res = await apiClient.get("/calls/participated");
+    if (res.status === 200) {
+      return res.data;
+    }
+    throw new Error("Failed to fetch calls");
+  },
 };
 
 export const TEAMS_QUERY = {

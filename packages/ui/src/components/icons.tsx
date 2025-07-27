@@ -54,6 +54,84 @@ export const Icons = {
     </svg>
   ),
 
+  timer: (props: IconProps) => (
+    <svg
+      width="18"
+      height="19"
+      viewBox="0 0 18 19"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M9 4.75V2.25C13.004 2.25 16.25 5.496 16.25 9.5C16.25 13.504 13.004 16.75 9 16.75C4.996 16.75 1.75 13.504 1.75 9.5C1.75 7.498 2.561 5.685 3.873 4.373"
+        stroke="#929292"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 9.5L6 6.5"
+        stroke="#929292"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+
+  users: (props: IconProps) => (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <g clipPath="url(#clip0_118_304)">
+        <path
+          d="M5.625 8.23923C6.7296 8.23923 7.625 7.34423 7.625 6.23923C7.625 5.13423 6.7296 4.23923 5.625 4.23923C4.5204 4.23923 3.625 5.13423 3.625 6.23923C3.625 7.34423 4.5204 8.23923 5.625 8.23923Z"
+          stroke="#929292"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M9.48384 15.1112C10.0068 14.9362 10.3138 14.3672 10.1198 13.8522C9.43484 12.0342 7.68384 10.7402 5.62584 10.7402C3.56784 10.7402 1.81684 12.0342 1.13184 13.8522C0.937844 14.3682 1.24484 14.9372 1.76784 15.1112C2.72984 15.4322 4.04884 15.7392 5.62684 15.7392C7.20484 15.7392 8.52284 15.4322 9.48384 15.1112Z"
+          stroke="#929292"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M11.875 5.73923C12.9796 5.73923 13.875 4.84423 13.875 3.73923C13.875 2.63423 12.9796 1.73923 11.875 1.73923C10.7704 1.73923 9.875 2.63423 9.875 3.73923C9.875 4.84423 10.7704 5.73923 11.875 5.73923Z"
+          stroke="#929292"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M13.0285 13.176C14.0969 13.0732 15.0182 12.8501 15.7325 12.6113C16.2555 12.4363 16.5625 11.8672 16.3685 11.3523C15.6835 9.53422 13.9325 8.24023 11.8745 8.24023C11.0353 8.24023 10.2535 8.46583 9.56738 8.84423"
+          stroke="#929292"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+      <defs>
+        <clipPath id="clip0_118_304">
+          <rect
+            width="18"
+            height="18"
+            fill="white"
+            transform="translate(-0.125 -0.011261)"
+          />
+        </clipPath>
+      </defs>
+    </svg>
+  ),
+
   // discord icon
   discord: () => (
     <svg

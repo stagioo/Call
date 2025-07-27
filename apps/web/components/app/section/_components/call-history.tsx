@@ -1,40 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardHeader, CardContent } from "@call/ui/components/card";
+import { Avatar } from "@call/ui/components/avatar";
 import { Button } from "@call/ui/components/button";
 import { Input } from "@call/ui/components/input";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@call/ui/components/tabs";
-import { Separator } from "@call/ui/components/separator";
-import { Avatar } from "@call/ui/components/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@call/ui/components/dropdown-menu";
-import {
-  formatDistanceToNow,
-  formatDuration,
-  intervalToDuration,
-} from "date-fns";
-import {
-  FiPhone,
-  FiSearch,
-  FiX,
-  FiUsers,
-  FiUser,
-  FiGrid,
-  FiTrash2,
-  FiMoreVertical,
-} from "react-icons/fi";
+import { intervalToDuration } from "date-fns";
+import { MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { FiX } from "react-icons/fi";
 import { useSession } from "../../../../hooks/useSession";
+import { Icons } from "@call/ui/components/icons";
+import { iconvVariants, UserProfile } from "@call/ui/components/use-profile";
+import { cn } from "@call/ui/lib/utils";
 // import { es } from "date-fns/locale";
 
 interface Participant {
@@ -58,7 +35,6 @@ type FilterType = "all" | "my-calls" | "shared-with-me";
 const formatCallDuration = (joinedAt: string, leftAt: string | null) => {
   const start = new Date(joinedAt);
 
-  // If leftAt is null, the call hasn't ended properly - show as unknown duration
   if (!leftAt) {
     return "Unknown duration";
   }
@@ -67,7 +43,6 @@ const formatCallDuration = (joinedAt: string, leftAt: string | null) => {
 
   const duration = intervalToDuration({ start, end });
 
-  // Format duration in a human-readable way
   const parts = [];
   if (duration.hours && duration.hours > 0) parts.push(`${duration.hours}h`);
   if (duration.minutes && duration.minutes > 0)
@@ -128,7 +103,6 @@ const ParticipantAvatars = ({
 
 export function CallHistory() {
   const [calls, setCalls] = useState<Call[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
@@ -136,33 +110,9 @@ export function CallHistory() {
   const { session } = useSession();
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchCalls = async () => {
-      try {
-        const res = await fetch(
-          "http://localhost:1284/api/calls/participated",
-          {
-            credentials: "include",
-          }
-        );
-        if (!res.ok) throw new Error("Failed to fetch calls");
-        const data = await res.json();
-        setCalls(data.calls);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Error loading calls");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCalls();
-  }, []);
-
-  // Filter calls based on search query and filter type
   const getFilteredCalls = () => {
     let filteredCalls = calls;
 
-    // Apply category filter
     if (activeFilter === "my-calls") {
       filteredCalls = calls.filter(
         (call) => call.creatorId === session?.user?.id
@@ -173,7 +123,6 @@ export function CallHistory() {
       );
     }
 
-    // Apply search filter
     if (searchQuery) {
       filteredCalls = filteredCalls.filter(
         (call) =>
@@ -249,7 +198,6 @@ export function CallHistory() {
         throw new Error("Failed to delete call participation");
       }
 
-      // Remove the call from state
       setCalls((prev) => prev.filter((call) => call.id !== callId));
     } catch (err) {
       setError(
@@ -275,51 +223,11 @@ export function CallHistory() {
 
   const counts = getFilterCounts();
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="bg-muted h-12"></CardHeader>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-muted-foreground p-8 text-center">
-        <p>Error: {error}</p>
-        <p className="mt-2">Please try again later</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      {/* Header with Search Bar and Delete Button */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">Call History</h2>
-          {calls.length > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={deleteHistory}
-              disabled={isDeleting}
-              className="flex items-center gap-2"
-            >
-              <FiTrash2 className="h-4 w-4" />
-              {isDeleting ? "Deleting..." : "Delete History"}
-            </Button>
-          )}
-        </div>
-
-        {/* Search Bar */}
+      <div className="flex flex-col gap-6">
         <div className="relative mx-auto max-w-md">
           <div className="relative">
-            <FiSearch className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform" />
             <Input
               type="text"
               placeholder="Search calls by name or ID..."
@@ -339,161 +247,67 @@ export function CallHistory() {
             )}
           </div>
         </div>
+
+        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 10 }).map((_, index) => (
+            <CallHistoryCard key={index} />
+          ))}
+        </div>
       </div>
-
-      {/* Filter Tabs */}
-      <Tabs
-        value={activeFilter}
-        onValueChange={(value) => setActiveFilter(value as FilterType)}
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="all" className="flex items-center gap-2">
-            <FiGrid className="h-4 w-4" />
-            All ({counts.all})
-          </TabsTrigger>
-          <TabsTrigger value="my-calls" className="flex items-center gap-2">
-            <FiUser className="h-4 w-4" />
-            My calls ({counts.myCalls})
-          </TabsTrigger>
-          <TabsTrigger
-            value="shared-with-me"
-            className="flex items-center gap-2"
-          >
-            <FiUsers className="h-4 w-4" />
-            Shared with me ({counts.sharedWithMe})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeFilter} className="mt-6">
-          {/* Results */}
-          {uniqueCalls.length === 0 ? (
-            <div className="text-muted-foreground p-8 text-center">
-              {searchQuery ? (
-                <>
-                  <p>No calls found for "{searchQuery}" in this category</p>
-                  <Button
-                    variant="ghost"
-                    onClick={clearSearch}
-                    className="mt-2"
-                  >
-                    Clear search
-                  </Button>
-                </>
-              ) : (
-                <p>
-                  {activeFilter === "all" && "No call history yet"}
-                  {activeFilter === "my-calls" &&
-                    "You haven't created any calls yet"}
-                  {activeFilter === "shared-with-me" &&
-                    "No calls have been shared with you yet"}
-                </p>
-              )}
-            </div>
-          ) : (
-            <>
-              {searchQuery && (
-                <p className="text-muted-foreground mb-4 text-center text-sm">
-                  Found {uniqueCalls.length} call
-                  {uniqueCalls.length === 1 ? "" : "s"} for "{searchQuery}"
-                </p>
-              )}
-
-              <div className="mx-auto flex max-w-full flex-wrap items-center space-y-8">
-                {uniqueCalls.map((call) => (
-                  <Card
-                    key={call.id}
-                    className="border-muted/60 bg-muted/40 relative mx-auto min-w-[340px] border px-8 py-7 transition-shadow hover:shadow-lg"
-                  >
-                    {/* Three dots menu */}
-                    <div className="absolute right-4 top-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="hover:bg-muted h-8 w-8"
-                          >
-                            <FiMoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => deleteCallParticipation(call.id)}
-                            className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                          >
-                            <FiTrash2 className="mr-2 h-4 w-4" />
-                            Eliminar del historial
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-
-                    <CardHeader className="border-0 bg-transparent p-0">
-                      <div className="flex w-full flex-col items-center gap-4">
-                        <span className="bg-primary/10 text-primary mb-2 inline-flex h-14 w-14 items-center justify-center rounded-full">
-                          <FiPhone size={28} />
-                        </span>
-                        <h3 className="break-words text-center text-xl font-semibold leading-tight">
-                          {call.name}
-                        </h3>
-                        <div className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
-                          <span className="font-mono">ID: {call.id}</span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="p-1 text-xs"
-                            title="Copy Call ID"
-                            onClick={() =>
-                              navigator.clipboard.writeText(call.id)
-                            }
-                          >
-                            📋
-                          </Button>
-                        </div>
-
-                        {/* Horizontal Separator */}
-                        <Separator className="w-full" />
-
-                        {/* Participants Avatars */}
-                        <ParticipantAvatars participants={call.participants} />
-
-                        {/* Call type indicator */}
-                        <div className="flex items-center gap-1 text-xs">
-                          {call.creatorId === session?.user?.id ? (
-                            <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-blue-600">
-                              <FiUser className="h-3 w-3" />
-                              Created by you
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-green-600">
-                              <FiUsers className="h-3 w-3" />
-                              Shared with you
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-center gap-1">
-                          <time className="text-muted-foreground text-xs">
-                            {call.leftAt
-                              ? formatDistanceToNow(new Date(call.leftAt), {
-                                  addSuffix: true,
-                                })
-                              : "Call in progress"}
-                          </time>
-                          <span className="text-primary text-xs font-medium">
-                            Duration:{" "}
-                            {formatCallDuration(call.joinedAt, call.leftAt)}
-                          </span>
-                        </div>
-                      </div>
-                    </CardHeader>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
+
+const CallHistoryCard = () => {
+  const numberOfParticipants = 10;
+  const participantsToShow = 3;
+  const remainingParticipants = numberOfParticipants - participantsToShow;
+
+  return (
+    <div className="bg-inset-accent flex flex-col gap-3 rounded-xl border p-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-medium">Call Name</h1>
+        <Button variant="ghost" size="icon">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Icons.scheduleIcon className="size-4" />
+            <span className="text-muted-foreground">Today</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Icons.timer className="size-4" />
+            <span className="text-muted-foreground">30 mins</span>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Icons.users className="size-4" />
+        <div className="flex items-center">
+          {Array.from({ length: participantsToShow }).map((_, index) => (
+            <UserProfile
+              key={index}
+              name="John Doe"
+              size="sm"
+              className={cn("border-inset-accent -ml-2 border", {
+                "-ml-0": index === 0,
+              })}
+            />
+          ))}
+          {remainingParticipants > 0 && (
+            <div
+              className={cn(
+                iconvVariants({ size: "sm" }),
+                "bg-muted z-10 -ml-2 border"
+              )}
+            >
+              <span className="text-xs">+{remainingParticipants}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
