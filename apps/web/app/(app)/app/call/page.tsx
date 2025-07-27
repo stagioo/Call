@@ -36,7 +36,7 @@ export default function CallPage() {
   );
 
   return (
-    <>
+    <div className="flex flex-col gap-[22px]">
       <Header className="justify-between">
         <div className="flex items-center gap-2">
           {SECTIONS.map((s) => (
@@ -67,8 +67,7 @@ export default function CallPage() {
           Start Call
         </Button>
       </Header>
-
       <CallSection section={sectionKey} />
-    </>
+    </div>
   );
 }

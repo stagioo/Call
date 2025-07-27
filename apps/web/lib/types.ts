@@ -56,3 +56,18 @@ export interface CreateTeamRequest {
   name: string;
   members: string[];
 }
+
+export interface Call {
+  id: string;
+  name: string;
+  creatorId: string;
+  joinedAt: string;
+  leftAt: string | null;
+  participants: Participant[];
+}
+export interface Participant {
+  id: string;
+  name: string;
+  email: string;
+  image: string;
+}

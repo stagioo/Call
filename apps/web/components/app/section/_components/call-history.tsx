@@ -1,114 +1,37 @@
 "use client";
 
-import { Avatar } from "@call/ui/components/avatar";
+import { Skeletons } from "@/components/skeletons";
+import { useSession } from "@/hooks/useSession";
+import { CALLS_QUERY } from "@/lib/QUERIES";
+import type { Call } from "@/lib/types";
+import { formatCallDuration, formatCustomDate } from "@/lib/utils";
 import { Button } from "@call/ui/components/button";
-import { Input } from "@call/ui/components/input";
-import { intervalToDuration } from "date-fns";
-import { MoreVertical } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { FiX } from "react-icons/fi";
-import { useSession } from "../../../../hooks/useSession";
 import { Icons } from "@call/ui/components/icons";
+import { Input } from "@call/ui/components/input";
 import { iconvVariants, UserProfile } from "@call/ui/components/use-profile";
 import { cn } from "@call/ui/lib/utils";
-// import { es } from "date-fns/locale";
-
-interface Participant {
-  id: string;
-  name: string;
-  email: string;
-  image: string | null;
-}
-
-interface Call {
-  id: string;
-  name: string;
-  creatorId: string;
-  joinedAt: string;
-  leftAt: string | null;
-  participants: Participant[];
-}
+import { useQuery } from "@tanstack/react-query";
+import { MoreVertical } from "lucide-react";
+import { useState } from "react";
+import { FiX } from "react-icons/fi";
 
 type FilterType = "all" | "my-calls" | "shared-with-me";
-
-const formatCallDuration = (joinedAt: string, leftAt: string | null) => {
-  const start = new Date(joinedAt);
-
-  if (!leftAt) {
-    return "Unknown duration";
-  }
-
-  const end = new Date(leftAt);
-
-  const duration = intervalToDuration({ start, end });
-
-  const parts = [];
-  if (duration.hours && duration.hours > 0) parts.push(`${duration.hours}h`);
-  if (duration.minutes && duration.minutes > 0)
-    parts.push(`${duration.minutes}m`);
-  if (duration.seconds && duration.seconds > 0)
-    parts.push(`${duration.seconds}s`);
-
-  return parts.length > 0 ? parts.join(" ") : "< 1s";
-};
-
-const ParticipantAvatars = ({
-  participants,
-}: {
-  participants: Participant[];
-}) => {
-  const maxVisible = 4;
-  const visibleParticipants = participants.slice(0, maxVisible);
-  const remainingCount = participants.length - maxVisible;
-
-  return (
-    <div className="flex items-center justify-center gap-1">
-      <span className="text-muted-foreground mr-2 text-xs">Participants:</span>
-      <div className="flex -space-x-2">
-        {visibleParticipants.map((participant) => (
-          <div key={participant.id} className="group relative">
-            <Avatar className="h-8 w-8 border-2 border-white dark:border-gray-900">
-              {participant.image ? (
-                <img
-                  src={participant.image}
-                  alt={participant.name || participant.email}
-                  className="h-full w-full rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-xs font-medium text-white">
-                  {(participant.name || participant.email)
-                    .charAt(0)
-                    .toUpperCase()}
-                </div>
-              )}
-            </Avatar>
-            {/* Tooltip */}
-            <div className="absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 transform whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-              {participant.name || participant.email}
-            </div>
-          </div>
-        ))}
-        {remainingCount > 0 && (
-          <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full border-2 border-white dark:border-gray-900">
-            <span className="text-muted-foreground text-xs font-medium">
-              +{remainingCount}
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 export function CallHistory() {
   const [calls, setCalls] = useState<Call[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
-  const [isDeleting, setIsDeleting] = useState(false);
   const { session } = useSession();
-  const router = useRouter();
+
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["calls"],
+    queryFn: () => CALLS_QUERY.getCalls(),
+  });
 
   const getFilteredCalls = () => {
     let filteredCalls = calls;
@@ -145,66 +68,66 @@ export function CallHistory() {
     setSearchQuery("");
   };
 
-  const deleteHistory = async () => {
-    if (
-      !confirm(
-        "¿Estás seguro de que quieres borrar todo tu historial de llamadas? Esta acción no se puede deshacer."
-      )
-    ) {
-      return;
-    }
+  // const deleteHistory = async () => {
+  //   if (
+  //     !confirm(
+  //       "¿Estás seguro de que quieres borrar todo tu historial de llamadas? Esta acción no se puede deshacer."
+  //     )
+  //   ) {
+  //     return;
+  //   }
 
-    setIsDeleting(true);
-    try {
-      const res = await fetch("http://localhost:1284/api/calls/participated", {
-        method: "DELETE",
-        credentials: "include",
-      });
+  //   // setIsDeleting(true);
+  //   try {
+  //     const res = await fetch("http://localhost:1284/api/calls/participated", {
+  //       method: "DELETE",
+  //       credentials: "include",
+  //     });
 
-      if (!res.ok) {
-        throw new Error("Failed to delete call history");
-      }
+  //     if (!res.ok) {
+  //       throw new Error("Failed to delete call history");
+  //     }
 
-      // Clear the calls from state
-      setCalls([]);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error deleting call history"
-      );
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  //     // Clear the calls from state
+  //     setCalls([]);
+  //   } catch (err) {
+  //     setError(
+  //       err instanceof Error ? err.message : "Error deleting call history"
+  //     );
+  //   } finally {
+  //     // setIsDeleting(false);
+  //   }
+  // };
 
-  const deleteCallParticipation = async (callId: string) => {
-    if (
-      !confirm(
-        "¿Estás seguro de que quieres eliminar esta llamada del historial?"
-      )
-    ) {
-      return;
-    }
+  // const deleteCallParticipation = async (callId: string) => {
+  //   if (
+  //     !confirm(
+  //       "¿Estás seguro de que quieres eliminar esta llamada del historial?"
+  //     )
+  //   ) {
+  //     return;
+  //   }
 
-    try {
-      const res = await fetch(
-        `http://localhost:1284/api/calls/participated/${callId}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
+  //   try {
+  //     const res = await fetch(
+  //       `http://localhost:1284/api/calls/participated/${callId}`,
+  //       {
+  //         method: "DELETE",
+  //         credentials: "include",
+  //       }
+  //     );
 
-      if (!res.ok) {
-        throw new Error("Failed to delete call participation");
-      }
+  //     if (!res.ok) {
+  //       throw new Error("Failed to delete call participation");
+  //     }
 
-      setCalls((prev) => prev.filter((call) => call.id !== callId));
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error deleting call participation"
-      );
-    }
-  };
+  //     setCalls((prev) => prev.filter((call) => call.id !== callId));
+  //   } catch (err) {
+  //     setError(
+  //       err instanceof Error ? err.message : "Error deleting call participation"
+  //     );
+  //   }
+  // };
 
   const getFilterCounts = () => {
     const myCalls = calls.filter(
@@ -226,15 +149,16 @@ export function CallHistory() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-6">
-        <div className="relative mx-auto max-w-md">
-          <div className="relative">
+        <div className="flex items-center gap-2">
+          <div className="relative w-full max-w-md">
             <Input
               type="text"
-              placeholder="Search calls by name or ID..."
+              placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10"
+              className="placeholder:text-primary bg-inset-accent border-inset-accent-foreground h-12 border-2 px-10"
             />
+            <Icons.search className="text-muted-foreground absolute left-3 top-1/2 size-5 -translate-y-1/2" />
             {searchQuery && (
               <Button
                 variant="ghost"
@@ -246,27 +170,42 @@ export function CallHistory() {
               </Button>
             )}
           </div>
+          <div className="flex items-center gap-2">
+            <Button
+              className="bg-inset-accent-foreground hover:bg-inset-accent-foreground/80 size-12"
+              variant="ghost"
+            >
+              <Icons.filter className="size-" />
+              <span className="sr-only">Filter</span>
+            </Button>
+          </div>
         </div>
-
         <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {Array.from({ length: 10 }).map((_, index) => (
-            <CallHistoryCard key={index} />
-          ))}
+          {isLoading
+            ? Array.from({ length: 10 }).map((_, index) => (
+                <Skeletons.callHistory key={index} />
+              ))
+            : response?.map((call) => (
+                <CallHistoryCard key={call.id} call={call} />
+              ))}
         </div>
       </div>
     </div>
   );
 }
 
-const CallHistoryCard = () => {
-  const numberOfParticipants = 10;
+interface CallHistoryCardProps {
+  call: Call;
+}
+
+const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
   const participantsToShow = 3;
-  const remainingParticipants = numberOfParticipants - participantsToShow;
+  const remainingParticipants = call.participants.length - participantsToShow;
 
   return (
     <div className="bg-inset-accent flex flex-col gap-3 rounded-xl border p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-medium">Call Name</h1>
+        <h1 className="text-lg font-medium">{call.name}</h1>
         <Button variant="ghost" size="icon">
           <MoreVertical className="h-4 w-4" />
         </Button>
@@ -275,27 +214,34 @@ const CallHistoryCard = () => {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Icons.scheduleIcon className="size-4" />
-            <span className="text-muted-foreground">Today</span>
+            <span className="text-muted-foreground">
+              {formatCustomDate(call.joinedAt)}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Icons.timer className="size-4" />
-            <span className="text-muted-foreground">30 mins</span>
+            <span className="text-muted-foreground">
+              {formatCallDuration(call.joinedAt, call.leftAt)}
+            </span>
           </div>
         </div>
       </div>
       <div className="flex items-center gap-2">
         <Icons.users className="size-4" />
         <div className="flex items-center">
-          {Array.from({ length: participantsToShow }).map((_, index) => (
-            <UserProfile
-              key={index}
-              name="John Doe"
-              size="sm"
-              className={cn("border-inset-accent -ml-2 border", {
-                "-ml-0": index === 0,
-              })}
-            />
-          ))}
+          {call.participants
+            .slice(0, participantsToShow)
+            .map((participant, index) => (
+              <UserProfile
+                key={index}
+                name={participant.name}
+                url={participant.image}
+                size="sm"
+                className={cn("border-inset-accent -ml-2 border", {
+                  "-ml-0": index === 0,
+                })}
+              />
+            ))}
           {remainingParticipants > 0 && (
             <div
               className={cn(

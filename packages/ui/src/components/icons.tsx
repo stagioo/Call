@@ -54,6 +54,63 @@ export const Icons = {
     </svg>
   ),
 
+  search: (props: IconProps) => (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12.3427 12.3426C12.6682 12.0171 13.1957 12.0171 13.5212 12.3426L18.0894 16.9108C18.4148 17.2362 18.4148 17.7638 18.0894 18.0892C17.7639 18.4147 17.2364 18.4147 16.9109 18.0892L12.3427 13.521C12.0173 13.1956 12.0173 12.668 12.3427 12.3426Z"
+        fill="#929292"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M1.66699 8.61111C1.66699 4.77588 4.7762 1.66667 8.61144 1.66667C12.4467 1.66667 15.5559 4.77588 15.5559 8.61111C15.5559 12.4463 12.4467 15.5556 8.61144 15.5556C4.7762 15.5556 1.66699 12.4463 1.66699 8.61111ZM8.61144 3.33333C5.69667 3.33333 3.33366 5.69635 3.33366 8.61111C3.33366 11.5259 5.69667 13.8889 8.61144 13.8889C11.5262 13.8889 13.8892 11.5259 13.8892 8.61111C13.8892 5.69635 11.5262 3.33333 8.61144 3.33333Z"
+        fill="#929292"
+      />
+    </svg>
+  ),
+
+  filter: (props: IconProps) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      {...props}
+    >
+      <path
+        d="M12.6004 9H5.40039"
+        stroke="#929292"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M2.7002 4.5H15.3002"
+        stroke="#929292"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8.10059 13.5H9.90059"
+        stroke="#929292"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+
   timer: (props: IconProps) => (
     <svg
       width="18"

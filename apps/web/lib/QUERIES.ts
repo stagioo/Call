@@ -1,4 +1,5 @@
 import { apiClient } from "./api-client";
+import type { Call } from "./types";
 
 export const CONTACTS_QUERY = {
   getContacts: async () => {
@@ -30,7 +31,7 @@ export const CALLS_QUERY = {
   getCalls: async () => {
     const res = await apiClient.get("/calls/participated");
     if (res.status === 200) {
-      return res.data;
+      return res.data.calls as Call[];
     }
     throw new Error("Failed to fetch calls");
   },
