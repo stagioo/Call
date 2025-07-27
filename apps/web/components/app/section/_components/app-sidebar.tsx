@@ -1,6 +1,8 @@
 "use client";
 import { useSession } from "@/components/providers/session";
+import { useModal } from "@/hooks/use-modal";
 import { siteConfig } from "@/lib/site";
+import { Button } from "@call/ui/components/button";
 import { Icons } from "@call/ui/components/icons";
 import {
   Sidebar,
@@ -12,11 +14,11 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@call/ui/components/sidebar";
-import { useRouter } from "next/navigation";
+import { cn } from "@call/ui/lib/utils";
+import Link from "next/link";
 import * as React from "react";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
-import { cn } from "@call/ui/lib/utils";
 
 const data = {
   navMain: [
@@ -76,8 +78,7 @@ export function AppSidebar({
   onSectionSelect: (title: string) => void;
 }) {
   const session = useSession();
-  const router = useRouter();
-
+  const { onOpen } = useModal();
   const navItems = data.navMain.map((item) => ({
     ...item,
     isActive: item.title === selectedSection,
@@ -99,20 +100,50 @@ export function AppSidebar({
       </SidebarContent>
       <SidebarFooter className="p-4">
         <SidebarMenu>
-          {data.navFooter.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span
-                  className={cn(
-                    item.title === "Thoughts?" && "font-medium text-[#FF6347]"
-                  )}
+          {data.navFooter.map((item) => {
+            const isThoughts = item.title === "Thoughts?";
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  onClick={() => {
+                    if (isThoughts) {
+                      onOpen("thoughts");
+                    }
+                  }}
+                  asChild
                 >
-                  {item.title}
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+                  {item.type === "button" ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex justify-start gap-2"
+                    >
+                      {item.icon && <item.icon />}
+                      <span
+                        className={cn(
+                          isThoughts && "font-medium text-[#FF6347]"
+                        )}
+                      >
+                        {item.title}
+                      </span>
+                    </Button>
+                  ) : (
+                    <Link href={item.url || ""}>
+                      {item.icon && <item.icon />}
+                      <span
+                        className={cn(
+                          isThoughts && "font-medium text-[#FF6347]"
+                        )}
+                      >
+                        {item.title}
+                      </span>
+                    </Link>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
