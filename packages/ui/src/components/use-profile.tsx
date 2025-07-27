@@ -31,7 +31,7 @@ interface ProfileProps extends VariantProps<typeof iconvVariants> {
   name: string;
 }
 
-export const UserProfile = ({ className, url, name, size }: ProfileProps) => {
+const UserProfile = ({ className, url, name, size }: ProfileProps) => {
   const twoLettersName = name
     .split("-")
     .map((l) => l[0])
@@ -40,9 +40,11 @@ export const UserProfile = ({ className, url, name, size }: ProfileProps) => {
   return (
     <Avatar className={cn(iconvVariants({ size, className }))}>
       <AvatarImage src={url as string} />
-      <AvatarFallback className="rounded-md text-sm font-semibold">
+      <AvatarFallback className="rounded-md text-sm font-semibold capitalize">
         {twoLettersName}
       </AvatarFallback>
     </Avatar>
   );
 };
+
+export { UserProfile, iconvVariants };
