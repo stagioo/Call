@@ -152,6 +152,10 @@
   border-radius: 0;
 }
 
+button {
+  cursor: pointer;
+}
+
 @keyframes spin-once {
   from {
     transform: rotate(0deg);
