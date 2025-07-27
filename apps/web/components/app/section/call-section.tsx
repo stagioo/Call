@@ -1,6 +1,13 @@
+"use client";
+
 import { JoinCallBox } from "./_components/join-call-box";
 import { CallHistory } from "./_components/call-history";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@call/ui/components/tabs";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@call/ui/components/tabs";
 import { useState } from "react";
 
 const SECTIONS = [
@@ -10,10 +17,11 @@ const SECTIONS = [
 
 const CallSection = () => {
   const [section, setSection] = useState("joincall");
+
   return (
-    <div className="max-w-2xl mx-auto mt-8 p-6 bg-background rounded-lg shadow">
+    <div className="bg-background mx-auto mt-8 max-w-2xl rounded-lg p-6 shadow">
       <Tabs value={section} onValueChange={setSection}>
-        <TabsList className="w-full mb-6 flex justify-center ">
+        <TabsList className="mb-6 flex w-full justify-center">
           {SECTIONS.map((s) => (
             <TabsTrigger key={s.key} value={s.key} className="flex-1">
               {s.label}
