@@ -19,7 +19,7 @@ const CallSection = () => {
   const [section, setSection] = useState("joincall");
 
   return (
-    <div className="bg-background mx-auto mt-8 max-w-2xl rounded-lg p-6 shadow">
+    <div className=" ">
       <Tabs value={section} onValueChange={setSection}>
         <TabsList className="mb-6 flex w-full justify-center">
           {SECTIONS.map((s) => (
