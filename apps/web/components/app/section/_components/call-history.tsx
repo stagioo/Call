@@ -1,7 +1,8 @@
 "use client";
 
+import { useSession } from "@/components/providers/session";
 import { Skeletons } from "@/components/skeletons";
-import { useSession } from "@/hooks/useSession";
+import { useModal } from "@/hooks/use-modal";
 import { CALLS_QUERY } from "@/lib/QUERIES";
 import type { Call } from "@/lib/types";
 import { formatCallDuration, formatCustomDate } from "@/lib/utils";
@@ -11,9 +12,8 @@ import { Input } from "@call/ui/components/input";
 import { iconvVariants, UserProfile } from "@call/ui/components/use-profile";
 import { cn } from "@call/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, X } from "lucide-react";
 import { useState } from "react";
-import { FiX } from "react-icons/fi";
 
 type FilterType = "all" | "my-calls" | "shared-with-me";
 
@@ -22,7 +22,7 @@ export function CallHistory() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
-  const { session } = useSession();
+  const { user } = useSession();
 
   const {
     data: response,
@@ -37,13 +37,9 @@ export function CallHistory() {
     let filteredCalls = calls;
 
     if (activeFilter === "my-calls") {
-      filteredCalls = calls.filter(
-        (call) => call.creatorId === session?.user?.id
-      );
+      filteredCalls = calls.filter((call) => call.creatorId === user.id);
     } else if (activeFilter === "shared-with-me") {
-      filteredCalls = calls.filter(
-        (call) => call.creatorId !== session?.user?.id
-      );
+      filteredCalls = calls.filter((call) => call.creatorId !== user.id);
     }
 
     if (searchQuery) {
@@ -130,11 +126,9 @@ export function CallHistory() {
   // };
 
   const getFilterCounts = () => {
-    const myCalls = calls.filter(
-      (call) => call.creatorId === session?.user?.id
-    ).length;
+    const myCalls = calls.filter((call) => call.creatorId === user.id).length;
     const sharedWithMe = calls.filter(
-      (call) => call.creatorId !== session?.user?.id
+      (call) => call.creatorId !== user.id
     ).length;
 
     return {
@@ -146,48 +140,56 @@ export function CallHistory() {
 
   const counts = getFilterCounts();
 
+  const isHavingCalls = response && response.length > 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-2">
-          <div className="relative w-full max-w-md">
-            <Input
-              type="text"
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="placeholder:text-primary bg-inset-accent border-inset-accent-foreground h-12 border-2 px-10"
-            />
-            <Icons.search className="text-muted-foreground absolute left-3 top-1/2 size-5 -translate-y-1/2" />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={clearSearch}
-                className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 transform"
-              >
-                <FiX className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+        {isHavingCalls || isLoading ? (
           <div className="flex items-center gap-2">
-            <Button
-              className="bg-inset-accent-foreground hover:bg-inset-accent-foreground/80 size-12"
-              variant="ghost"
-            >
-              <Icons.filter className="size-" />
-              <span className="sr-only">Filter</span>
-            </Button>
+            <div className="relative w-full max-w-md">
+              <Input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="placeholder:text-primary bg-inset-accent border-inset-accent-foreground h-12 border-2 px-10"
+              />
+              <Icons.search className="text-muted-foreground absolute left-3 top-1/2 size-5 -translate-y-1/2" />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={clearSearch}
+                  className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 transform"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                className="bg-inset-accent-foreground hover:bg-inset-accent-foreground/80 size-12"
+                variant="ghost"
+              >
+                <Icons.filter className="size-" />
+                <span className="sr-only">Filter</span>
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : null}
         <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {isLoading
-            ? Array.from({ length: 10 }).map((_, index) => (
-                <Skeletons.callHistory key={index} />
-              ))
-            : response?.map((call) => (
-                <CallHistoryCard key={call.id} call={call} />
-              ))}
+          {isLoading ? (
+            Array.from({ length: 10 }).map((_, index) => (
+              <Skeletons.callHistory key={index} />
+            ))
+          ) : response && response.length > 0 ? (
+            response.map((call) => (
+              <CallHistoryCard key={call.id} call={call} />
+            ))
+          ) : (
+            <NoCallsFound />
+          )}
         </div>
       </div>
     </div>
@@ -205,7 +207,9 @@ const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
   return (
     <div className="bg-inset-accent flex flex-col gap-3 rounded-xl border p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-medium">{call.name}</h1>
+        <h1 className="text-lg font-medium first-letter:uppercase">
+          {call.name}
+        </h1>
         <Button variant="ghost" size="icon">
           <MoreVertical className="h-4 w-4" />
         </Button>
@@ -254,6 +258,30 @@ const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
           )}
         </div>
       </div>
+    </div>
+  );
+};
+
+const NoCallsFound = () => {
+  const { onOpen } = useModal();
+  const { user } = useSession();
+  return (
+    <div className="bg-inset-accent border-inset-accent-foreground col-span-full flex h-96 flex-col items-center justify-center gap-4 rounded-xl border p-4 text-center">
+      <div className="flex flex-col items-center">
+        <h1 className="text-lg font-medium">
+          Ops <span className="first-letter:uppercase">{user.name}</span>! You
+          don&apos;t have any calls yet.
+        </h1>
+        <p className="text-muted-foreground">
+          You can create a call to start a conversation with your friends.
+        </p>
+      </div>
+      <Button
+        onClick={() => onOpen("start-call")}
+        className="bg-muted-foreground hover:bg-muted-foreground/80"
+      >
+        Start a call
+      </Button>
     </div>
   );
 };
