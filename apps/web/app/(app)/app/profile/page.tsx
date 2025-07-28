@@ -43,7 +43,7 @@ export default function ProfilePage() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:1284/api/auth/update-profile", {
+      const res = await fetch(`http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -96,7 +96,7 @@ export default function ProfilePage() {
       const formData = new FormData();
       formData.append("image", file);
 
-      const res = await fetch("http://localhost:1284/api/auth/update-profile-image", {
+      const res = await fetch(`http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-profile-image`, {
         method: "PATCH",
         credentials: "include",
         body: formData,

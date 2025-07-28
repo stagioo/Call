@@ -52,7 +52,7 @@ export const TeamSection = () => {
   const startTeamMeeting = async (team: Team) => {
     try {
       setStartingMeeting(team.id);
-      const res = await fetch("http://localhost:1284/api/calls/create", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -81,7 +81,7 @@ export const TeamSection = () => {
   const fetchTeams = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:1284/api/teams", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams`, {
         credentials: "include",
       });
 
@@ -107,7 +107,7 @@ export const TeamSection = () => {
   // Fetch contacts only when modal opens
   useEffect(() => {
     if (addUsersOpen) {
-      fetch("http://localhost:1284/api/contacts", { credentials: "include" })
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/contacts`, { credentials: "include" })
         .then(res => res.json())
         .then(data => setContacts(data.contacts || []));
     }
@@ -118,7 +118,7 @@ export const TeamSection = () => {
     setAddLoading(true);
     setAddError(null);
     try {
-      const res = await fetch(`http://localhost:1284/api/teams/${addUsersOpen}/add-members`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams/${addUsersOpen}/add-members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -223,7 +223,7 @@ export const TeamSection = () => {
                         <DropdownMenuItem
                           onClick={async () => {
                             try {
-                              const res = await fetch(`http://localhost:1284/api/teams/${team.id}/leave`, {
+                              const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams/${team.id}/leave`, {
                                 method: "POST",
                                 credentials: "include",
                               });
