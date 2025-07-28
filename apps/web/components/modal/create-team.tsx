@@ -1,4 +1,4 @@
-import { useContacts } from "@/components/providers/contacts";
+//import { useContacts } from "@/components/providers/contacts";
 import { useModal } from "@/hooks/use-modal";
 import { TEAMS_QUERY } from "@/lib/QUERIES";
 import {
@@ -17,8 +17,7 @@ import {
 import { Input } from "@call/ui/components/input";
 import { LoadingButton } from "@call/ui/components/loading-button";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -29,23 +28,47 @@ const formSchema = z.object({
 
 export const CreateTeam = () => {
   const { isOpen, onClose, type } = useModal();
-  const router = useRouter();
-  const { contacts, isLoading, error } = useContacts();
+  const queryClient = useQueryClient();
 
   const { mutate: createTeam, isPending } = useMutation({
     mutationFn: TEAMS_QUERY.createTeam,
-    onSuccess: (data) => {
-      toast.success("Team created successfully", {
-        description: "Redirecting to team...",
+    onMutate: async (newTeam) => {
+      await queryClient.cancelQueries({ queryKey: ["teams"] });
+
+      const previousTeams = queryClient.getQueryData(["teams"]);
+
+      queryClient.setQueryData(["teams"], (old: any) => {
+        if (!old) return old;
+
+        const optimisticTeam = {
+          id: `temp-${Date.now()}`,
+          name: newTeam.name,
+          creator_id: "current-user",
+          members: [],
+        };
+
+        return [...old, optimisticTeam];
       });
+
+      return { previousTeams };
+    },
+    onError: (err: any, newTeam, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousTeams) {
+        queryClient.setQueryData(["teams"], context.previousTeams);
+      }
+      toast.error("Failed to create team", {
+        description: err.response?.data?.message || "Unknown error",
+      });
+    },
+    onSuccess: (data) => {
+      toast.success("Team created successfully");
       onClose();
       form.reset();
-      router.push(`/app/team/${data.teamId}`);
     },
-    onError: (error: any) => {
-      toast.error("Failed to create team", {
-        description: error.response?.data.message || "Unknown error",
-      });
+    onSettled: () => {
+      // Always refetch after error or success to ensure cache is in sync
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
     },
   });
   const form = useForm<z.infer<typeof formSchema>>({

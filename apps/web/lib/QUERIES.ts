@@ -1,5 +1,5 @@
 import { apiClient } from "./api-client";
-import type { Call } from "./types";
+import type { Call, Team } from "./types";
 
 export const CONTACTS_QUERY = {
   getContacts: async () => {
@@ -44,5 +44,29 @@ export const TEAMS_QUERY = {
       return res.data;
     }
     throw new Error("Failed to create team");
+  },
+  getTeams: async () => {
+    const res = await apiClient.get("/teams");
+    if (res.status === 200) {
+      return res.data.teams as Team[];
+    }
+    throw new Error("Failed to fetch teams");
+  },
+  deleteTeam: async (teamId: string) => {
+    const res = await apiClient.post(`/teams/${teamId}/leave`);
+    if (res.status === 200) {
+      return res.data;
+    }
+    throw new Error("Failed to delete team");
+  },
+};
+
+export const THOUGHTS_QUERY = {
+  createThought: async (data: { type: string; description: string }) => {
+    const res = await apiClient.post("/thoughts/create", data);
+    if (res.status === 200) {
+      return res.data;
+    }
+    throw new Error("Failed to create thought");
   },
 };
