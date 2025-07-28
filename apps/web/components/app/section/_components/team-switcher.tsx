@@ -44,7 +44,7 @@ export function TeamSwitcher() {
     
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:1284/api/teams", {
+      const res = await fetch(`http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams`, {
         credentials: "include",
       });
       
