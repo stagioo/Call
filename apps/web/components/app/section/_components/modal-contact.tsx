@@ -60,7 +60,7 @@ export function ModalContact({ onClose }: { onClose?: () => void }) {
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col gap-6">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">email</Label>
               <Input
                 id="email"
                 type="email"
