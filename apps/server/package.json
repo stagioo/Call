@@ -6,7 +6,7 @@
     "dev": "nodemon --exec tsx src/index.ts",
     "yassr": "tsx src/ws-signaling.ts",
     "dev:hot": "nodemon --exec tsx src/index.ts",
-    "build": "tsc --build",
+    "build": "tsup src/index.ts --format esm,cjs --dts -d dist",
     "start": "node dist/index.js",
     "ws": "tsx src/mediasoup-server.ts"
   },
@@ -36,6 +36,7 @@
     "@types/pg": "^8.15.4",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsup": "^8.5.0",
     "tsx": "^4.7.0",
     "typescript": "^5.7.3"
   }
