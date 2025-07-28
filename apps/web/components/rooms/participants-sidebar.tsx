@@ -65,7 +65,7 @@ export function ParticipantsSidebar({
 
     const fetchJoinRequests = async () => {
       try {
-        const response = await fetch(`http://localhost:1284/api/calls/${callId}/join-requests`, {
+        const response = await fetch(`http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/join-requests`, {
           credentials: "include",
         });
         
@@ -88,7 +88,7 @@ export function ParticipantsSidebar({
   const handleApproveRequest = async (userId: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:1284/api/calls/${callId}/approve-join`, {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/approve-join`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,7 +115,7 @@ export function ParticipantsSidebar({
   const handleRejectRequest = async (userId: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:1284/api/calls/${callId}/reject-join`, {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/reject-join`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
