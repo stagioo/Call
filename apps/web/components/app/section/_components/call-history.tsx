@@ -75,7 +75,7 @@ export function CallHistory() {
 
   //   // setIsDeleting(true);
   //   try {
-  //     const res = await fetch("http://localhost:1284/api/calls/participated", {
+  //     const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/participated`, {
   //       method: "DELETE",
   //       credentials: "include",
   //     });
@@ -106,7 +106,7 @@ export function CallHistory() {
 
   //   try {
   //     const res = await fetch(
-  //       `http://localhost:1284/api/calls/participated/${callId}`,
+  //       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/participated/${callId}`,
   //       {
   //         method: "DELETE",
   //         credentials: "include",

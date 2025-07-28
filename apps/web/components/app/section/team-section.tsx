@@ -71,7 +71,7 @@ export const TeamSection = () => {
   const startTeamMeeting = async (team: Team) => {
     try {
       setStartingMeeting(team.id);
-      const res = await fetch("http://localhost:1284/api/calls/create", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -97,20 +97,55 @@ export const TeamSection = () => {
     }
   };
 
+
+  const fetchTeams = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams`, {
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setTeams(data.teams || []);
+      } else {
+        setError("Failed to load teams");
+      }
+    } catch (err) {
+      setError("Network error loading teams");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (mounted && session?.user && !sessionLoading) {
+      fetchTeams();
+    }
+  }, [mounted, session?.user, sessionLoading]);
+
+  // Fetch contacts only when modal opens
+  useEffect(() => {
+    if (addUsersOpen) {
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/contacts`, { credentials: "include" })
+        .then(res => res.json())
+        .then(data => setContacts(data.contacts || []));
+    }
+  }, [addUsersOpen]);
+
   const handleAddUsers = async () => {
     if (!addUsersOpen) return;
     setAddLoading(true);
     setAddError(null);
     try {
-      const res = await fetch(
-        `http://localhost:1284/api/teams/${addUsersOpen}/add-members`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ emails: selectedContacts }),
-        }
-      );
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams/${addUsersOpen}/add-members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ emails: selectedContacts }),
+      });
+
       const data = await res.json();
       if (!res.ok) {
         setAddError(data.message || "Failed to add users");
@@ -205,8 +240,27 @@ export const TeamSection = () => {
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
+
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams/${team.id}/leave`, {
+                                method: "POST",
+                                credentials: "include",
+                              });
+                              if (res.ok) {
+                                setTeams((prev) => prev.filter((t) => t.id !== team.id));
+                              } else {
+                                const data = await res.json();
+                                alert(data.message || "Failed to leave team");
+                              }
+                            } catch (err) {
+                              alert("Network error leaving team");
+                            }
+                          }}
+
                           onClick={() => deleteTeam(team.id)}
                           disabled={deleteTeamPending}
+
                         >
                           Leave
                         </DropdownMenuItem>

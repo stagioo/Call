@@ -28,7 +28,7 @@ export function ModalContact({ onClose }: { onClose?: () => void }) {
     }
     setLoading(true);
     try {
-      const res = await fetch(`http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/contacts/invite`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/contacts/invite`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -60,7 +60,7 @@ export function ModalContact({ onClose }: { onClose?: () => void }) {
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col gap-6">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">email</Label>
               <Input
                 id="email"
                 type="email"
