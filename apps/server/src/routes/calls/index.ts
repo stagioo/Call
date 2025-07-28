@@ -127,6 +127,7 @@ callsRoutes.post("/create", async (c) => {
           id: crypto.randomUUID(),
           userId: inviteeId,
           message: notificationMessage,
+          type: "call",
           callId,
           createdAt: new Date(),
         });
