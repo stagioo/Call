@@ -26,10 +26,10 @@ Thank you for your interest in contributing to Call-SO! This document will guide
 
    ```bash
    # Start all applications
-   ./run-dev.sh
+   ./setup-dev.sh
 
    # Start a specific application
-   ./run-dev.sh --filter web
+   ./setup-dev.sh --filter web
    ```
 
    This script will:

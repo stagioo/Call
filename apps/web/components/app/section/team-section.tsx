@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSession } from "@/hooks/useSession";
+import type { Team } from "@/lib/types";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@call/ui/components/alert-dialog";
 import { Button } from "@call/ui/components/button";
 import {
   Card,
@@ -8,33 +15,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@call/ui/components/card";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from "@call/ui/components/alert-dialog";
-import { Input } from "@call/ui/components/input";
-import { Label } from "@call/ui/components/label";
-import { useSession } from "@/hooks/useSession";
-import type { Team } from "@/lib/types";
-import { Users, Play, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@call/ui/components/dropdown-menu";
+import { MoreHorizontal, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { TEAMS_QUERY } from "@/lib/QUERIES";
+import { toast } from "sonner";
 
 export const TeamSection = () => {
+  const queryClient = useQueryClient();
   const { session, isLoading: sessionLoading } = useSession();
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [addUsersOpen, setAddUsersOpen] = useState<string | null>(null); // teamId or null
   const [contacts, setContacts] = useState<any[]>([]);
@@ -43,6 +41,27 @@ export const TeamSection = () => {
   const [addError, setAddError] = useState<string | null>(null);
   const [startingMeeting, setStartingMeeting] = useState<string | null>(null);
   const router = useRouter();
+
+  const {
+    data: teams,
+    isLoading: teamsLoading,
+    error: teamsError,
+  } = useQuery({
+    queryKey: ["teams"],
+    queryFn: TEAMS_QUERY.getTeams,
+  });
+
+  const { mutate: deleteTeam, isPending: deleteTeamPending } = useMutation({
+    mutationFn: TEAMS_QUERY.deleteTeam,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      toast.success("Team deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+    },
+  });
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -58,8 +77,8 @@ export const TeamSection = () => {
         credentials: "include",
         body: JSON.stringify({
           name: `${team.name} Meeting`,
-          members: team.members.map(m => m.email),
-          teamId: team.id
+          members: team.members.map((m) => m.email),
+          teamId: team.id,
         }),
       });
 
@@ -77,6 +96,7 @@ export const TeamSection = () => {
       setStartingMeeting(null);
     }
   };
+
 
   const fetchTeams = async () => {
     try {
@@ -118,18 +138,18 @@ export const TeamSection = () => {
     setAddLoading(true);
     setAddError(null);
     try {
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams/${addUsersOpen}/add-members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ emails: selectedContacts }),
       });
+
       const data = await res.json();
       if (!res.ok) {
         setAddError(data.message || "Failed to add users");
       } else {
-        // Refetch teams to update members
-        await fetchTeams();
         setAddUsersOpen(null);
         setSelectedContacts([]);
       }
@@ -168,7 +188,7 @@ export const TeamSection = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -179,16 +199,15 @@ export const TeamSection = () => {
         </div>
       </div>
 
-      {/* Teams Grid */}
-      {loading ? (
+      {teamsLoading ? (
         <div className="flex h-32 items-center justify-center">
           <p className="text-muted-foreground">Loading teams...</p>
         </div>
-      ) : error ? (
+      ) : teamsError ? (
         <div className="flex h-32 items-center justify-center">
-          <p className="text-red-500">{error}</p>
+          <p className="text-red-500">{teamsError.message}</p>
         </div>
-      ) : teams.length === 0 ? (
+      ) : teams?.length === 0 ? (
         <div className="flex h-64 flex-col items-center justify-center text-center">
           <Users className="text-muted-foreground mb-4 h-12 w-12" />
           <h3 className="mb-2 text-lg font-medium">No teams yet</h3>
@@ -198,7 +217,7 @@ export const TeamSection = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {teams.map((team, index) => (
+          {teams?.map((team, index) => (
             <Card
               key={`${team.id}-${index}`}
               className="transition-shadow hover:shadow-md"
@@ -221,6 +240,7 @@ export const TeamSection = () => {
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
+
                           onClick={async () => {
                             try {
                               const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams/${team.id}/leave`, {
@@ -237,6 +257,10 @@ export const TeamSection = () => {
                               alert("Network error leaving team");
                             }
                           }}
+
+                          onClick={() => deleteTeam(team.id)}
+                          disabled={deleteTeamPending}
+
                         >
                           Leave
                         </DropdownMenuItem>
@@ -280,13 +304,15 @@ export const TeamSection = () => {
                 </div>
 
                 {/* Action Button */}
-                <Button 
-                  className="w-full" 
+                <Button
+                  className="w-full"
                   variant="outline"
                   onClick={() => startTeamMeeting(team)}
                   disabled={startingMeeting === team.id}
                 >
-                  {startingMeeting === team.id ? "Starting..." : "Start Meeting"}
+                  {startingMeeting === team.id
+                    ? "Starting..."
+                    : "Start Meeting"}
                 </Button>
               </CardContent>
             </Card>
@@ -295,26 +321,50 @@ export const TeamSection = () => {
       )}
 
       {/* Modal for adding users to team */}
-      <AlertDialog open={!!addUsersOpen} onOpenChange={(open: boolean) => { if (!open) setAddUsersOpen(null); }}>
+      <AlertDialog
+        open={!!addUsersOpen}
+        onOpenChange={(open: boolean) => {
+          if (!open) setAddUsersOpen(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Add users to team</AlertDialogTitle>
           </AlertDialogHeader>
-          <div className="max-h-64 overflow-y-auto border rounded-md p-2 space-y-2">
+          <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-2">
             {contacts.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No contacts available</p>
+              <p className="text-muted-foreground py-4 text-center text-sm">
+                No contacts available
+              </p>
             ) : (
               contacts.map((contact, idx) => (
-                <div key={contact.id || contact.email || idx} className="flex items-center justify-between p-2 hover:bg-muted rounded">
+                <div
+                  key={contact.id || contact.email || idx}
+                  className="hover:bg-muted flex items-center justify-between rounded p-2"
+                >
                   <div className="flex-1">
-                    <p className="text-sm font-medium">{contact.name || contact.email}</p>
-                    <p className="text-xs text-muted-foreground">{contact.email}</p>
+                    <p className="text-sm font-medium">
+                      {contact.name || contact.email}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      {contact.email}
+                    </p>
                   </div>
                   <Button
                     type="button"
-                    variant={selectedContacts.includes(contact.email) ? "default" : "outline"}
+                    variant={
+                      selectedContacts.includes(contact.email)
+                        ? "default"
+                        : "outline"
+                    }
                     size="sm"
-                    onClick={() => setSelectedContacts(prev => prev.includes(contact.email) ? prev.filter(e => e !== contact.email) : [...prev, contact.email])}
+                    onClick={() =>
+                      setSelectedContacts((prev) =>
+                        prev.includes(contact.email)
+                          ? prev.filter((e) => e !== contact.email)
+                          : [...prev, contact.email]
+                      )
+                    }
                     disabled={addLoading}
                   >
                     {selectedContacts.includes(contact.email) ? "Added" : "Add"}
@@ -323,12 +373,24 @@ export const TeamSection = () => {
               ))
             )}
           </div>
-          {addError && <div className="text-red-500 text-sm mt-2">{addError}</div>}
+          {addError && (
+            <div className="mt-2 text-sm text-red-500">{addError}</div>
+          )}
           <div className="mt-4 flex flex-col gap-3">
-            <Button onClick={handleAddUsers} disabled={addLoading || selectedContacts.length === 0} className="w-full">
+            <Button
+              onClick={handleAddUsers}
+              disabled={addLoading || selectedContacts.length === 0}
+              className="w-full"
+            >
               {addLoading ? "Adding..." : "Add Selected"}
             </Button>
-            <Button variant="outline" onClick={() => setAddUsersOpen(null)} className="w-full" type="button" disabled={addLoading}>
+            <Button
+              variant="outline"
+              onClick={() => setAddUsersOpen(null)}
+              className="w-full"
+              type="button"
+              disabled={addLoading}
+            >
               Cancel
             </Button>
           </div>

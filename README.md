@@ -7,7 +7,7 @@
   <p align="center">
     Ready to escape complex, data-hungry meeting apps? Join the future of video calling.
   </p>
-  
+
   <div align="center">
     <a href="https://joincall.co">
       <img src="https://img.shields.io/badge/Website-joincall.co-blue?style=for-the-badge&logo=globe" alt="Website">
@@ -98,7 +98,7 @@
 2. **Start the development environment**
 
    ```bash
-   ./run-dev.sh
+   ./setup-dev.sh
    ```
 
    This script will automatically:
@@ -184,7 +184,7 @@ call/
 │   ├── eslint-config/     # ESLint configuration
 │   └── typescript-config/ # TypeScript configuration
 ├── docker-compose.yml      # Docker services
-├── run-dev.sh             # Development setup script
+├── setup-dev.sh             # Development setup script
 └── turbo.json             # Turborepo configuration
 ```
 

@@ -5,7 +5,8 @@ type ModalType =
   | "add-member"
   | "start-call"
   | "create-contact"
-  | "thoughts";
+  | "thoughts"
+  | "add-member-to-team";
 
 interface ModalStore {
   type: ModalType | null;
