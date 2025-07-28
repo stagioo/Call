@@ -111,28 +111,24 @@ export const contactRequestStatusEnum = pgEnum("contact_request_status", [
   "rejected",
 ]);
 
-export const contactRequests = pgTable(
-  "contact_requests",
-  {
-    id: text("id").primaryKey(),
-    senderId: text("sender_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    receiverEmail: text("receiver_email").notNull(),
-    receiverId: text("receiver_id")
-      .references(() => user.id, { onDelete: "cascade" }),
-    status: contactRequestStatusEnum("status").notNull(),
-    createdAt: timestamp("created_at")
-      .$defaultFn(() => new Date())
-      .notNull(),
-  },
-  (table) => [
-    // Indexes for fast lookup
-    index("contact_requests_sender_id_idx").on(table.senderId),
-    index("contact_requests_receiver_email_idx").on(table.receiverEmail),
-    index("contact_requests_receiver_id_idx").on(table.receiverId),
-  ]
-);
+export const contactRequests = pgTable("contact_requests", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  senderId: text("sender_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  receiverEmail: text("receiver_email").notNull(),
+  receiverId: text("receiver_id")
+    .references(() => user.id, { onDelete: "cascade" }),
+  status: contactRequestStatusEnum("status").notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+}, (table) => ({
+  senderIdx: index("contact_requests_sender_id_idx").on(table.senderId),
+  receiverEmailIdx: index("contact_requests_receiver_email_idx").on(table.receiverEmail),
+  receiverIdIdx: index("contact_requests_receiver_id_idx").on(table.receiverId),
+}));
 
 export const contacts = pgTable(
   "contacts",
@@ -264,24 +260,23 @@ export const callInvitations = pgTable(
 );
 
 // Notifications Table
-export const notifications = pgTable(
-  "notifications",
-  {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    message: text("message").notNull(),
-    callId: text("call_id")
-      .references(() => calls.id, { onDelete: "set null" }),
-    createdAt: timestamp("created_at")
-      .$defaultFn(() => new Date())
-      .notNull(),
-  },
-  (table) => [
-    index("notifications_user_id_idx").on(table.userId),
-  ]
-);
+export const notifications = pgTable("notifications", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  message: text("message").notNull(),
+  type: text("type", { enum: ["call", "contact_request"] }).notNull(),
+  callId: text("call_id")
+    .references(() => calls.id, { onDelete: "set null" }),
+  contactRequestId: text("contact_request_id")
+    .references(() => contactRequests.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+}, (table) => ({
+  userIdx: index("notifications_user_id_idx").on(table.userId),
+}));
 
 // Call Join Request Status Enum
 export const callJoinRequestStatusEnum = pgEnum("call_join_request_status", [

@@ -1,6 +1,6 @@
 {
-  "id": "6a489a60-a386-4640-85d3-17670dbb64c6",
-  "prevId": "5e484acc-9274-4a91-90ee-89376cca1846",
+  "id": "d2ade345-d5fe-4f54-87d0-ecf9052ffe52",
+  "prevId": "977ef9ac-5147-4a85-8153-f89bf3361391",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -205,6 +205,93 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.call_participants": {
+      "name": "call_participants",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "call_id": {
+          "name": "call_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "joined_at": {
+          "name": "joined_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "call_participants_call_id_idx": {
+          "name": "call_participants_call_id_idx",
+          "columns": [
+            {
+              "expression": "call_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "call_participants_user_id_idx": {
+          "name": "call_participants_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "call_participants_call_id_calls_id_fk": {
+          "name": "call_participants_call_id_calls_id_fk",
+          "tableFrom": "call_participants",
+          "tableTo": "calls",
+          "columnsFrom": ["call_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "call_participants_user_id_user_id_fk": {
+          "name": "call_participants_user_id_user_id_fk",
+          "tableFrom": "call_participants",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.calls": {
       "name": "calls",
       "schema": "",
@@ -303,6 +390,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -346,6 +439,21 @@
           "columns": [
             {
               "expression": "receiver_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "contact_requests_status_idx": {
+          "name": "contact_requests_status_idx",
+          "columns": [
+            {
+              "expression": "status",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -486,8 +594,20 @@
           "primaryKey": false,
           "notNull": true
         },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "call_id": {
           "name": "call_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contact_request_id": {
+          "name": "contact_request_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -531,6 +651,15 @@
           "tableFrom": "notifications",
           "tableTo": "calls",
           "columnsFrom": ["call_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "notifications_contact_request_id_contact_requests_id_fk": {
+          "name": "notifications_contact_request_id_contact_requests_id_fk",
+          "tableFrom": "notifications",
+          "tableTo": "contact_requests",
+          "columnsFrom": ["contact_request_id"],
           "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
