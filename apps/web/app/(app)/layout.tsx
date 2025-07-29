@@ -9,8 +9,7 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
     headers: await headers(),
   });
 
-  // if (!session) redirect("/login");
-  if (!session) return null;
+  if (!session) redirect("/login");
   return <SessionProvider value={session}>{children}</SessionProvider>;
 };
 
