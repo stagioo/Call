@@ -6,8 +6,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "tsup src/auth.ts src/auth-client.ts src/utils/send-mail.ts --format esm,cjs --dts -d dist --tsconfig tsconfig.build.json",
-    "dev": "tsup src/auth.ts src/auth-client.ts src/utils/send-mail.ts --format esm,cjs --dts -d dist --watch --tsconfig tsconfig.build.json"
+    "build": "tsup src/auth.ts src/auth-client.ts src/utils/send-mail.ts --format esm,cjs --dts -d dist --tsconfig tsconfig.build.json"
   },
   "exports": {
     "./auth-client": {
