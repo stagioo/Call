@@ -97,33 +97,6 @@ export const TeamSection = () => {
     }
   };
 
-
-  const fetchTeams = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams`, {
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setTeams(data.teams || []);
-      } else {
-        setError("Failed to load teams");
-      }
-    } catch (err) {
-      setError("Network error loading teams");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (mounted && session?.user && !sessionLoading) {
-      fetchTeams();
-    }
-  }, [mounted, session?.user, sessionLoading]);
-
   // Fetch contacts only when modal opens
   useEffect(() => {
     if (addUsersOpen) {
@@ -138,7 +111,6 @@ export const TeamSection = () => {
     setAddLoading(true);
     setAddError(null);
     try {
-
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams/${addUsersOpen}/add-members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -152,6 +124,8 @@ export const TeamSection = () => {
       } else {
         setAddUsersOpen(null);
         setSelectedContacts([]);
+        // Invalidate teams query to refresh the list
+        queryClient.invalidateQueries({ queryKey: ["teams"] });
       }
     } catch (err) {
       setAddError("Network error adding users");
@@ -217,7 +191,7 @@ export const TeamSection = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {teams?.map((team, index) => (
+          {teams?.map((team: Team, index: number) => (
             <Card
               key={`${team.id}-${index}`}
               className="transition-shadow hover:shadow-md"
@@ -240,27 +214,8 @@ export const TeamSection = () => {
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-
-                          onClick={async () => {
-                            try {
-                              const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams/${team.id}/leave`, {
-                                method: "POST",
-                                credentials: "include",
-                              });
-                              if (res.ok) {
-                                setTeams((prev) => prev.filter((t) => t.id !== team.id));
-                              } else {
-                                const data = await res.json();
-                                alert(data.message || "Failed to leave team");
-                              }
-                            } catch (err) {
-                              alert("Network error leaving team");
-                            }
-                          }}
-
                           onClick={() => deleteTeam(team.id)}
                           disabled={deleteTeamPending}
-
                         >
                           Leave
                         </DropdownMenuItem>
