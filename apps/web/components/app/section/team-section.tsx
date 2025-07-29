@@ -1,13 +1,8 @@
 "use client";
 
-import { useSession } from "@/hooks/useSession";
+import { useModal } from "@/hooks/use-modal";
+import { CALLS_QUERY, TEAMS_QUERY } from "@/lib/QUERIES";
 import type { Team } from "@/lib/types";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@call/ui/components/alert-dialog";
 import { Button } from "@call/ui/components/button";
 import {
   Card,
@@ -23,23 +18,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@call/ui/components/dropdown-menu";
+import { LoadingButton } from "@call/ui/components/loading-button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { TEAMS_QUERY } from "@/lib/QUERIES";
 import { toast } from "sonner";
 
 export const TeamSection = () => {
   const queryClient = useQueryClient();
-  const { session, isLoading: sessionLoading } = useSession();
-  const [mounted, setMounted] = useState(false);
-  const [addUsersOpen, setAddUsersOpen] = useState<string | null>(null); // teamId or null
-  const [contacts, setContacts] = useState<any[]>([]);
-  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
-  const [addLoading, setAddLoading] = useState(false);
-  const [addError, setAddError] = useState<string | null>(null);
-  const [startingMeeting, setStartingMeeting] = useState<string | null>(null);
+  const { onOpen } = useModal();
   const router = useRouter();
 
   const {
@@ -63,6 +50,7 @@ export const TeamSection = () => {
     },
   });
 
+  
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
@@ -81,15 +69,8 @@ export const TeamSection = () => {
           teamId: team.id,
         }),
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        alert(data.message || "Failed to start meeting");
-        return;
-      }
-
-      const data = await res.json();
       router.push(`/app/call/${data.callId}`);
+
     } catch (err) {
       alert("Network error starting meeting");
     } finally {
@@ -118,52 +99,16 @@ export const TeamSection = () => {
         body: JSON.stringify({ emails: selectedContacts }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setAddError(data.message || "Failed to add users");
-      } else {
-        setAddUsersOpen(null);
-        setSelectedContacts([]);
-        // Invalidate teams query to refresh the list
-        queryClient.invalidateQueries({ queryKey: ["teams"] });
-      }
-    } catch (err) {
-      setAddError("Network error adding users");
-    } finally {
-      setAddLoading(false);
-    }
+
+  const startTeamMeeting = async (team: Team) => {
+    createCall({
+      name: `${team.name} Meeting`,
+      members: team.members.map((m) => m.email),
+    });
   };
-
-  // Show loading state during initial mount to prevent hydration mismatch
-  if (!mounted || sessionLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Teams</h1>
-            <p className="text-muted-foreground">
-              Manage your teams and collaborate with others
-            </p>
-          </div>
-        </div>
-        <div className="flex h-32 items-center justify-center">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!session?.user) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="text-muted-foreground">Please sign in to view teams</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 px-10">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Teams</h1>
@@ -220,7 +165,7 @@ export const TeamSection = () => {
                           Leave
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setAddUsersOpen(team.id)}
+                          onClick={() => onOpen("add-member-to-team", { team })}
                         >
                           Add users
                         </DropdownMenuItem>
@@ -257,100 +202,18 @@ export const TeamSection = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Action Button */}
-                <Button
-                  className="w-full"
-                  variant="outline"
+                <LoadingButton
                   onClick={() => startTeamMeeting(team)}
-                  disabled={startingMeeting === team.id}
+                  loading={createCallPending}
+                  className="w-full"
                 >
-                  {startingMeeting === team.id
-                    ? "Starting..."
-                    : "Start Meeting"}
-                </Button>
+                  Start Meeting
+                </LoadingButton>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
-
-      {/* Modal for adding users to team */}
-      <AlertDialog
-        open={!!addUsersOpen}
-        onOpenChange={(open: boolean) => {
-          if (!open) setAddUsersOpen(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Add users to team</AlertDialogTitle>
-          </AlertDialogHeader>
-          <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-2">
-            {contacts.length === 0 ? (
-              <p className="text-muted-foreground py-4 text-center text-sm">
-                No contacts available
-              </p>
-            ) : (
-              contacts.map((contact, idx) => (
-                <div
-                  key={contact.id || contact.email || idx}
-                  className="hover:bg-muted flex items-center justify-between rounded p-2"
-                >
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">
-                      {contact.name || contact.email}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {contact.email}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant={
-                      selectedContacts.includes(contact.email)
-                        ? "default"
-                        : "outline"
-                    }
-                    size="sm"
-                    onClick={() =>
-                      setSelectedContacts((prev) =>
-                        prev.includes(contact.email)
-                          ? prev.filter((e) => e !== contact.email)
-                          : [...prev, contact.email]
-                      )
-                    }
-                    disabled={addLoading}
-                  >
-                    {selectedContacts.includes(contact.email) ? "Added" : "Add"}
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
-          {addError && (
-            <div className="mt-2 text-sm text-red-500">{addError}</div>
-          )}
-          <div className="mt-4 flex flex-col gap-3">
-            <Button
-              onClick={handleAddUsers}
-              disabled={addLoading || selectedContacts.length === 0}
-              className="w-full"
-            >
-              {addLoading ? "Adding..." : "Add Selected"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setAddUsersOpen(null)}
-              className="w-full"
-              type="button"
-              disabled={addLoading}
-            >
-              Cancel
-            </Button>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };

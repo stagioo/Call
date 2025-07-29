@@ -46,6 +46,7 @@ export const StartCall = () => {
       toast.error("Failed to create call");
     },
   });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
