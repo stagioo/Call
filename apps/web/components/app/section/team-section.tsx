@@ -100,6 +100,17 @@ export const TeamSection = () => {
     }
   };
 
+  // Fetch contacts only when modal opens
+  useEffect(() => {
+    if (addUsersOpen) {
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/contacts`, {
+        credentials: "include",
+      })
+        .then((res) => res.json())
+        .then((data) => setContacts(data.contacts || []));
+    }
+  }, [addUsersOpen]);
+
   const handleAddUsers = async () => {
     if (!addUsersOpen) return;
     setAddLoading(true);
@@ -121,6 +132,8 @@ export const TeamSection = () => {
       } else {
         setAddUsersOpen(null);
         setSelectedContacts([]);
+        // Invalidate teams query to refresh the list
+        queryClient.invalidateQueries({ queryKey: ["teams"] });
       }
     } catch (err) {
       setAddError("Network error adding users");
@@ -186,7 +199,7 @@ export const TeamSection = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {teams?.map((team, index) => (
+          {teams?.map((team: Team, index: number) => (
             <Card
               key={`${team.id}-${index}`}
               className="transition-shadow hover:shadow-md"
@@ -209,27 +222,7 @@ export const TeamSection = () => {
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={async () => {
-                            try {
-                              const res = await fetch(
-                                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams/${team.id}/leave`,
-                                {
-                                  method: "POST",
-                                  credentials: "include",
-                                }
-                              );
-                              if (res.ok) {
-                                queryClient.invalidateQueries({
-                                  queryKey: ["teams"],
-                                });
-                              } else {
-                                const data = await res.json();
-                                alert(data.message || "Failed to leave team");
-                              }
-                            } catch (err) {
-                              alert("Network error leaving team");
-                            }
-                          }}
+                          onClick={() => deleteTeam(team.id)}
                           disabled={deleteTeamPending}
                         >
                           Leave

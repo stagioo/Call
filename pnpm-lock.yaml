@@ -102,6 +102,12 @@ importers:
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
+      axios:
+        specifier: ^1.10.0
+        version: 1.10.0
+      better-auth:
+        specifier: ^1.2.9
+        version: 1.2.10
       drizzle-orm:
         specifier: ^0.44.2
         version: 0.44.2(@types/pg@8.15.4)(kysely@0.28.2)(pg@8.16.1)(postgres@3.4.7)
@@ -309,6 +315,9 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.17.19
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(jiti@2.4.2)(postcss@8.5.3)(tsx@4.20.3)(typescript@5.7.3)(yaml@2.8.0)
 
   packages/db:
     dependencies:
@@ -343,6 +352,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.1
         version: 0.31.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(jiti@2.4.2)(postcss@8.5.3)(tsx@4.20.3)(typescript@5.7.3)(yaml@2.8.0)
 
   packages/eslint-config:
     devDependencies:

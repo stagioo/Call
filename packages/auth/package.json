@@ -3,14 +3,19 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "build": "tsup src/auth.ts src/auth-client.ts src/utils/send-mail.ts --format esm,cjs --dts -d dist --tsconfig tsconfig.build.json",
+    "dev": "tsup src/auth.ts src/auth-client.ts src/utils/send-mail.ts --format esm,cjs --dts -d dist --watch --tsconfig tsconfig.build.json"
+  },
   "exports": {
-    "./auth-client": "./src/auth-client.ts",
-    "./auth": "./src/auth.ts",
-    "./utils/send-mail": "./src/utils/send-mail.ts"
+    "./auth-client": "./dist/auth-client.js",
+    "./auth": "./dist/auth.js",
+    "./utils/send-mail": "./dist/utils/send-mail.js"
   },
   "devDependencies": {
     "@call/typescript-config": "workspace:*",
-    "@types/node": "^20"
+    "@types/node": "^20",
+    "tsup": "^8.5.0"
   },
   "peerDependencies": {
     "typescript": "^5"
