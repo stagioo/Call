@@ -2,6 +2,8 @@
   "name": "calldotso",
   "version": "0.0.1",
   "private": true,
+  "main": "./dist/auth.js",
+  "types": "./dist/auth.d.ts",
   "scripts": {
     "build": "turbo build",
     "dev": "dotenv -- turbo dev",
