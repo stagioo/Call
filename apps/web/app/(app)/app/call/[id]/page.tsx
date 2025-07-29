@@ -273,17 +273,16 @@ interface RemoteStream {
 
 const recordCallParticipation = async (callId: string) => {
   try {
-    await fetch(
-      `http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-participation`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ callId }),
-      }
-    );
+
+    await fetch(`${process.env.BACKEND_URL}/api/calls/record-participation`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ callId }),
+    });
+
   } catch (error) {
     console.error("Error recording call participation:", error);
   }
@@ -324,8 +323,10 @@ export default function CallPreviewPage() {
     const fetchCreatorInfo = async () => {
       try {
         const response = await fetch(
-          `http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/creator`,
-          {
+
+          `${process.env.BACKEND_URL}/api/calls/${callId}/creator`,
+          {   
+
             credentials: "include",
           }
         );
@@ -349,7 +350,7 @@ export default function CallPreviewPage() {
     const checkAccess = async () => {
       try {
         const response = await fetch(
-          `http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/check-access`,
+          `${process.env.BACKEND_URL}/api/calls/${callId}/check-access`,
           {
             credentials: "include",
           }
@@ -380,7 +381,7 @@ export default function CallPreviewPage() {
     setIsRequestingAccess(true);
     try {
       const response = await fetch(
-        `http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/request-join`,
+          `${process.env.BACKEND_URL}/api/calls/${callId}/request-join`,
         {
           method: "POST",
           headers: {
@@ -942,17 +943,16 @@ export default function CallPreviewPage() {
   const handleHangup = useCallback(async () => {
     try {
       // Record that the user is leaving the call
-      await fetch(
-        `http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ callId }),
-        }
-      );
+
+      await fetch(`${process.env.BACKEND_URL}/api/calls/record-leave`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ callId }),
+      });
+
     } catch (error) {
       console.error("Failed to record call leave:", error);
       // Continue with hangup even if recording fails
@@ -1013,17 +1013,16 @@ export default function CallPreviewPage() {
       // Record that the user is leaving the call if they were joined
       if (joined) {
         try {
-          await fetch(
-            `http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-              body: JSON.stringify({ callId }),
-            }
-          );
+
+          await fetch(`${process.env.BACKEND_URL}/api/calls/record-leave`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ callId }),
+          });
+
         } catch (error) {
           console.error("Failed to record call leave on cleanup:", error);
         }
@@ -1050,7 +1049,7 @@ export default function CallPreviewPage() {
       // For synchronous operation during page unload
       if (joined) {
         navigator.sendBeacon(
-          `http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`,
+          `${process.env.BACKEND_URL}/api/calls/record-leave`,
           JSON.stringify({ callId })
         );
       }

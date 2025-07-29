@@ -1,5 +1,5 @@
-import { extractTokenFromUrl } from "./utils/extract-token";
-import { sendMail } from "./utils/send-mail";
+import { extractTokenFromUrl } from "./utils/extract-token.js";
+import { sendMail } from "./utils/send-mail.js";
 import { db } from "@call/db";
 import schema from "@call/db/schema";
 import { betterAuth } from "better-auth";
