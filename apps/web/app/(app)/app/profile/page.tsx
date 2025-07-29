@@ -1,39 +1,27 @@
 "use client";
 
-import { useSession } from "@/hooks/useSession";
-import { Card, CardContent, CardHeader, CardTitle } from "@call/ui/components/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@call/ui/components/avatar";
-import { Label } from "@call/ui/components/label";
-import { Input } from "@call/ui/components/input";
-import { Button } from "@call/ui/components/button";
-import { useState, useRef } from "react";
-import { toast } from "sonner";
+import { useSession } from "@/components/providers/session";
 import { authClient } from "@call/auth/auth-client";
-import { Camera } from "lucide-react";
+import { Button } from "@call/ui/components/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@call/ui/components/card";
+import { Input } from "@call/ui/components/input";
+import { Label } from "@call/ui/components/label";
+import { UserProfile } from "@call/ui/components/use-profile";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
-  const { session, isLoading } = useSession();
+  const { user } = useSession();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(session?.user?.name || "");
+  const [name, setName] = useState(user.name || "");
   const [loading, setLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
-
-  if (!session?.user) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-        <p className="text-muted-foreground">Please sign in to view your profile.</p>
-      </div>
-    );
-  }
 
   const handleUpdateProfile = async () => {
     if (!name.trim()) {
@@ -43,26 +31,25 @@ export default function ProfilePage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-profile`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ name }),
-      });
+      const res = await fetch(
+        `http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-profile`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ name }),
+        }
+      );
 
       if (!res.ok) {
         throw new Error("Failed to update profile");
       }
-
-      // Refresh the session to get the updated user data
       await authClient.getSession();
-      
+
       toast.success("Profile updated successfully");
       setIsEditing(false);
-      
-      // Force a page refresh to update all components with new session data
       window.location.reload();
     } catch (error) {
       toast.error("Failed to update profile");
@@ -96,11 +83,14 @@ export default function ProfilePage() {
       const formData = new FormData();
       formData.append("image", file);
 
-      const res = await fetch(`http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-profile-image`, {
-        method: "PATCH",
-        credentials: "include",
-        body: formData,
-      });
+      const res = await fetch(
+        `http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-profile-image`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          body: formData,
+        }
+      );
 
       if (!res.ok) {
         throw new Error("Failed to update profile image");
@@ -108,9 +98,9 @@ export default function ProfilePage() {
 
       // Refresh the session to get the updated user data
       await authClient.getSession();
-      
+
       toast.success("Profile image updated successfully");
-      
+
       // Force a page refresh to update all components with new session data
       window.location.reload();
     } catch (error) {
@@ -121,23 +111,15 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-8">
+    <div className="mx-auto mt-8 max-w-2xl">
       <Card>
         <CardHeader>
           <CardTitle>Profile</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
-            <div className="relative group">
-              <Avatar className="h-20 w-20 cursor-pointer transition-opacity group-hover:opacity-75" onClick={handleImageClick}>
-                <AvatarImage src={session.user.image || undefined} />
-                <AvatarFallback>
-                  {session.user.name?.charAt(0).toUpperCase() || "U"}
-                </AvatarFallback>
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 rounded-full">
-                  <Camera className="h-6 w-6 text-white" />
-                </div>
-              </Avatar>
+            <div className="group relative">
+              <UserProfile name={user.name} url={user.image} />
               <input
                 type="file"
                 ref={fileInputRef}
@@ -147,14 +129,14 @@ export default function ProfilePage() {
                 disabled={imageLoading}
               />
               {imageLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 </div>
               )}
             </div>
             <div>
-              <h2 className="text-xl font-semibold">{session.user.name}</h2>
-              <p className="text-sm text-muted-foreground">{session.user.email}</p>
+              <h2 className="text-xl font-semibold">{user.name}</h2>
+              <p className="text-muted-foreground text-sm">{user.email}</p>
             </div>
           </div>
 
@@ -162,7 +144,7 @@ export default function ProfilePage() {
             <div>
               <Label htmlFor="name">Name</Label>
               {isEditing ? (
-                <div className="flex gap-2 mt-1">
+                <div className="mt-1 flex gap-2">
                   <Input
                     id="name"
                     value={name}
@@ -176,7 +158,7 @@ export default function ProfilePage() {
                     variant="outline"
                     onClick={() => {
                       setIsEditing(false);
-                      setName(session.user.name);
+                      setName(user.name);
                     }}
                     disabled={loading}
                   >
@@ -184,8 +166,8 @@ export default function ProfilePage() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-sm">{session.user.name}</p>
+                <div className="mt-1 flex items-center justify-between">
+                  <p className="text-sm">{user.name}</p>
                   <Button variant="outline" onClick={() => setIsEditing(true)}>
                     Edit
                   </Button>
@@ -195,10 +177,12 @@ export default function ProfilePage() {
 
             <div>
               <Label htmlFor="email">Email</Label>
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-sm">{session.user.email}</p>
-                {session.user.emailVerified ? (
-                  <span className="text-xs text-green-600 font-medium">Verified</span>
+              <div className="mt-1 flex items-center justify-between">
+                <p className="text-sm">{user.email}</p>
+                {user.emailVerified ? (
+                  <span className="text-xs font-medium text-green-600">
+                    Verified
+                  </span>
                 ) : (
                   <Button variant="outline" size="sm">
                     Verify Email
@@ -209,8 +193,8 @@ export default function ProfilePage() {
 
             <div>
               <Label>Account Created</Label>
-              <p className="text-sm mt-1">
-                {new Date(session.user.createdAt).toLocaleDateString()}
+              <p className="mt-1 text-sm">
+                {new Date(user.createdAt).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -218,4 +202,4 @@ export default function ProfilePage() {
       </Card>
     </div>
   );
-} 
+}
