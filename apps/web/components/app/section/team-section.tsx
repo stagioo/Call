@@ -50,55 +50,18 @@ export const TeamSection = () => {
     },
   });
 
-  
-  // Prevent hydration mismatch
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const startTeamMeeting = async (team: Team) => {
-    try {
-      setStartingMeeting(team.id);
-      const res = await fetch(`${process.env.BACKEND_URL}/api/calls/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name: `${team.name} Meeting`,
-          members: team.members.map((m) => m.email),
-          teamId: team.id,
-        }),
+  const { mutate: createCall, isPending: createCallPending } = useMutation({
+    mutationFn: CALLS_QUERY.createCall,
+    onSuccess: (data) => {
+      toast.success("Call created successfully", {
+        description: "Redirecting to call...",
       });
       router.push(`/app/call/${data.callId}`);
-
-    } catch (err) {
-      alert("Network error starting meeting");
-    } finally {
-      setStartingMeeting(null);
-    }
-  };
-
-  // Fetch contacts only when modal opens
-  useEffect(() => {
-    if (addUsersOpen) {
-      fetch(`${process.env.BACKEND_URL}/api/contacts`, { credentials: "include" })
-        .then(res => res.json())
-        .then(data => setContacts(data.contacts || []));
-    }
-  }, [addUsersOpen]);
-
-  const handleAddUsers = async () => {
-    if (!addUsersOpen) return;
-    setAddLoading(true);
-    setAddError(null);
-    try {
-      const res = await fetch(`${process.env.BACKEND_URL}/api/teams/${addUsersOpen}/add-members`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ emails: selectedContacts }),
-      });
-
+    },
+    onError: (error) => {
+      toast.error("Failed to create call");
+    },
+  });
 
   const startTeamMeeting = async (team: Team) => {
     createCall({

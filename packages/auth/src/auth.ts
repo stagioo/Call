@@ -29,26 +29,6 @@ export const auth = betterAuth({
 
   trustedOrigins: [process.env.FRONTEND_URL, process.env.BACKEND_URL],
 
-  // Add cookie configuration for cross-domain support
-  session: {
-    cookieCache: {
-      enabled: true,
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    },
-  },
-
-  // Cookie configuration for cross-domain
-  cookies: {
-    sessionToken: {
-      name: "better-auth.session-token",
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      domain: process.env.NODE_ENV === "production" ? ".joincall.co" : undefined,
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    },
-  },
-
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
