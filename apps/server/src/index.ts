@@ -5,9 +5,9 @@ import { db } from "@call/db";
 import routes from "./routes/index.js";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
-import { serve } from '@hono/node-server';
-import chalk from 'chalk';
-import { networkInterfaces } from 'os';
+import { serve } from "@hono/node-server";
+import chalk from "chalk";
+import { networkInterfaces } from "os";
 
 export interface ReqVariables {
   user: typeof auth.$Infer.Session.user | null;
@@ -37,11 +37,11 @@ app.use(
     },
     credentials: true,
     allowHeaders: [
-      "Content-Type", 
-      "Authorization", 
+      "Content-Type",
+      "Authorization",
       "X-Requested-With",
       "Accept",
-      "Origin"
+      "Origin",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     exposeHeaders: ["Set-Cookie"],
@@ -74,49 +74,58 @@ const getNetworkIP = () => {
   const nets = networkInterfaces();
   for (const name of Object.keys(nets)) {
     for (const net of nets[name] || []) {
-      if (net.family === 'IPv4' && !net.internal) {
+      if (net.family === "IPv4" && !net.internal) {
         return net.address;
       }
     }
   }
-  return '127.0.0.1';
+  return "127.0.0.1";
 };
 
 const logServerStart = (port: number) => {
   const networkIP = getNetworkIP();
-  
-  console.log(chalk.cyan('\nServer Starting...'));
-  console.log(chalk.gray('━'.repeat(50)));
+
+  console.log(chalk.cyan("\nServer Starting..."));
+  console.log(chalk.gray("━".repeat(50)));
   console.log(chalk.green(`Server running on port ${port}`));
   console.log(chalk.blue(`Local: http://localhost:${port}`));
   console.log(chalk.blue(`Network: http://${networkIP}:${port}`));
-  console.log(chalk.gray('━'.repeat(50)));
-  console.log(chalk.yellow('Press Ctrl+C to stop\n'));
+  console.log(chalk.gray("━".repeat(50)));
+  console.log(chalk.yellow("Press Ctrl+C to stop\n"));
 };
 
-const startServerWithEventHandling = async (startPort: number, maxAttempts: number = 50): Promise<void> => {
+const startServerWithEventHandling = async (
+  startPort: number,
+  maxAttempts: number = 50
+): Promise<void> => {
   return new Promise((resolve, reject) => {
     let currentPort = startPort;
     let attempts = 0;
-    
+
     const tryPort = () => {
       if (attempts >= maxAttempts) {
-        reject(new Error(`Could not start server after ${maxAttempts} attempts`));
+        reject(
+          new Error(`Could not start server after ${maxAttempts} attempts`)
+        );
         return;
       }
-      
+
       try {
         const server = serve({
           fetch: app.fetch,
           port: currentPort,
-          hostname: '0.0.0.0',
+          hostname: "0.0.0.0",
         });
 
-        server.once('error', (error: any) => {
-          if (error.code === 'EADDRINUSE') {
+        server.once("error", (error: any) => {
+          if (error.code === "EADDRINUSE") {
             attempts++;
             currentPort++;
-            console.log(chalk.yellow(`Port ${currentPort - 1} is busy, trying ${currentPort}...`));
+            console.log(
+              chalk.yellow(
+                `Port ${currentPort - 1} is busy, trying ${currentPort}...`
+              )
+            );
             tryPort();
           } else {
             reject(error);
@@ -125,23 +134,25 @@ const startServerWithEventHandling = async (startPort: number, maxAttempts: numb
 
         process.nextTick(() => {
           if (currentPort !== startPort) {
-            console.log(chalk.yellow(`Port ${startPort} was busy, using ${currentPort} instead`));
+            console.log(
+              chalk.yellow(
+                `Port ${startPort} was busy, using ${currentPort} instead`
+              )
+            );
           }
           logServerStart(currentPort);
           resolve();
         });
-        
       } catch (error) {
         reject(error);
       }
     };
-    
+
     tryPort();
   });
 };
 
-startServerWithEventHandling(Number(port))
-  .catch((error) => {
-    console.log(chalk.red(`\nFailed to start server: ${error.message}`));
-    process.exit(1);
-  });
+startServerWithEventHandling(Number(port)).catch((error) => {
+  console.log(chalk.red(`\nFailed to start server: ${error.message}`));
+  process.exit(1);
+});
