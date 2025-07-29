@@ -273,6 +273,7 @@ interface RemoteStream {
 
 const recordCallParticipation = async (callId: string) => {
   try {
+
     await fetch(`${process.env.BACKEND_URL}/api/calls/record-participation`, {
       method: "POST",
       headers: {
@@ -281,6 +282,7 @@ const recordCallParticipation = async (callId: string) => {
       credentials: "include",
       body: JSON.stringify({ callId }),
     });
+
   } catch (error) {
     console.error("Error recording call participation:", error);
   }
@@ -321,8 +323,10 @@ export default function CallPreviewPage() {
     const fetchCreatorInfo = async () => {
       try {
         const response = await fetch(
+
           `${process.env.BACKEND_URL}/api/calls/${callId}/creator`,
           {   
+
             credentials: "include",
           }
         );
@@ -939,6 +943,7 @@ export default function CallPreviewPage() {
   const handleHangup = useCallback(async () => {
     try {
       // Record that the user is leaving the call
+
       await fetch(`${process.env.BACKEND_URL}/api/calls/record-leave`, {
         method: "POST",
         headers: {
@@ -947,6 +952,7 @@ export default function CallPreviewPage() {
         credentials: "include",
         body: JSON.stringify({ callId }),
       });
+
     } catch (error) {
       console.error("Failed to record call leave:", error);
       // Continue with hangup even if recording fails
@@ -1007,6 +1013,7 @@ export default function CallPreviewPage() {
       // Record that the user is leaving the call if they were joined
       if (joined) {
         try {
+
           await fetch(`${process.env.BACKEND_URL}/api/calls/record-leave`, {
             method: "POST",
             headers: {
@@ -1015,6 +1022,7 @@ export default function CallPreviewPage() {
             credentials: "include",
             body: JSON.stringify({ callId }),
           });
+
         } catch (error) {
           console.error("Failed to record call leave on cleanup:", error);
         }
