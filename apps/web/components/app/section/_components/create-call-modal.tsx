@@ -48,14 +48,14 @@ export function CreateCallModal({
     }
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/create`, {
+      const res = await fetch(`${process.env.BACKEND_URL}/api/calls/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           name: meetingName.trim(),
           members: selectedMembers.length > 0 ? selectedMembers : undefined,
-        }),
+        }), 
       });
       const data = await res.json();
       console.log("🔍 [CALLS DEBUG] Response:", data);

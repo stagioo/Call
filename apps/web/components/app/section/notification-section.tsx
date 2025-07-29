@@ -46,10 +46,10 @@ const NotificationSection = () => {
       try {
         // Fetch both call notifications and contact requests
         const [notificationsRes, contactRequestsRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/notifications`, {
+          fetch(`${process.env.BACKEND_URL}/api/notifications`, {
             credentials: "include",
           }),
-          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/contacts/requests`, {
+          fetch(`${process.env.BACKEND_URL}/api/contacts/requests`, {
             credentials: "include",
           }),
         ]);
@@ -104,7 +104,7 @@ const NotificationSection = () => {
     setActionLoading(invitationId);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/invitations/${invitationId}/accept`,
+        `${process.env.BACKEND_URL}/api/calls/invitations/${invitationId}/accept`,
         {
           method: "PATCH",
           credentials: "include",
@@ -128,7 +128,7 @@ const NotificationSection = () => {
     setActionLoading(invitationId);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/invitations/${invitationId}/reject`,
+        `${process.env.BACKEND_URL}/api/calls/invitations/${invitationId}/reject`,
         {
           method: "PATCH",
           credentials: "include",
@@ -157,7 +157,7 @@ const NotificationSection = () => {
     setActionLoading(requestId);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/contacts/requests/${requestId}/${action}`,
+          `${process.env.BACKEND_URL}/api/contacts/requests/${requestId}/${action}`,
         {
           method: "PATCH",
           credentials: "include",
