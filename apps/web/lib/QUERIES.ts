@@ -59,6 +59,13 @@ export const TEAMS_QUERY = {
     }
     throw new Error("Failed to delete team");
   },
+  addMembers: async (teamId: string, data: { emails: string[] }) => {
+    const res = await apiClient.post(`/teams/${teamId}/add-members`, data);
+    if (res.status === 200) {
+      return res.data;
+    }
+    throw new Error("Failed to add members");
+  },
 };
 
 export const THOUGHTS_QUERY = {
