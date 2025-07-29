@@ -1,16 +1,16 @@
 {
   "name": "@call/auth",
-  "module": "index.ts",
-  "type": "module",
+  "main": "./dist/auth.cjs",
+  "module": "./dist/auth.mjs",
+  "types": "./dist/auth.d.ts",
   "private": true,
   "scripts": {
-    "build": "tsup src/auth.ts src/auth-client.ts src/utils/send-mail.ts --format esm,cjs --dts -d dist --tsconfig tsconfig.build.json",
-    "dev": "tsup src/auth.ts src/auth-client.ts src/utils/send-mail.ts --format esm,cjs --dts -d dist --watch --tsconfig tsconfig.build.json"
+    "build": "tsup src/auth.ts src/auth-client.ts src/utils/send-mail.ts --format esm,cjs --dts -d dist --tsconfig tsconfig.build.json"
   },
   "exports": {
-    "./auth-client": "./dist/auth-client.js",
-    "./auth": "./dist/auth.js",
-    "./utils/send-mail": "./dist/utils/send-mail.js"
+    "./auth-client": "./dist/auth-client.mjs",
+    "./auth": "./dist/auth.mjs",
+    "./utils/send-mail": "./dist/utils/send-mail.mjs"
   },
   "devDependencies": {
     "@call/typescript-config": "workspace:*",

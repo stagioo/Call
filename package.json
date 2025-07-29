@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "postinstall": "turbo run build --filter=./packages/auth",
     "build": "turbo build",
     "dev": "dotenv -- turbo dev",
     "lint": "turbo lint",

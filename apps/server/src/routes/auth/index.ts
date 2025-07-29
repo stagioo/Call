@@ -57,7 +57,10 @@ authRouter.patch("/update-profile", async (c) => {
     const result = updateProfileSchema.safeParse(body);
 
     if (!result.success) {
-      return c.json({ message: result.error.errors[0]?.message || "Invalid input" }, 400);
+      return c.json(
+        { message: result.error.errors[0]?.message || "Invalid input" },
+        400
+      );
     }
 
     const { name } = result.data;
@@ -107,15 +110,15 @@ authRouter.patch("/update-profile-image", async (c) => {
     // Update user profile with the new image
     await db
       .update(userTable)
-      .set({ 
+      .set({
         image: dataUrl,
-        updatedAt: new Date() 
+        updatedAt: new Date(),
       })
       .where(eq(userTable.id, user.id));
 
-    return c.json({ 
+    return c.json({
       message: "Profile image updated successfully",
-      image: dataUrl
+      image: dataUrl,
     });
   } catch (err) {
     console.error("[PATCH /update-profile-image] Error:", err);
