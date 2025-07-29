@@ -1,5 +1,6 @@
 "use client";
 
+import { useModal } from "@/hooks/use-modal";
 import { CALLS_QUERY, TEAMS_QUERY } from "@/lib/QUERIES";
 import type { Team } from "@/lib/types";
 import { Button } from "@call/ui/components/button";
@@ -25,6 +26,7 @@ import { toast } from "sonner";
 
 export const TeamSection = () => {
   const queryClient = useQueryClient();
+  const { onOpen } = useModal();
   const router = useRouter();
 
   const {
@@ -70,7 +72,6 @@ export const TeamSection = () => {
 
   return (
     <div className="space-y-6 px-10">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Teams</h1>
@@ -126,7 +127,9 @@ export const TeamSection = () => {
                         >
                           Leave
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {}}>
+                        <DropdownMenuItem
+                          onClick={() => onOpen("add-member-to-team", { team })}
+                        >
                           Add users
                         </DropdownMenuItem>
                       </DropdownMenuContent>
