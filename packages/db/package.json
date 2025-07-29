@@ -4,14 +4,16 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "build": "tsup src/index.ts src/schema.ts --format esm,cjs --dts -d dist --tsconfig tsconfig.build.json",
+    "dev": "tsup src/index.ts src/schema.ts --format esm,cjs --dts -d dist --watch --tsconfig tsconfig.build.json",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./schema": "./src/schema.ts"
+    ".": "./dist/index.js",
+    "./schema": "./dist/schema.js"
   },
   "devDependencies": {
     "@call/eslint-config": "workspace:*",
@@ -19,7 +21,8 @@
     "@paralleldrive/cuid2": "^2.2.2",
     "@types/node": "^20",
     "@types/pg": "^8.15.4",
-    "drizzle-kit": "^0.31.1"
+    "drizzle-kit": "^0.31.1",
+    "tsup": "^8.5.0"
   },
   "peerDependencies": {
     "typescript": "^5"
