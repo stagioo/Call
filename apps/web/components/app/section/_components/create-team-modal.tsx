@@ -38,7 +38,7 @@ export function CreateTeamModal({ onClose, onTeamCreated }: {
     
     const fetchContacts = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/contacts`, {
+        const res = await fetch(`${process.env.BACKEND_URL}/api/contacts`, {
           credentials: "include",
         });
         if (res.ok) {
@@ -87,7 +87,7 @@ export function CreateTeamModal({ onClose, onTeamCreated }: {
         members: selectedMembers,
       };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/teams/create`, {
+      const res = await fetch(`${process.env.BACKEND_URL}/api/teams/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
