@@ -2,276 +2,351 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useReducer,
+  useState,
   useCallback,
-  useMemo,
-} from 'react';
+  useRef,
+} from "react";
 import {
-  CallState,
-  CallConfig,
+  type CallState,
+  type CallConfig,
+  type CallStats,
   CallConnectionStatus,
-  CallEvent,
-} from '../types/call';
-import { MediasoupService } from '../services/mediasoup-service';
-import { Self, Participant, MediaPermissions } from '../types/participant';
+} from "../types/call";
+import { CallClient } from "../services/call-client";
 
-interface CallContextValue extends CallState {
-  // Connection methods
-  connect: (config: CallConfig) => Promise<void>;
-  disconnect: () => Promise<void>;
 
-  // Media control methods
-  enableAudio: () => Promise<void>;
-  disableAudio: () => void;
-  enableVideo: () => Promise<void>;
-  disableVideo: () => void;
-  enableScreenShare: () => Promise<void>;
-  disableScreenShare: () => void;
+interface CallContextType {
+  // Core state
+  callState: CallState;
+  isConnected: boolean;
+  isConnecting: boolean;
+  localStream: MediaStream | null;
+  
+  // Expose CallState properties directly for easier access
+  self: CallState['self'];
+  participants: CallState['participants'];
+  dominantSpeakerId: CallState['dominantSpeakerId'];
+  pinnedParticipantId: CallState['pinnedParticipantId'];
+  
+  stats?: CallStats;
+  error?: Error;
 
-  // Participant management
+  // Actions
+  joinCall: (config: CallConfig) => Promise<void>;
+  leaveCall: () => Promise<void>;
+  toggleMicrophone: () => Promise<boolean>;
+  toggleCamera: () => Promise<boolean>;
+  startScreenShare: () => Promise<void>;
+  stopScreenShare: () => Promise<void>;
+  changeDevice: (type: 'audio' | 'video', deviceId: string) => Promise<void>;
   pinParticipant: (participantId: string) => void;
   unpinParticipant: () => void;
 
   // Device management
-  setAudioInputDevice: (deviceId: string) => Promise<void>;
-  setVideoInputDevice: (deviceId: string) => Promise<void>;
+  audioInputDevices: MediaDeviceInfo[];
+  videoInputDevices: MediaDeviceInfo[];
+  audioOutputDevices: MediaDeviceInfo[];
+  selectedDevices: {
+    audioInput: string;
+    videoInput: string;
+    audioOutput: string;
+  };
+
+  // Call client instance (for advanced usage)
+  callClient: CallClient | null;
 }
 
-const CallContext = createContext<CallContextValue | null>(null);
-
-type CallAction =
-  | { type: 'SET_CONNECTION_STATUS'; status: CallConnectionStatus }
-  | { type: 'SET_SELF'; self: Self }
-  | { type: 'ADD_PARTICIPANT'; participant: Participant }
-  | { type: 'REMOVE_PARTICIPANT'; participantId: string }
-  | { type: 'SET_DOMINANT_SPEAKER'; participantId: string }
-  | { type: 'SET_PINNED_PARTICIPANT'; participantId: string }
-  | { type: 'CLEAR_PINNED_PARTICIPANT' }
-  | { type: 'SET_ERROR'; error: Error }
-  | { type: 'SET_PERMISSIONS'; permissions: MediaPermissions }
-  | { type: 'RESET' };
-
-const initialState: CallState = {
-  connectionStatus: CallConnectionStatus.IDLE,
-  self: null,
-  participants: new Map(),
-  dominantSpeakerId: undefined,
-  pinnedParticipantId: undefined,
-  error: undefined,
-  permissions: {
-    audio: false,
-    video: false,
-    screen: false,
-  },
-};
-
-function callReducer(state: CallState, action: CallAction): CallState {
-  switch (action.type) {
-    case 'SET_CONNECTION_STATUS':
-      return { ...state, connectionStatus: action.status };
-
-    case 'SET_SELF':
-      return { ...state, self: action.self };
-
-    case 'ADD_PARTICIPANT': {
-      const newParticipants = new Map(state.participants);
-      newParticipants.set(action.participant.id, action.participant);
-      return { ...state, participants: newParticipants };
-    }
-
-    case 'REMOVE_PARTICIPANT': {
-      const newParticipants = new Map(state.participants);
-      newParticipants.delete(action.participantId);
-      return { ...state, participants: newParticipants };
-    }
-
-    case 'SET_DOMINANT_SPEAKER':
-      return { ...state, dominantSpeakerId: action.participantId };
-
-    case 'SET_PINNED_PARTICIPANT':
-      return { ...state, pinnedParticipantId: action.participantId };
-
-    case 'CLEAR_PINNED_PARTICIPANT':
-      return { ...state, pinnedParticipantId: undefined };
-
-    case 'SET_ERROR':
-      return { ...state, error: action.error };
-
-    case 'SET_PERMISSIONS':
-      return { ...state, permissions: action.permissions };
-
-    case 'RESET':
-      return initialState;
-
-    default:
-      return state;
-  }
-}
+const CallContext = createContext<CallContextType | undefined>(undefined);
 
 interface CallProviderProps {
   children: React.ReactNode;
-  wsUrl: string;
+  signalingUrl: string;
 }
 
-export function CallProvider({ children, wsUrl }: CallProviderProps) {
-  const [state, dispatch] = useReducer(callReducer, initialState);
-  const mediasoupService = useMemo(() => new MediasoupService(wsUrl), [wsUrl]);
+export function CallProvider({ children, signalingUrl }: CallProviderProps) {
+  const callClientRef = useRef<CallClient | null>(null);
+  const [callState, setCallState] = useState<CallState>({
+    connectionStatus: CallConnectionStatus.IDLE,
+    self: null,
+    participants: new Map(),
+    permissions: {
+      audio: false,
+      video: false,
+      screen: false,
+    },
+  });
+  
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [stats, setStats] = useState<CallStats | undefined>();
+  const [error, setError] = useState<Error | undefined>();
+  
+  // Device state
+  const [audioInputDevices, setAudioInputDevices] = useState<MediaDeviceInfo[]>([]);
+  const [videoInputDevices, setVideoInputDevices] = useState<MediaDeviceInfo[]>([]);
+  const [audioOutputDevices, setAudioOutputDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDevices, setSelectedDevices] = useState({
+    audioInput: '',
+    videoInput: '',
+    audioOutput: '',
+  });
 
+  // Initialize CallClient
   useEffect(() => {
-    // Set up MediaSoup event listeners
-    mediasoupService.on(CallEvent.CONNECTION_STATUS_CHANGED, (status: CallConnectionStatus) => {
-      dispatch({ type: 'SET_CONNECTION_STATUS', status });
-    });
+    if (!callClientRef.current) {
+      callClientRef.current = new CallClient(signalingUrl);
+      
+      const client = callClientRef.current;
 
-    mediasoupService.on('participantJoined', (participant: Participant) => {
-      dispatch({ type: 'ADD_PARTICIPANT', participant });
-    });
+      // Set up event listeners
+      client.on('connectionStatusChanged', (status) => {
+        setCallState(prev => ({ ...prev, connectionStatus: status }));
+        if (status === CallConnectionStatus.DISCONNECTED) {
+          setLocalStream(null);
+          setCallState(prev => ({
+            ...prev,
+            participants: new Map(),
+            dominantSpeakerId: undefined,
+            pinnedParticipantId: undefined
+          }));
+          setError(undefined);
+        }
+      });
 
-    mediasoupService.on('participantLeft', (participantId: string) => {
-      dispatch({ type: 'REMOVE_PARTICIPANT', participantId });
-    });
+      client.on('participantJoined', (participant) => {
+        setCallState(prev => {
+          const newParticipants = new Map(prev.participants);
+          newParticipants.set(participant.id, participant);
+          return { ...prev, participants: newParticipants };
+        });
+      });
 
-    mediasoupService.on('dominantSpeakerChanged', (participantId: string) => {
-      dispatch({ type: 'SET_DOMINANT_SPEAKER', participantId });
-    });
+      client.on('participantLeft', (participantId) => {
+        setCallState(prev => {
+          const newParticipants = new Map(prev.participants);
+          newParticipants.delete(participantId);
+          return { 
+            ...prev, 
+            participants: newParticipants,
+            dominantSpeakerId: prev.dominantSpeakerId === participantId ? undefined : prev.dominantSpeakerId,
+            pinnedParticipantId: prev.pinnedParticipantId === participantId ? undefined : prev.pinnedParticipantId
+          };
+        });
+      });
 
-    return () => {
-      mediasoupService.removeAllListeners();
-    };
-  }, [mediasoupService]);
+      client.on('participantUpdated', (participant) => {
+        setCallState(prev => {
+          const newParticipants = new Map(prev.participants);
+          newParticipants.set(participant.id, participant);
+          return { ...prev, participants: newParticipants };
+        });
+      });
 
-  const connect = useCallback(async (config: CallConfig) => {
-    try {
-      await mediasoupService.connect(config);
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', error: error as Error });
-      throw error;
+      client.on('dominantSpeakerChanged', (speakerId) => {
+        setCallState(prev => ({ ...prev, dominantSpeakerId: speakerId }));
+      });
+
+      client.on('localStreamChanged', (stream) => {
+        setLocalStream(stream);
+      });
+
+      client.on('error', (err) => {
+        setError(err);
+      });
+
+      client.on('statsUpdated', (callStats) => {
+        setStats(callStats);
+      });
+
+      // Update device lists
+      const updateDevices = () => {
+        const devices = client.getMediaDevices();
+        setAudioInputDevices(devices.audioInputDevices);
+        setVideoInputDevices(devices.videoInputDevices);
+        setAudioOutputDevices(devices.audioOutputDevices);
+        
+        const settings = client.getMediaSettings();
+        setSelectedDevices({
+          audioInput: settings.audioInputDeviceId || '',
+          videoInput: settings.videoInputDeviceId || '',
+          audioOutput: settings.audioOutputDeviceId || '',
+        });
+      };
+
+      // Initial device update
+      updateDevices();
+
+      // Listen for device changes
+      navigator.mediaDevices?.addEventListener('devicechange', updateDevices);
+
+      return () => {
+        navigator.mediaDevices?.removeEventListener('devicechange', updateDevices);
+      };
     }
-  }, [mediasoupService]);
+  }, [signalingUrl]);
 
-  const disconnect = useCallback(async () => {
-    await mediasoupService.disconnect();
-    dispatch({ type: 'RESET' });
-  }, [mediasoupService]);
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (callClientRef.current) {
+        callClientRef.current.destroy();
+        callClientRef.current = null;
+      }
+    };
+  }, []);
 
-  const enableAudio = useCallback(async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const track = stream.getAudioTracks()[0];
-    await mediasoupService.produceTrack(track, 'audio');
-    dispatch({
-      type: 'SET_SELF',
-      self: { ...state.self!, audioEnabled: true } as Self,
-    });
-  }, [mediasoupService, state.self]);
+  // Actions
+  const joinCall = useCallback(async (config: CallConfig) => {
+    if (!callClientRef.current) return;
+    
+    try {
+      setError(undefined);
+      await callClientRef.current.joinCall(config);
+      setCallState(callClientRef.current.getState());
+    } catch (err) {
+      setError(err as Error);
+      throw err;
+    }
+  }, []);
 
-  const disableAudio = useCallback(() => {
-    mediasoupService.closeProducer('audio');
-    dispatch({
-      type: 'SET_SELF',
-      self: { ...state.self!, audioEnabled: false } as Self,
-    });
-  }, [mediasoupService, state.self]);
+  const leaveCall = useCallback(async () => {
+    if (!callClientRef.current) return;
+    
+    try {
+      await callClientRef.current.leaveCall();
+      setCallState(callClientRef.current.getState());
+    } catch (err) {
+      setError(err as Error);
+      throw err;
+    }
+  }, []);
 
-  const enableVideo = useCallback(async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    const track = stream.getVideoTracks()[0];
-    await mediasoupService.produceTrack(track, 'video');
-    dispatch({
-      type: 'SET_SELF',
-      self: { ...state.self!, videoEnabled: true } as Self,
-    });
-  }, [mediasoupService, state.self]);
+  const toggleMicrophone = useCallback(async () => {
+    if (!callClientRef.current) return false;
+    
+    try {
+      const isEnabled = await callClientRef.current.toggleMicrophone();
+      setCallState(callClientRef.current.getState());
+      return isEnabled;
+    } catch (err) {
+      setError(err as Error);
+      throw err;
+    }
+  }, []);
 
-  const disableVideo = useCallback(() => {
-    mediasoupService.closeProducer('video');
-    dispatch({
-      type: 'SET_SELF',
-      self: { ...state.self!, videoEnabled: false } as Self,
-    });
-  }, [mediasoupService, state.self]);
+  const toggleCamera = useCallback(async () => {
+    if (!callClientRef.current) return false;
+    
+    try {
+      const isEnabled = await callClientRef.current.toggleCamera();
+      setCallState(callClientRef.current.getState());
+      return isEnabled;
+    } catch (err) {
+      setError(err as Error);
+      throw err;
+    }
+  }, []);
 
-  const enableScreenShare = useCallback(async () => {
-    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-    const track = stream.getVideoTracks()[0];
-    await mediasoupService.produceTrack(track, 'screen');
-    dispatch({
-      type: 'SET_SELF',
-      self: { ...state.self!, screenShareEnabled: true } as Self,
-    });
-  }, [mediasoupService, state.self]);
+  const startScreenShare = useCallback(async () => {
+    if (!callClientRef.current) return;
+    
+    try {
+      await callClientRef.current.startScreenShare();
+      setCallState(callClientRef.current.getState());
+    } catch (err) {
+      setError(err as Error);
+      throw err;
+    }
+  }, []);
 
-  const disableScreenShare = useCallback(() => {
-    mediasoupService.closeProducer('screen');
-    dispatch({
-      type: 'SET_SELF',
-      self: { ...state.self!, screenShareEnabled: false } as Self,
-    });
-  }, [mediasoupService, state.self]);
+  const stopScreenShare = useCallback(async () => {
+    if (!callClientRef.current) return;
+    
+    try {
+      await callClientRef.current.stopScreenShare();
+      setCallState(callClientRef.current.getState());
+    } catch (err) {
+      setError(err as Error);
+      throw err;
+    }
+  }, []);
 
+  const changeDevice = useCallback(async (type: 'audio' | 'video', deviceId: string) => {
+    if (!callClientRef.current) return;
+    
+    try {
+      await callClientRef.current.changeDevice(type, deviceId);
+      
+      // Update selected devices
+      setSelectedDevices(prev => ({
+        ...prev,
+        [type === 'audio' ? 'audioInput' : 'videoInput']: deviceId,
+      }));
+    } catch (err) {
+      setError(err as Error);
+      throw err;
+    }
+  }, []);
+
+  // Pin/unpin participant functions
   const pinParticipant = useCallback((participantId: string) => {
-    dispatch({ type: 'SET_PINNED_PARTICIPANT', participantId });
+    setCallState(prev => ({ ...prev, pinnedParticipantId: participantId }));
   }, []);
 
   const unpinParticipant = useCallback(() => {
-    dispatch({ type: 'CLEAR_PINNED_PARTICIPANT' });
+    setCallState(prev => ({ ...prev, pinnedParticipantId: undefined }));
   }, []);
 
-  const setAudioInputDevice = useCallback(async (deviceId: string) => {
-    if (state.self?.audioEnabled) {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { deviceId: { exact: deviceId } },
-      });
-      const track = stream.getAudioTracks()[0];
-      await mediasoupService.produceTrack(track, 'audio');
-    }
-  }, [mediasoupService, state.self?.audioEnabled]);
+  // Computed values
+  const isConnected = callState.connectionStatus === CallConnectionStatus.CONNECTED;
+  const isConnecting = callState.connectionStatus === CallConnectionStatus.CONNECTING;
 
-  const setVideoInputDevice = useCallback(async (deviceId: string) => {
-    if (state.self?.videoEnabled) {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: deviceId } },
-      });
-      const track = stream.getVideoTracks()[0];
-      await mediasoupService.produceTrack(track, 'video');
-    }
-  }, [mediasoupService, state.self?.videoEnabled]);
+  const contextValue: CallContextType = {
+    // Core state
+    callState,
+    isConnected,
+    isConnecting,
+    localStream,
+    
+    // Expose CallState properties directly
+    self: callState.self,
+    participants: callState.participants,
+    dominantSpeakerId: callState.dominantSpeakerId,
+    pinnedParticipantId: callState.pinnedParticipantId,
+    
+    stats,
+    error,
 
-  const value = useMemo(() => ({
-    ...state,
-    connect,
-    disconnect,
-    enableAudio,
-    disableAudio,
-    enableVideo,
-    disableVideo,
-    enableScreenShare,
-    disableScreenShare,
+    // Actions
+    joinCall,
+    leaveCall,
+    toggleMicrophone,
+    toggleCamera,
+    startScreenShare,
+    stopScreenShare,
+    changeDevice,
     pinParticipant,
     unpinParticipant,
-    setAudioInputDevice,
-    setVideoInputDevice,
-  }), [
-    state,
-    connect,
-    disconnect,
-    enableAudio,
-    disableAudio,
-    enableVideo,
-    disableVideo,
-    enableScreenShare,
-    disableScreenShare,
-    pinParticipant,
-    unpinParticipant,
-    setAudioInputDevice,
-    setVideoInputDevice,
-  ]);
 
-  return <CallContext.Provider value={value}>{children}</CallContext.Provider>;
+    // Device management
+    audioInputDevices,
+    videoInputDevices,
+    audioOutputDevices,
+    selectedDevices,
+
+    // Call client instance
+    callClient: callClientRef.current,
+  };
+
+  return (
+    <CallContext.Provider value={contextValue}>
+      {children}
+    </CallContext.Provider>
+  );
 }
 
 export function useCall() {
   const context = useContext(CallContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useCall must be used within a CallProvider');
   }
   return context;

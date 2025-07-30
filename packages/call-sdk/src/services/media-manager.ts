@@ -1,11 +1,7 @@
 import { EventEmitter } from 'events';
 import type { ProducerSource } from '../types/call';
 
-export interface MediaDeviceInfo {
-  deviceId: string;
-  label: string;
-  kind: 'audioinput' | 'videoinput' | 'audiooutput';
-}
+// Use the native MediaDeviceInfo interface
 
 export interface MediaManagerEvents {
   devicesChanged: (devices: MediaDeviceInfo[]) => void;

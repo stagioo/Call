@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { useCall } from '../providers/CallProvider';
-import { Participant, Self } from '../types/participant';
+import { useMemo } from "react";
+import { useCall } from "../providers/CallProvider";
+import type { Participant, Self } from "../types/participant";
 
 export interface UseParticipantsReturn {
   /**
@@ -70,51 +70,57 @@ export function useParticipants(): UseParticipantsReturn {
     participants: participantsMap,
     dominantSpeakerId,
     pinnedParticipantId,
-    pinParticipant: pin,
-    unpinParticipant: unpin,
+    pinParticipant,
+    unpinParticipant,
   } = useCall();
 
   // Convert participants Map to Array for easier manipulation
-  const participants = useMemo(() =>
-    Array.from(participantsMap.values()),
+  const participants = useMemo(
+    () => Array.from(participantsMap.values()),
     [participantsMap]
   );
 
   // Get pinned participant
-  const pinnedParticipant = useMemo(() =>
-    pinnedParticipantId ? participantsMap.get(pinnedParticipantId) : undefined,
+  const pinnedParticipant = useMemo(
+    () =>
+      pinnedParticipantId
+        ? participantsMap.get(pinnedParticipantId)
+        : undefined,
     [participantsMap, pinnedParticipantId]
   );
 
   // Get dominant speaker
-  const dominantSpeaker = useMemo(() =>
-    dominantSpeakerId ? participantsMap.get(dominantSpeakerId) : undefined,
+  const dominantSpeaker = useMemo(
+    () =>
+      dominantSpeakerId ? participantsMap.get(dominantSpeakerId) : undefined,
     [participantsMap, dominantSpeakerId]
   );
 
   // Get active participants (speaking or sharing screen)
-  const activeParticipants = useMemo(() =>
-    participants.filter(participant =>
-      participant.id === dominantSpeakerId || participant.screenShareEnabled
-    ),
+  const activeParticipants = useMemo(
+    () =>
+      participants.filter(
+        (participant) =>
+          participant.id === dominantSpeakerId || participant.screenShareEnabled
+      ),
     [participants, dominantSpeakerId]
   );
 
   // Helper function to get participant by ID
-  const getParticipantById = useMemo(() =>
-    (participantId: string) => participantsMap.get(participantId),
+  const getParticipantById = useMemo(
+    () => (participantId: string) => participantsMap.get(participantId),
     [participantsMap]
   );
 
   // Helper function to check if participant is speaking
-  const isParticipantSpeaking = useMemo(() =>
-    (participantId: string) => participantId === dominantSpeakerId,
+  const isParticipantSpeaking = useMemo(
+    () => (participantId: string) => participantId === dominantSpeakerId,
     [dominantSpeakerId]
   );
 
   // Helper function to check if participant is sharing screen
-  const isParticipantSharingScreen = useMemo(() =>
-    (participantId: string) => {
+  const isParticipantSharingScreen = useMemo(
+    () => (participantId: string) => {
       const participant = participantsMap.get(participantId);
       return participant ? participant.screenShareEnabled : false;
     },
@@ -122,8 +128,8 @@ export function useParticipants(): UseParticipantsReturn {
   );
 
   // Get sorted participants based on activity
-  const getSortedParticipants = useMemo(() =>
-    () => {
+  const getSortedParticipants = useMemo(
+    () => () => {
       const sorted = [...participants];
       sorted.sort((a, b) => {
         // Pinned participant first
@@ -153,8 +159,8 @@ export function useParticipants(): UseParticipantsReturn {
     dominantSpeaker,
     activeParticipants,
     participantCount: participants.length + (self ? 1 : 0),
-    pinParticipant: pin,
-    unpinParticipant: unpin,
+    pinParticipant,
+    unpinParticipant,
     getParticipantById,
     isParticipantSpeaking,
     isParticipantSharingScreen,
