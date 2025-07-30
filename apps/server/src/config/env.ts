@@ -13,6 +13,15 @@ export const env = createEnv({
         "The value provided for DATABASE_URL is not a valid URL. Please check the format."
       ),
 
+    BETTER_AUTH_SECRET: z
+      .string({
+        message: "The BETTER_AUTH_SECRET environment variable is required.",
+      })
+      .min(
+        32,
+        "BETTER_AUTH_SECRET must be at least 32 characters long for security."
+      ),
+
     GOOGLE_CLIENT_ID: z
       .string({
         message: "The GOOGLE_CLIENT_ID environment variable is required.",
