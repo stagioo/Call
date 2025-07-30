@@ -12,7 +12,6 @@ export const env = createEnv({
       .url(
         "The value provided for DATABASE_URL is not a valid URL. Please check the format."
       ),
-
     GOOGLE_CLIENT_ID: z
       .string({
         message: "The GOOGLE_CLIENT_ID environment variable is required.",
@@ -60,26 +59,6 @@ export const env = createEnv({
       .default("1284")
       .transform((val) => parseInt(val, 10))
       .pipe(z.number().min(1).max(65535)),
-
-    VALKEY_HOST: z
-      .string({ message: "The VALKEY_HOST environment variable is required." })
-      .min(1, "VALKEY_HOST cannot be empty.")
-      .default("localhost"),
-
-    VALKEY_PORT: z
-      .string({ message: "The VALKEY_PORT environment variable is optional." })
-      .optional()
-      .default("6379")
-      .transform((val) => parseInt(val, 10))
-      .pipe(z.number().min(1).max(65535)),
-
-    VALKEY_USERNAME: z
-      .string({ message: "The VALKEY_USERNAME environment variable is optional." })
-      .optional(),
-
-    VALKEY_PASSWORD: z
-      .string({ message: "The VALKEY_PASSWORD environment variable is optional." })
-      .optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

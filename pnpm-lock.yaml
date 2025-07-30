@@ -172,6 +172,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@better-fetch/fetch':
+        specifier: ^1.1.18
+        version: 1.1.18
       '@call/auth':
         specifier: workspace:*
         version: link:../../packages/auth

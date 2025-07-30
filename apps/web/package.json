@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@better-fetch/fetch": "^1.1.18",
     "@call/auth": "workspace:*",
     "@call/db": "workspace:*",
     "@call/ui": "workspace:*",

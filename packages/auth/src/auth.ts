@@ -62,6 +62,12 @@ export const auth = betterAuth({
       prompt: "consent",
     },
   },
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: "joincall.co",
+    },
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;

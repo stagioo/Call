@@ -6,6 +6,7 @@
     "postinstall": "turbo run build --filter=./packages/auth",
     "build": "turbo build",
     "dev": "dotenv -- turbo dev",
+    "start": "dotenv -- turbo start",
     "lint": "turbo lint",
     "format": "prettier --check \"**/*.{ts,tsx,md}\"",
     "format:fix": "prettier --write \"**/*.{ts,tsx,md}\"",
