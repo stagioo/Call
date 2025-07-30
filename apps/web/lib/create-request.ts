@@ -26,7 +26,7 @@ export function createRequest({
     const query = queryString ? `?${queryString}` : "";
 
     // Construct the full URL
-    const fullUrl = `${process.env.BACKEND_URL}/api${currentPath}${query}`;
+    const fullUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api${currentPath}${query}`;
 
     return fetch(fullUrl, { signal, credentials: "include" });
   };
