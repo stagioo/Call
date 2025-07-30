@@ -29,7 +29,10 @@ export const auth = betterAuth({
   trustedOrigins: [
     process.env.FRONTEND_URL,
     process.env.BACKEND_URL,
-    "https://call-web-olive.vercel.app",
+    "https://app.joincall.co",
+    "https://api.joincall.co",
+    "http://localhost:3000",
+    "http://localhost:1284",
   ],
 
   emailAndPassword: {
@@ -55,8 +58,8 @@ export const auth = betterAuth({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       scope: [
-        // "https://www.googleapis.com/auth/userinfo.profile",
-        // "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/userinfo.email",
       ],
       accessType: "offline",
       prompt: "consent",
