@@ -2,12 +2,17 @@
  * Types for call management and state
  */
 
-import { Participant, Self, MediaPermissions } from './participant';
+import type { Participant, Self, MediaPermissions } from './participant';
 
 /**
  * Supported media types in a call
  */
 export type MediaType = 'audio' | 'video' | 'screen';
+
+/**
+ * Producer source types matching server implementation
+ */
+export type ProducerSource = 'mic' | 'webcam' | 'screen';
 
 /**
  * Call connection status
@@ -194,4 +199,129 @@ export interface RecordingOptions {
    * Quality of the recording (0-1)
    */
   quality?: number;
+}
+
+/**
+ * Server message types matching MediaSoup server protocol
+ */
+export interface ServerMessage {
+  type: string;
+  reqId?: string;
+  [key: string]: any;
+}
+
+export interface JoinRoomRequest extends ServerMessage {
+  type: 'joinRoom';
+  roomId: string;
+  peerId: string;
+  displayName: string;
+}
+
+export interface JoinRoomResponse extends ServerMessage {
+  type: 'joinRoomResponse';
+  rtpCapabilities: any;
+  peers: Array<{
+    id: string;
+    displayName: string;
+    connectionState: string;
+  }>;
+  producers: Array<{
+    id: string;
+    peerId: string;
+    kind: 'audio' | 'video';
+    source: ProducerSource;
+    displayName: string;
+    muted: boolean;
+  }>;
+}
+
+export interface CreateTransportRequest extends ServerMessage {
+  type: 'createWebRtcTransport';
+  direction: 'send' | 'recv';
+}
+
+export interface CreateTransportResponse extends ServerMessage {
+  type: 'createWebRtcTransportResponse';
+  id: string;
+  iceParameters: any;
+  iceCandidates: any[];
+  dtlsParameters: any;
+  sctpParameters?: any;
+}
+
+export interface ConnectTransportRequest extends ServerMessage {
+  type: 'connectWebRtcTransport';
+  direction: 'send' | 'recv';
+  dtlsParameters: any;
+}
+
+export interface ProduceRequest extends ServerMessage {
+  type: 'produce';
+  kind: 'audio' | 'video';
+  rtpParameters: any;
+  source?: ProducerSource;
+}
+
+export interface ProduceResponse extends ServerMessage {
+  type: 'produceResponse';
+  id: string;
+}
+
+export interface ConsumeRequest extends ServerMessage {
+  type: 'consume';
+  producerId: string;
+  rtpCapabilities: any;
+}
+
+export interface ConsumeResponse extends ServerMessage {
+  type: 'consumeResponse';
+  id: string;
+  producerId: string;
+  kind: 'audio' | 'video';
+  rtpParameters: any;
+  peerId: string;
+  displayName: string;
+  source: ProducerSource;
+  muted: boolean;
+}
+
+export interface NewProducerNotification extends ServerMessage {
+  type: 'newProducer';
+  id: string;
+  peerId: string;
+  kind: 'audio' | 'video';
+  source: ProducerSource;
+  displayName: string;
+  muted: boolean;
+}
+
+export interface ProducerClosedNotification extends ServerMessage {
+  type: 'producerClosed';
+  peerId: string;
+  producerId: string;
+}
+
+export interface SetProducerMutedRequest extends ServerMessage {
+  type: 'setProducerMuted';
+  producerId: string;
+  muted: boolean;
+}
+
+export interface AudioLevelNotification extends ServerMessage {
+  type: 'audioLevel';
+  peerId: string;
+  volume: number;
+}
+
+export interface PeerJoinedNotification extends ServerMessage {
+  type: 'peerJoined';
+  peerId: string;
+  displayName: string;
+  isCreator: boolean;
+}
+
+export interface PeerLeftNotification extends ServerMessage {
+  type: 'peerLeft';
+  peerId: string;
+  displayName: string;
 }
