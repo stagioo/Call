@@ -32,7 +32,7 @@ export default function ProfilePage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-profile`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-profile`,
         {
           method: "PATCH",
           headers: {
@@ -84,7 +84,7 @@ export default function ProfilePage() {
       formData.append("image", file);
 
       const res = await fetch(
-        `http://${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-profile-image`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-profile-image`,
         {
           method: "PATCH",
           credentials: "include",
