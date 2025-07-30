@@ -21,7 +21,7 @@ export default function ContactsList() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/contacts`, {
+      const res = await fetch(`${process.env.BACKEND_URL}/api/contacts`, {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch contacts");
@@ -39,7 +39,7 @@ export default function ContactsList() {
     
     try {
       setDeletingContact(contactId);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/contacts/${contactId}`, {
+      const res = await fetch(`${process.env.BACKEND_URL}/api/contacts/${contactId}`, {
         method: "DELETE",
         credentials: "include",
       });
