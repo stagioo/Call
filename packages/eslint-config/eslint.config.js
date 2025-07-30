@@ -1,3 +1,3 @@
-import { config } from "./base.js";
+import base from "./base.js";
 
-export default config;
+export default base;
