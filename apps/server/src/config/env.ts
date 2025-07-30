@@ -12,7 +12,7 @@ export const env = createEnv({
       .url(
         "The value provided for DATABASE_URL is not a valid URL. Please check the format."
       ),
-
+    
     BETTER_AUTH_SECRET: z
       .string({
         message: "The BETTER_AUTH_SECRET environment variable is required.",
@@ -21,6 +21,7 @@ export const env = createEnv({
         32,
         "BETTER_AUTH_SECRET must be at least 32 characters long for security."
       ),
+
 
     GOOGLE_CLIENT_ID: z
       .string({
@@ -69,26 +70,6 @@ export const env = createEnv({
       .default("1284")
       .transform((val) => parseInt(val, 10))
       .pipe(z.number().min(1).max(65535)),
-
-    VALKEY_HOST: z
-      .string({ message: "The VALKEY_HOST environment variable is required." })
-      .min(1, "VALKEY_HOST cannot be empty.")
-      .default("localhost"),
-
-    VALKEY_PORT: z
-      .string({ message: "The VALKEY_PORT environment variable is optional." })
-      .optional()
-      .default("6379")
-      .transform((val) => parseInt(val, 10))
-      .pipe(z.number().min(1).max(65535)),
-
-    VALKEY_USERNAME: z
-      .string({ message: "The VALKEY_USERNAME environment variable is optional." })
-      .optional(),
-
-    VALKEY_PASSWORD: z
-      .string({ message: "The VALKEY_PASSWORD environment variable is optional." })
-      .optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

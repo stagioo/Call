@@ -5,13 +5,11 @@ import { Button } from "@call/ui/components/button";
 import { Icons } from "@call/ui/components/icons";
 
 const SocialButton = () => {
-  const handleGoogleLogin = async () => {
-    const { data } = await authClient.signIn.social({
+  const handleGoogleLogin = async () =>
+    await authClient.signIn.social({
       provider: "google",
       callbackURL: process.env.NEXT_PUBLIC_CALLBACK_URL,
     });
-    console.log(data);
-  };
 
   return (
     <Button

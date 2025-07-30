@@ -14,7 +14,11 @@ export async function middleware(request: NextRequest) {
   const isPublic = publicRoutes.has(pathname);
 
   try {
-    const sessionCookie = getSessionCookie(request.headers);
+    const sessionCookie = getSessionCookie(request.headers, {});
+
+    console.log({
+      sessionCookie,
+    });
 
     if (isProtected && !sessionCookie) {
       const signInUrl = new URL("/login", request.url);
