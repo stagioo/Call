@@ -29,7 +29,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     process.env.FRONTEND_URL,
     process.env.BACKEND_URL,
-    "https://app.joincall.co",
+    "https://joincall.co",
     "https://api.joincall.co",
     "http://localhost:3000",
     "http://localhost:1284",
