@@ -1,89 +1,120 @@
 import { Device } from 'mediasoup-client';
-import {
-  MediaType,
-  CallConfig,
-  CallConnectionStatus,
-  CallEvent
-} from '../types/call';
 import { EventEmitter } from 'events';
+import type {
+  CallConfig,
+  ProducerSource,
+} from '../types/call';
+import { CallConnectionStatus } from '../types/call';
+import { SignalingClient } from './signaling-client';
+import { MediaManager } from './media-manager';
 
-/**
- * Interface for MediaSoup transport options
- */
-interface TransportOptions {
-  id: string;
-  iceParameters: RTCIceParameters;
-  iceCandidates: RTCIceCandidate[];
-  dtlsParameters: RTCDtlsParameters;
+export interface MediasoupServiceEvents {
+  connectionStatusChanged: (status: CallConnectionStatus) => void;
+  newConsumer: (consumer: any, peerId: string, displayName: string, source: ProducerSource) => void;
+  consumerClosed: (consumerId: string) => void;
+  producerCreated: (producer: any, source: ProducerSource) => void;
+  producerClosed: (producerId: string, source: ProducerSource) => void;
+  error: (error: Error) => void;
+}
+
+export declare interface MediasoupService {
+  on<U extends keyof MediasoupServiceEvents>(
+    event: U,
+    listener: MediasoupServiceEvents[U]
+  ): this;
+  emit<U extends keyof MediasoupServiceEvents>(
+    event: U,
+    ...args: Parameters<MediasoupServiceEvents[U]>
+  ): boolean;
 }
 
 /**
- * Interface for MediaSoup producer options
- */
-interface ProducerOptions {
-  track: MediaStreamTrack;
-  encodings?: RTCRtpEncodingParameters[];
-  codecOptions?: {
-    opusStereo?: boolean;
-    opusDtx?: boolean;
-    videoGoogleStartBitrate?: number;
-  };
-}
-
-/**
- * Interface for MediaSoup consumer options
- */
-interface ConsumerOptions {
-  id: string;
-  producerId: string;
-  kind: string;
-  rtpParameters: RTCRtpParameters;
-}
-
-/**
- * Class responsible for handling MediaSoup WebRTC functionality
+ * MediaSoup service that integrates with SignalingClient and MediaManager
  */
 export class MediasoupService extends EventEmitter {
   private device: Device;
-  private sendTransport?: any; // mediasoup-client Transport type
-  private recvTransport?: any; // mediasoup-client Transport type
-  private producers: Map<string, any>; // mediasoup-client Producer type
-  private consumers: Map<string, any>; // mediasoup-client Consumer type
-  private connectionStatus: CallConnectionStatus;
-  private config: CallConfig;
-  private wsUrl: string;
-  private ws?: WebSocket;
+  private signalingClient: SignalingClient;
+  private mediaManager: MediaManager;
+  private sendTransport: any = null;
+  private recvTransport: any = null;
+  private producers = new Map<ProducerSource, any>();
+  private consumers = new Map<string, any>();
+  private connectionStatus: CallConnectionStatus = CallConnectionStatus.IDLE;
+  private config: CallConfig | null = null;
 
-  constructor(wsUrl: string) {
+  constructor(signalingUrl: string) {
     super();
-    this.wsUrl = wsUrl;
     this.device = new Device();
-    this.producers = new Map();
-    this.consumers = new Map();
-    this.connectionStatus = CallConnectionStatus.IDLE;
+    this.signalingClient = new SignalingClient(signalingUrl);
+    this.mediaManager = new MediaManager();
+    this.setupEventListeners();
+  }
+
+  private setupEventListeners(): void {
+    // Signaling client events
+    this.signalingClient.on('connected', () => {
+      this.setConnectionStatus(CallConnectionStatus.CONNECTED);
+    });
+
+    this.signalingClient.on('disconnected', () => {
+      this.setConnectionStatus(CallConnectionStatus.DISCONNECTED);
+    });
+
+    this.signalingClient.on('error', (error) => {
+      this.emit('error', error);
+    });
+
+    this.signalingClient.on('newProducer', async (data) => {
+      try {
+        await this.handleNewProducer(data);
+      } catch (error) {
+        this.emit('error', error as Error);
+      }
+    });
+
+    this.signalingClient.on('producerClosed', (data) => {
+      this.handleProducerClosed(data);
+    });
+
+    // Media manager events
+    this.mediaManager.on('error', (error) => {
+      this.emit('error', error);
+    });
   }
 
   /**
-   * Initialize and connect to the MediaSoup server
+   * Connect to the MediaSoup server
    */
   async connect(config: CallConfig): Promise<void> {
     try {
       this.config = config;
       this.setConnectionStatus(CallConnectionStatus.CONNECTING);
 
-      // Connect to WebSocket server
-      await this.connectWebSocket();
+      // Connect to signaling server
+      await this.signalingClient.connect();
 
-      // Load MediaSoup device
-      const routerRtpCapabilities = await this.sendRequest('getRouterRtpCapabilities');
-      await this.device.load({ routerRtpCapabilities });
+      // Join the room
+      const joinResponse = await this.signalingClient.joinRoom(
+        config.roomId,
+        config.userId || crypto.randomUUID(),
+        config.displayName
+      );
+
+      // Load MediaSoup device with RTP capabilities
+      await this.device.load({ routerRtpCapabilities: joinResponse.rtpCapabilities });
 
       // Create WebRTC transports
       await this.createSendTransport();
       await this.createRecvTransport();
 
-      // Join the room
-      await this.joinRoom();
+      // Consume existing producers
+      for (const producer of joinResponse.producers) {
+        try {
+          await this.consumeProducer(producer.id);
+        } catch (error) {
+          console.warn('Failed to consume existing producer:', producer.id, error);
+        }
+      }
 
       this.setConnectionStatus(CallConnectionStatus.CONNECTED);
     } catch (error) {
@@ -96,164 +127,180 @@ export class MediasoupService extends EventEmitter {
    * Disconnect from the MediaSoup server
    */
   async disconnect(): Promise<void> {
-    this.producers.forEach(producer => producer.close());
-    this.consumers.forEach(consumer => consumer.close());
-    this.sendTransport?.close();
-    this.recvTransport?.close();
-    this.ws?.close();
+    // Close all producers
+    this.producers.forEach((producer) => {
+      producer.close();
+    });
+    this.producers.clear();
+
+    // Close all consumers
+    this.consumers.forEach((consumer) => {
+      consumer.close();
+    });
+    this.consumers.clear();
+
+    // Close transports
+    if (this.sendTransport) {
+      this.sendTransport.close();
+      this.sendTransport = null;
+    }
+    if (this.recvTransport) {
+      this.recvTransport.close();
+      this.recvTransport = null;
+    }
+
+    // Stop all media streams
+    this.mediaManager.stopAllStreams();
+
+    // Disconnect signaling
+    this.signalingClient.disconnect();
+
     this.setConnectionStatus(CallConnectionStatus.DISCONNECTED);
   }
 
   /**
-   * Produce a media track (audio/video/screen)
+   * Produce media from a stream
    */
-  async produceTrack(track: MediaStreamTrack, type: MediaType): Promise<void> {
+  async produceMedia(stream: MediaStream, source: ProducerSource = 'webcam'): Promise<any[]> {
     if (!this.sendTransport) {
-      throw new Error('Send transport not created');
+      throw new Error('Send transport not available');
     }
 
-    const producer = await this.sendTransport.produce({
-      track,
-      encodings: this.getEncodings(type),
-      codecOptions: this.getCodecOptions(type),
-    });
+    const producers: any[] = [];
 
-    this.producers.set(type, producer);
+    for (const track of stream.getTracks()) {
+      try {
+        const producer = await this.sendTransport.produce({
+          track,
+          encodings: this.getEncodings(track.kind as 'audio' | 'video'),
+          codecOptions: this.getCodecOptions(track.kind as 'audio' | 'video'),
+        });
 
-    producer.on('transportclose', () => {
-      this.producers.delete(type);
-    });
+        // Store producer
+        this.producers.set(source, producer);
 
-    producer.on('trackended', () => {
-      this.closeProducer(type);
-    });
+        // Handle producer events
+        producer.on('transportclose', () => {
+          this.producers.delete(source);
+          this.emit('producerClosed', producer.id, source);
+        });
+
+        producer.on('trackended', () => {
+          this.closeProducer(source);
+        });
+
+        producers.push(producer);
+        this.emit('producerCreated', producer, source);
+
+        console.log(`Producer created: ${producer.id}, kind: ${track.kind}, source: ${source}`);
+      } catch (error) {
+        console.error(`Failed to produce ${track.kind} track:`, error);
+        throw error;
+      }
+    }
+
+    return producers;
   }
 
   /**
-   * Consume a remote participant's track
+   * Close a producer
    */
-  async consumeTrack(consumerId: string, producerId: string, kind: string): Promise<MediaStreamTrack> {
-    if (!this.recvTransport) {
-      throw new Error('Receive transport not created');
-    }
-
-    const { rtpParameters } = await this.sendRequest('consume', {
-      consumerId,
-      producerId,
-      rtpCapabilities: this.device.rtpCapabilities,
-    });
-
-    const consumer = await this.recvTransport.consume({
-      id: consumerId,
-      producerId,
-      kind,
-      rtpParameters,
-    });
-
-    this.consumers.set(consumerId, consumer);
-    return consumer.track;
-  }
-
-  /**
-   * Close a producer for a specific media type
-   */
-  async closeProducer(type: MediaType): Promise<void> {
-    const producer = this.producers.get(type);
+  async closeProducer(source: ProducerSource): Promise<void> {
+    const producer = this.producers.get(source);
     if (producer) {
-      producer.close();
-      this.producers.delete(type);
-      await this.sendRequest('closeProducer', { producerId: producer.id });
+      try {
+        await this.signalingClient.closeProducer(producer.id);
+        producer.close();
+        this.producers.delete(source);
+        this.emit('producerClosed', producer.id, source);
+      } catch (error) {
+        console.error('Failed to close producer:', error);
+        throw error;
+      }
     }
   }
 
-  private setConnectionStatus(status: CallConnectionStatus): void {
-    this.connectionStatus = status;
-    this.emit(CallEvent.CONNECTION_STATUS_CHANGED, status);
-  }
-
-  private async connectWebSocket(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(this.wsUrl);
-
-      this.ws.onopen = () => resolve();
-      this.ws.onerror = (error) => reject(error);
-      this.ws.onmessage = (event) => this.handleWebSocketMessage(event);
-    });
-  }
-
-  private async sendRequest(type: string, data: any = {}): Promise<any> {
-    if (!this.ws) {
-      throw new Error('WebSocket not connected');
-    }
-
-    return new Promise((resolve, reject) => {
-      const requestId = Math.random().toString(36).substr(2, 9);
-      const request = { type, data, requestId };
-
-      const timeout = setTimeout(() => {
-        reject(new Error('Request timeout'));
-      }, 10000);
-
-      const handleResponse = (event: MessageEvent) => {
-        const response = JSON.parse(event.data);
-        if (response.requestId === requestId) {
-          clearTimeout(timeout);
-          this.ws?.removeEventListener('message', handleResponse);
-          if (response.error) {
-            reject(new Error(response.error));
-          } else {
-            resolve(response.data);
-          }
+  /**
+   * Set producer muted state
+   */
+  async setProducerMuted(source: ProducerSource, muted: boolean): Promise<void> {
+    const producer = this.producers.get(source);
+    if (producer) {
+      try {
+        await this.signalingClient.setProducerMuted(producer.id, muted);
+        if (muted) {
+          producer.pause();
+        } else {
+          producer.resume();
         }
-      };
-
-      this.ws.addEventListener('message', handleResponse);
-      this.ws.send(JSON.stringify(request));
-    });
+      } catch (error) {
+        console.error('Failed to set producer muted state:', error);
+        throw error;
+      }
+    }
   }
 
-  private handleWebSocketMessage(event: MessageEvent): void {
-    const message = JSON.parse(event.data);
-    switch (message.type) {
-      case 'newConsumer':
-        this.handleNewConsumer(message.data);
-        break;
-      case 'consumerClosed':
-        this.handleConsumerClosed(message.data);
-        break;
-      // Add more message handlers as needed
-    }
+  /**
+   * Get MediaManager instance
+   */
+  getMediaManager(): MediaManager {
+    return this.mediaManager;
+  }
+
+  /**
+   * Get SignalingClient instance
+   */
+  getSignalingClient(): SignalingClient {
+    return this.signalingClient;
+  }
+
+  /**
+   * Get current connection status
+   */
+  getConnectionStatus(): CallConnectionStatus {
+    return this.connectionStatus;
+  }
+
+  /**
+   * Get MediaSoup device
+   */
+  getDevice(): Device {
+    return this.device;
+  }
+
+  /**
+   * Get RTP capabilities
+   */
+  getRtpCapabilities(): any {
+    return this.device.rtpCapabilities;
   }
 
   private async createSendTransport(): Promise<void> {
-    const transportOptions = await this.sendRequest('createWebRtcTransport', {
-      producing: true,
-      consuming: false,
+    const transportData = await this.signalingClient.createWebRtcTransport('send');
+
+    this.sendTransport = this.device.createSendTransport({
+      id: transportData.id,
+      iceParameters: transportData.iceParameters,
+      iceCandidates: transportData.iceCandidates,
+      dtlsParameters: transportData.dtlsParameters,
     });
 
-    this.sendTransport = this.device.createSendTransport(transportOptions);
-
-    this.sendTransport.on('connect', async ({ dtlsParameters }, callback: () => void, errback: (error: Error) => void) => {
+    this.sendTransport.on('connect', async ({ dtlsParameters }: any, callback: any, errback: any) => {
       try {
-        await this.sendRequest('connectWebRtcTransport', {
-          transportId: this.sendTransport.id,
-          dtlsParameters,
-        });
+        await this.signalingClient.connectWebRtcTransport('send', dtlsParameters);
         callback();
       } catch (error) {
         errback(error as Error);
       }
     });
 
-    this.sendTransport.on('produce', async ({ kind, rtpParameters, appData }, callback: (arg0: { id: string; }) => void, errback: (error: Error) => void) => {
+    this.sendTransport.on('produce', async ({ kind, rtpParameters }: any, callback: any, errback: any) => {
       try {
-        const { id } = await this.sendRequest('produce', {
-          transportId: this.sendTransport.id,
-          kind,
-          rtpParameters,
-          appData,
-        });
-        callback({ id });
+        const response = await this.signalingClient.produce(
+          kind as 'audio' | 'video',
+          rtpParameters
+        );
+        callback({ id: response.id });
       } catch (error) {
         errback(error as Error);
       }
@@ -261,19 +308,18 @@ export class MediasoupService extends EventEmitter {
   }
 
   private async createRecvTransport(): Promise<void> {
-    const transportOptions = await this.sendRequest('createWebRtcTransport', {
-      producing: false,
-      consuming: true,
+    const transportData = await this.signalingClient.createWebRtcTransport('recv');
+
+    this.recvTransport = this.device.createRecvTransport({
+      id: transportData.id,
+      iceParameters: transportData.iceParameters,
+      iceCandidates: transportData.iceCandidates,
+      dtlsParameters: transportData.dtlsParameters,
     });
 
-    this.recvTransport = this.device.createRecvTransport(transportOptions);
-
-    this.recvTransport.on('connect', async ({ dtlsParameters }, callback: () => void, errback: (error: Error) => void) => {
+    this.recvTransport.on('connect', async ({ dtlsParameters }: any, callback: any, errback: any) => {
       try {
-        await this.sendRequest('connectWebRtcTransport', {
-          transportId: this.recvTransport.id,
-          dtlsParameters,
-        });
+        await this.signalingClient.connectWebRtcTransport('recv', dtlsParameters);
         callback();
       } catch (error) {
         errback(error as Error);
@@ -281,25 +327,90 @@ export class MediasoupService extends EventEmitter {
     });
   }
 
-  private getEncodings(type: MediaType): RTCRtpEncodingParameters[] {
-    if (type === 'video') {
+  private async handleNewProducer(data: any): Promise<void> {
+    if (!this.recvTransport) {
+      throw new Error('Receive transport not available');
+    }
+
+    try {
+      await this.consumeProducer(data.id);
+    } catch (error) {
+      console.error('Failed to consume new producer:', error);
+      throw error;
+    }
+  }
+
+  private async consumeProducer(producerId: string): Promise<void> {
+    if (!this.recvTransport) {
+      throw new Error('Receive transport not available');
+    }
+
+    try {
+      const consumeResponse = await this.signalingClient.consume(
+        producerId,
+        this.device.rtpCapabilities
+      );
+
+      const consumer = await this.recvTransport.consume({
+        id: consumeResponse.id,
+        producerId: consumeResponse.producerId,
+        kind: consumeResponse.kind as 'audio' | 'video',
+        rtpParameters: consumeResponse.rtpParameters,
+      });
+
+      this.consumers.set(consumer.id, consumer);
+
+      // Handle consumer events
+      consumer.on('transportclose', () => {
+        this.consumers.delete(consumer.id);
+        this.emit('consumerClosed', consumer.id);
+      });
+
+      consumer.on('producerclose', () => {
+        this.consumers.delete(consumer.id);
+        this.emit('consumerClosed', consumer.id);
+      });
+
+      this.emit('newConsumer', consumer, consumeResponse.peerId, consumeResponse.displayName, consumeResponse.source);
+
+      console.log(`Consumer created: ${consumer.id} for producer: ${producerId}`);
+    } catch (error) {
+      console.error('Failed to consume producer:', error);
+      throw error;
+    }
+  }
+
+  private handleProducerClosed(data: any): void {
+    const consumer = Array.from(this.consumers.values()).find(
+      c => (c as any).producerId === data.producerId
+    );
+    
+    if (consumer) {
+      consumer.close();
+      this.consumers.delete(consumer.id);
+      this.emit('consumerClosed', consumer.id);
+    }
+  }
+
+  private getEncodings(kind: 'audio' | 'video'): any[] {
+    if (kind === 'video') {
       return [
-        { maxBitrate: 100000, scalabilityMode: 'L1T3' },
-        { maxBitrate: 300000, scalabilityMode: 'L1T3' },
-        { maxBitrate: 900000, scalabilityMode: 'L1T3' },
+        { maxBitrate: 100000 },
+        { maxBitrate: 300000 },
+        { maxBitrate: 900000 },
       ];
     }
     return [];
   }
 
-  private getCodecOptions(type: MediaType): any {
-    if (type === 'audio') {
+  private getCodecOptions(kind: 'audio' | 'video'): any {
+    if (kind === 'audio') {
       return {
         opusStereo: true,
         opusDtx: true,
       };
     }
-    if (type === 'video') {
+    if (kind === 'video') {
       return {
         videoGoogleStartBitrate: 1000,
       };
@@ -307,31 +418,17 @@ export class MediasoupService extends EventEmitter {
     return {};
   }
 
-  private async joinRoom(): Promise<void> {
-    await this.sendRequest('join', {
-      roomId: this.config.roomId,
-      rtpCapabilities: this.device.rtpCapabilities,
-    });
+  private setConnectionStatus(status: CallConnectionStatus): void {
+    this.connectionStatus = status;
+    this.emit('connectionStatusChanged', status);
   }
 
-  private async handleNewConsumer(data: ConsumerOptions): Promise<void> {
-    try {
-      const stream = await this.consumeTrack(
-        data.id,
-        data.producerId,
-        data.kind
-      );
-      this.emit('newTrack', { stream, ...data });
-    } catch (error) {
-      console.error('Error handling new consumer:', error);
-    }
-  }
-
-  private handleConsumerClosed(data: { consumerId: string }): void {
-    const consumer = this.consumers.get(data.consumerId);
-    if (consumer) {
-      consumer.close();
-      this.consumers.delete(data.consumerId);
-    }
+  /**
+   * Cleanup resources
+   */
+  destroy(): void {
+    this.disconnect();
+    this.mediaManager.destroy();
+    this.removeAllListeners();
   }
 }
