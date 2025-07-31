@@ -5,7 +5,11 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { extractTokenFromUrl } from "./utils/extract-token";
 import { sendMail } from "./utils/send-mail";
 
-if (!process.env.FRONTEND_URL || !process.env.BACKEND_URL) {
+if (
+  !process.env.FRONTEND_URL ||
+  !process.env.BACKEND_URL ||
+  !process.env.MAIN_URL
+) {
   throw new Error(
     "Missing environment variables. FRONTEND_URL or BACKEND_URL is not defined"
   );
@@ -63,12 +67,6 @@ export const auth = betterAuth({
       ],
       accessType: "offline",
       prompt: "consent",
-    },
-  },
-  advanced: {
-    crossSubDomainCookies: {
-      enabled: true,
-      domain: "joincall.co",
     },
   },
 });
