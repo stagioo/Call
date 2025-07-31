@@ -8,7 +8,8 @@
     "dev:hot": "nodemon --exec tsx src/index.ts",
     "build": "tsup",
     "start": "node dist/index.js",
-    "ws": "tsx src/mediasoup-server.ts"
+    "ws": "tsx src/mediasoup-server.ts",
+    "prod": "node dist/mediasoup-server.js"
   },
   "dependencies": {
     "@call/auth": "workspace:*",
