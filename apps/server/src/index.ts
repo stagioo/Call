@@ -8,7 +8,7 @@ import { logger } from "hono/logger";
 import { serve } from "@hono/node-server";
 import chalk from "chalk";
 import { networkInterfaces } from "os";
-import "./mediasoup-server.js";
+
 
 export interface ReqVariables {
   user: typeof auth.$Infer.Session.user | null;

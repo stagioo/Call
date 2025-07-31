@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "nodemon --exec tsx src/index.ts",
-    "yassr": "tsx src/ws-signaling.ts",
+    "dev:ws": "tsx src/mediasoup-server.ts",
     "dev:hot": "nodemon --exec tsx src/index.ts",
     "build": "tsup",
     "start": "node dist/index.js",
-    "ws": "tsx src/mediasoup-server.ts",
-    "prod": "node dist/mediasoup-server.js"
+    "start:ws": "node dist/mediasoup-server.js",
+    "start:all": "node dist/index.js & node dist/mediasoup-server.js"
   },
   "dependencies": {
     "@call/auth": "workspace:*",
