@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 const getSocketUrl = () => {
   if (typeof window === "undefined") return "ws://localhost:4001";
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const host = "media.joincall.co";
+  const host = "13.61.191.241";
+
   const port = "4001";
   return `${protocol}//${host}:${port}`;
 };
