@@ -108,9 +108,7 @@ const mediasoupConfig = {
     ],
   },
   webRtcTransport: {
-
-    listenIps: [{ ip: "0.0.0.0", announcedIp: "13.61.191.241" }],
-
+    listenIps: [{ ip: "0.0.0.0", announcedIp: "media.joincall.co" }],
     enableUdp: true,
     enableTcp: true,
     preferUdp: true,
