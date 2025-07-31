@@ -5,7 +5,6 @@
   "private": true,
   "scripts": {
     "build": "tsup src/index.ts src/schema.ts --format esm,cjs --dts -d dist --tsconfig tsconfig.build.json",
-    "dev": "tsup src/index.ts src/schema.ts --format esm,cjs --dts -d dist --watch --tsconfig tsconfig.build.json",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
