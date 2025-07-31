@@ -118,7 +118,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
-            <div className="group relative">
+            <div className="group relative" onClick={handleImageClick}>
               <UserProfile name={user.name} url={user.image} />
               <input
                 type="file"

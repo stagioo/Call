@@ -17,14 +17,11 @@ import { useState } from "react";
 import { LoadingButton } from "@call/ui/components/loading-button";
 
 export const AddMemberToTeam = () => {
-  const {
-    isOpen,
-    onClose,
-    type,
-    data: { team },
-  } = useModal();
+  const { isOpen, onClose, type, data } = useModal();
   const { contacts, isLoading: contactsLoading } = useContacts();
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+
+  const team = data?.team;
 
   const isModalOpen = isOpen && type === "add-member-to-team";
 
