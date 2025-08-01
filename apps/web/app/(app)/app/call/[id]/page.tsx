@@ -420,7 +420,7 @@ export default function CallPreviewPage() {
     socket,
     device,
     setProducerMuted,
-    activeSpeakerId,
+    // Remove activeSpeakerId from destructuring
     setLocalStream,
   } = useMediasoupClient();
 
@@ -1378,18 +1378,13 @@ export default function CallPreviewPage() {
                   }
                 );
 
-                const isSpeaking = activeSpeakerId === peerId;
-
                 return (
                   <div className="relative" key={producerId || peerId}>
                     <video
                       autoPlay
                       playsInline
                       className={cn(
-                        "h-[240px] w-[320px] rounded-lg bg-black shadow-lg",
-                        isSpeaking
-                          ? "ring-2 ring-red-500 ring-offset-2 ring-offset-black"
-                          : ""
+                        "h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
                       )}
                       ref={(el) => {
                         if (el && stream) {
