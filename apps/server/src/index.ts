@@ -9,6 +9,7 @@ import { serve } from "@hono/node-server";
 import chalk from "chalk";
 import { networkInterfaces } from "os";
 
+
 export interface ReqVariables {
   user: typeof auth.$Infer.Session.user | null;
   session: typeof auth.$Infer.Session.session | null;
