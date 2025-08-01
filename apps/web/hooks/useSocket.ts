@@ -5,8 +5,12 @@ const getSocketUrl = () => {
   if (typeof window === "undefined") return "ws://localhost:4001";
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const host = "media.joincall.co";
-  const port = "4001";
-  return `${protocol}//${host}:${port}`;
+  // const port = "4001";
+  if (process.env.NODE_ENV === "production") {
+    return `wss://media.joincall.co`
+  }
+  return `${protocol}//${host}`;
+
 };
 
 export function useSocket() {
