@@ -10,6 +10,7 @@ const getSocketUrl = () => {
     return `wss://media.joincall.co`
   }
   return `${protocol}//${host}`;
+
 };
 
 export function useSocket() {
