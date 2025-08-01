@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from "react";
 const getSocketUrl = () => {
   if (typeof window === "undefined") return "ws://localhost:4001";
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const host = "media.joincall.co";
-  // const port = "4001";
+  const host = "localhost";
+  const port = "4001";
+  
   if (process.env.NODE_ENV === "production") {
-    return `wss://media.joincall.co`
+    return process.env.NEXT_PUBLIC_WS_PRODUCTION_URL!;
   }
-  return `${protocol}//${host}`;
+  return `${protocol}//${host}:${port}`;
 
 };
 
@@ -18,7 +19,7 @@ export function useSocket() {
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
 
-  useEffect(() => {
+  useEffect(() => { 
     const connectWebSocket = () => {
       const socket = new WebSocket(getSocketUrl());
       socketRef.current = socket;
