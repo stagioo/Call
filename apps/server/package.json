@@ -20,6 +20,7 @@
     "@types/ws": "^8.18.1",
     "axios": "^1.10.0",
     "better-auth": "^1.2.9",
+    "dotenv": "^16.5.0",
     "drizzle-orm": "^0.44.2",
     "hono": "^4.8.0",
     "iovalkey": "^0.3.3",
