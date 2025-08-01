@@ -109,7 +109,7 @@ const mediasoupConfig = {
   },
   webRtcTransport: {
 
-    listenIps: [{ ip: "127.0.0.1", announcedIp: "13.61.191.241" }],
+    listenIps: [{ ip: "0.0.0.0", announcedIp: "13.61.191.241" }],
 
     enableUdp: true,
     enableTcp: true,
