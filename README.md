@@ -1,59 +1,8 @@
-<div align="center">
-  <img src="apps/web/public/logo.png" alt="Call Logo" width="120" height="120" style="border-radius: 20px;">
-  <h1 align="center">Call</h1>
-  <p align="center">
-    <strong>An Open-source AI-native alternative to Google Meet and Zoom</strong>
-  </p>
-  <p align="center">
-    Ready to escape complex, data-hungry meeting apps? Join the future of video calling.
-  </p>
+# Call
 
-<<<<<<< Updated upstream
+An Open-source AI-native alternative to Google Meet and Zoom
 
-  <div align="center">
-    <a href="https://joincall.co">
-      <img src="https://img.shields.io/badge/Website-joincall.co-blue?style=for-the-badge&logo=globe" alt="Website">
-    </a>
-    <a href="https://github.com/joincalldotco/call">
-      <img src="https://img.shields.io/badge/GitHub-joincalldotco/call-black?style=for-the-badge&logo=github" alt="GitHub">
-    </a>
-    <a href="https://discord.com/invite/bre4echNxB">
-      <img src="https://img.shields.io/badge/Discord-Join%20Community-blue?style=for-the-badge&logo=discord" alt="Discord">
-    </a>
-    <a href="https://x.com/joincalldotco">
-      <img src="https://img.shields.io/badge/X-%40joincalldotco-black?style=for-the-badge&logo=x" alt="X (Twitter)">
-    </a>
-  </div>
-</div>
-
----
-
-## 🚀 Features
-
-### 🎥 **Video Calling**
-
-### 👥 **Team Collaboration**
-
-### 📞 **Contact Management**
-
-### 📅 **Meeting Scheduling**
-
-### 🤖 **AI-Powered Features**
-
-### 🔒 **Security & Privacy**
-
-### 🌐 **Cross-Platform**
-
-- **Web-based** - works on any modern browser
-- **Mobile responsive** design
-- **Progressive Web App** (PWA) support
-- # **Offline capabilities** for basic features
-<div align="center">
-  <img src="apps/web/public/logo.png" alt="Call Logo" width="120" height="120" />
-  <h3>Modern video calling for teams</h3>
-</div>
-
-An open-source alternative to Google Meet and Zoom, built for the modern workplace.
+Ready to escape complex, data-hungry meeting apps? Join the future of video calling.
 
 - [Website](https://joincall.co)
 - [GitHub](https://github.com/joincalldotco/call)
@@ -62,63 +11,62 @@ An open-source alternative to Google Meet and Zoom, built for the modern workpla
 
 ---
 
-## Why Call?
+## Features
 
-Traditional video calling platforms are complex, data-hungry, and often lack the features modern teams need. Call is built from the ground up to be:
+### Video Calling
 
-- **Privacy-first** - Your data stays yours
-- **AI-enhanced** - Intelligent features that actually help
-- **Developer-friendly** - Open source and extensible
-- **Performance-focused** - Lightweight and fast
-- **Team-oriented** - Built for collaboration, not just meetings
-  > > > > > > > Stashed changes
+### Team Collaboration
+
+### Contact Management
+
+### Meeting Scheduling
+
+### AI-Powered Features
+
+### Security & Privacy
+
+### Cross-Platform
+
+- **Web-based** - works on any modern browser
+- **Mobile responsive** design
+- **Progressive Web App** (PWA) support
+- **Offline capabilities** for basic features
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Frontend
 
 - **Next.js 15** - React framework with App Router
 - **TypeScript** - Type-safe development
 - **Tailwind CSS** - Utility-first styling
-  <<<<<<< Updated upstream
 - **shadcn/ui** - Beautiful component library
-- **LiveKit** - Real-time video/audio communication - Working on the migration to Mediasoup
-- # **React Query** - Server state management
-- **shadcn/ui** - Component library
-- **Mediasoup-SFU** - Scalable video conferencing
+- **Mediasoup-SFU** - Scalable Selective Forwarding Unit for real-time audio/video conferencing
 - **React Query** - Server state management
-- **Zustand** - State management
-  > > > > > > > Stashed changes
+- **Zustand** - For Distributed state management
 
 ### Backend
 
 - **Hono** - Fast web framework
-  <<<<<<< Updated upstream
-- **Bun** - JavaScript runtime
 - **PostgreSQL** - Reliable database
 - **Drizzle ORM** - Type-safe database queries
-- # **Better Auth** - Authentication system
-- **PostgreSQL** - Database
-- **Drizzle ORM** - Type-safe queries
-- **Better Auth** - Authentication
-  > > > > > > > Stashed changes
+- **Better Auth** - Authentication system
 
 ### Infrastructure
 
 - **Turborepo** - Monorepo build system
 - **Docker** - Containerization
-- **Vercel** - Deployment
+- **Vercel** - Deployment platform
 - **Rate Limiting** - API protection
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- **Node.js** 20+
+- **Node.js** 20 or higher
 - **pnpm** package manager
 - **Docker** and Docker Compose
 - **Git**
@@ -132,30 +80,21 @@ Traditional video calling platforms are complex, data-hungry, and often lack the
    cd call
    ```
 
-2. **Start development environment**
+2. **Start the development environment**
 
    ```bash
    ./setup-dev.sh
    ```
 
-   This script automatically:
+   This script will automatically:
 
-   - Creates `.env` file if needed
-   - Installs dependencies
-   - Starts Docker services (PostgreSQL)
-   - Waits for database readiness
-   - Starts development environment
+   - Create a `.env` file if it doesn't exist
+   - Install dependencies if needed
+   - Start Docker services (PostgreSQL)
+   - Wait for the database to be ready
+   - Start the development environment
 
-<<<<<<< Updated upstream
-
-- ✅ Create a `.env` file if it doesn't exist
-- 📦 Install dependencies if needed
-- 🐳 Start Docker services (PostgreSQL)
-- ⏳ Wait for the database to be ready
-- # 🚀 Start the development environment
-  > **Note:** For troubleshooting, check [ERRORS.md](ERRORS.md)
-  >
-  > > > > > > > Stashed changes
+   > **Note:** If you encounter any issues during setup, check the [ERRORS.md](ERRORS.md) file for troubleshooting guidance.
 
 3. **Open your browser**
    - Web app: http://localhost:3000
@@ -163,17 +102,17 @@ Traditional video calling platforms are complex, data-hungry, and often lack the
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory with the following variables:
 
 ```env
-# Database
+# Database Configuration
 DATABASE_URL=postgresql://postgres:postgres@localhost:5434/call
 
-# Google OAuth
+# Google OAuth (for authentication)
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 
-# Email
+# Email Configuration (for notifications)
 EMAIL_FROM=your_email@domain.com
 RESEND_API_KEY=your_resend_api_key
 
@@ -184,11 +123,15 @@ BACKEND_URL=http://localhost:1284
 # App Configuration
 NODE_ENV=development
 
-# Better Auth Secret (generate at https://www.better-auth.com/docs/installation)
+
+go to https://www.better-auth.com/docs/installation and click on 'Generate Secret'.
+
 BETTER_AUTH_SECRET=your_generated_secret
 ```
 
 ### Docker Services
+
+The project uses Docker Compose to run PostgreSQL:
 
 ```bash
 # Start services
@@ -197,39 +140,46 @@ pnpm docker:up
 # Stop services
 pnpm docker:down
 
-# Clean up
+# Clean up (removes volumes)
 pnpm docker:clean
 ```
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 call/
 ├── apps/                    # Applications
 │   ├── web/                # Next.js web application
 │   │   ├── app/           # App Router pages
+│   │   │   ├── (app)/     # Main app routes
+│   │   │   ├── (auth)/    # Authentication routes
+│   │   │   └── (waitlist)/ # Landing page
 │   │   ├── components/    # React components
-│   │   └── lib/          # Utilities and configs
+│   │   ├── lib/          # Utilities and configs
+│   │   └── public/       # Static assets
 │   └── server/            # Hono backend API
 │       ├── routes/        # API routes
 │       ├── config/        # Server configuration
-│       └── utils/         # Server utilities
+│       ├── utils/         # Server utilities
+│       └── validators/    # Request validation
 ├── packages/               # Shared packages
 │   ├── auth/              # Authentication utilities
-│   ├── db/                # Database schemas
-│   ├── ui/                # Shared UI components
+│   ├── db/                # Database schemas and migrations
+│   ├── ui/                # Shared UI components (shadcn/ui)
 │   ├── eslint-config/     # ESLint configuration
 │   └── typescript-config/ # TypeScript configuration
-└── docker-compose.yml      # Docker services
+├── docker-compose.yml      # Docker services
+├── setup-dev.sh             # Development setup script
+└── turbo.json             # Turborepo configuration
 ```
 
 ---
 
-## 🧪 Development
+## Development
 
-### Scripts
+### Available Scripts
 
 ```bash
 # Development
@@ -241,7 +191,7 @@ pnpm dev --filter server   # Start only server
 pnpm build                 # Build all packages
 pnpm build --filter web    # Build only web app
 
-# Code Quality
+# Linting & Formatting
 pnpm lint                  # Lint all packages
 pnpm lint:fix             # Fix linting issues
 pnpm format               # Check formatting
@@ -249,42 +199,49 @@ pnpm format:fix           # Fix formatting
 
 # Database
 pnpm db:generate          # Generate database types
-pnpm db:migrate           # Run migrations
+pnpm db:migrate           # Run database migrations
 pnpm db:push              # Push schema changes
 pnpm db:studio            # Open database studio
+
+# Docker
+pnpm docker:up            # Start Docker services
+pnpm docker:down          # Stop Docker services
+pnpm docker:clean         # Clean up Docker volumes
 ```
 
 ### Package Management
 
+We use pnpm workspaces to manage this monorepo:
+
 ```bash
-# Install dependency in specific workspace
+# Install a dependency in a specific workspace
 pnpm add <package> --filter <workspace-name>
 
-# Install dependency in all workspaces
+# Install a dependency in all workspaces
 pnpm add -w <package>
 
-# Link local package
+# Link a local package in another workspace
 pnpm add @call/<package-name> --filter <workspace-name> --workspace
 ```
 
 ### Development Workflow
 
-1. **Create feature branch**
+1. **Create a feature branch**
 
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
-2. **Make changes** following coding standards
+2. **Make your changes** following our coding standards
 
 3. **Run checks before committing**
 
    ```bash
-   pnpm lint
-   pnpm build
+   pnpm lint      # Lint all packages
+   pnpm build     # Build all packages
    ```
 
-4. **Commit using conventional commits**
+4. **Commit your changes** using conventional commits:
 
    ```
    feat: add new feature
@@ -296,23 +253,27 @@ pnpm add @call/<package-name> --filter <workspace-name> --workspace
    ui: for ui changes
    ```
 
-5. **Push and create pull request**
+5. **Push and create a pull request**
+
+### Package Organization
+
+- Place shared code in `packages/`
+- Keep applications in `apps/`
+- Use consistent naming conventions:
+  - Applications: `@call/app-name`
+  - Packages: `@call/package-name`
+
+### Code of Conduct
+
+This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ---
 
-<<<<<<< Updated upstream
-
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **All contributors** who help make Call better every day
 
-## 📞 Support
-
-=======
-
 ## Support
-
-> > > > > > > Stashed changes
 
 - **Discord**: [Join our community](https://discord.com/invite/bre4echNxB)
 - **Email**: attiyassr@gmail.com
@@ -320,20 +281,6 @@ pnpm add @call/<package-name> --filter <workspace-name> --workspace
 
 ---
 
-<div align="center">
-<<<<<<< Updated upstream
-  <p>Made with ❤️ by the Call team</p>
-  <p>
-    <a href="https://joincall.co">Website</a> •
-    <a href="https://github.com/Call0dotco/call">GitHub</a> •
-    <a href="https://discord.com/invite/bre4echNxB">Discord</a> •
-    <a href="https://x.com/joincalldotco">Twitter</a>
-  </p>
-</div>
-=======
-  Made with ❤️ by the Call team
-</div>
+Made with ❤️ by the Call team
 
 [Website](https://joincall.co) • [GitHub](https://github.com/Call0dotco/call) • [Discord](https://discord.com/invite/bre4echNxB) • [Twitter](https://x.com/joincalldotco)
-
-> > > > > > > Stashed changes

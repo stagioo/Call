@@ -345,11 +345,7 @@ export default function CallPreviewPage() {
 
   // Check access status periodically when not joined
   useEffect(() => {
-<<<<<<< Updated upstream
     if (joined || !session?.user?.id) return;
-=======
-    if (joined || !user.id) return;
->>>>>>> Stashed changes
 
     const checkAccess = async () => {
       try {

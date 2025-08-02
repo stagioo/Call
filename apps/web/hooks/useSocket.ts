@@ -1,17 +1,21 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
+import { config } from "dotenv";
+import { resolve } from "path";
+
+config({ path: resolve(process.cwd(), "../../.env") });
 
 const getSocketUrl = () => {
   if (typeof window === "undefined") return "ws://localhost:4001";
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const host = "localhost";
   const port = "4001";
-  
+
   if (process.env.NODE_ENV === "production") {
     return process.env.NEXT_PUBLIC_WS_PRODUCTION_URL!;
   }
   return `${protocol}//${host}:${port}`;
-
 };
 
 export function useSocket() {
@@ -19,14 +23,17 @@ export function useSocket() {
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
 
-  useEffect(() => { 
+  useEffect(() => {
     const connectWebSocket = () => {
       const socket = new WebSocket(getSocketUrl());
       socketRef.current = socket;
 
       socket.onopen = () => {
         setConnected(true);
-        console.log("[useSocket] WebSocket connection opened at:", getSocketUrl());
+        console.log(
+          "[useSocket] WebSocket connection opened at:",
+          getSocketUrl()
+        );
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
         }
