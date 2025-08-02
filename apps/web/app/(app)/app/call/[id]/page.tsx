@@ -2,7 +2,7 @@
 import { ChatSidebar } from "@/components/rooms/chat-sidebar";
 import { ParticipantsSidebar } from "@/components/rooms/participants-sidebar";
 import { useMediasoupClient } from "@/hooks/useMediasoupClient";
-import { useSession } from "@/hooks/useSession";
+import { useSession } from "@/components/providers/session";
 import { Button } from "@call/ui/components/button";
 import {
   DropdownMenu,
@@ -273,16 +273,17 @@ interface RemoteStream {
 
 const recordCallParticipation = async (callId: string) => {
   try {
-
-            await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-participation`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ callId }),
-    });
-
+    await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-participation`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ callId }),
+      }
+    );
   } catch (error) {
     console.error("Error recording call participation:", error);
   }
@@ -290,10 +291,10 @@ const recordCallParticipation = async (callId: string) => {
 
 export default function CallPreviewPage() {
   const params = useParams();
-  const { session } = useSession();
+  const { user } = useSession();
   const callId = params?.id as string;
   const userId = generateUserId();
-  const displayName = session?.user?.name || generateDisplayName();
+  const displayName = user.name;
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<string | undefined>();
@@ -323,10 +324,8 @@ export default function CallPreviewPage() {
     const fetchCreatorInfo = async () => {
       try {
         const response = await fetch(
-
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/creator`,
-          {   
-
+          {
             credentials: "include",
           }
         );
@@ -345,7 +344,7 @@ export default function CallPreviewPage() {
 
   // Check access status periodically when not joined
   useEffect(() => {
-    if (joined || !session?.user?.id) return;
+    if (joined || user.id) return;
 
     const checkAccess = async () => {
       try {
@@ -369,11 +368,11 @@ export default function CallPreviewPage() {
     checkAccess();
     const interval = setInterval(checkAccess, 3000); // Check every 3 seconds
     return () => clearInterval(interval);
-  }, [callId, session?.user?.id, joined]);
+  }, [callId, user.id, joined]);
 
   // Request access to join the call
   const handleRequestAccess = async () => {
-    if (!callId || !session?.user?.id) {
+    if (!callId || !user.id) {
       alert("You must be logged in to request access");
       return;
     }
@@ -381,7 +380,7 @@ export default function CallPreviewPage() {
     setIsRequestingAccess(true);
     try {
       const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/request-join`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/request-join`,
         {
           method: "POST",
           headers: {
@@ -944,15 +943,17 @@ export default function CallPreviewPage() {
     try {
       // Record that the user is leaving the call
 
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ callId }),
-      });
-
+      await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ callId }),
+        }
+      );
     } catch (error) {
       console.error("Failed to record call leave:", error);
       // Continue with hangup even if recording fails
@@ -1013,16 +1014,17 @@ export default function CallPreviewPage() {
       // Record that the user is leaving the call if they were joined
       if (joined) {
         try {
-
-          await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ callId }),
-          });
-
+          await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({ callId }),
+            }
+          );
         } catch (error) {
           console.error("Failed to record call leave on cleanup:", error);
         }
