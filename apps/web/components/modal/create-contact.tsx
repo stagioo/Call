@@ -35,7 +35,7 @@ export const CreateContact = () => {
   const { mutate: createContact, isPending } = useMutation({
     mutationFn: CONTACTS_QUERY.createContact,
     onSuccess: (data) => {
-      toast.success("Contact created successfully");
+      toast.success(data.message || "Contact created successfully");
       onClose();
       form.reset();
     },
