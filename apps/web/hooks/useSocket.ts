@@ -8,7 +8,7 @@ config({ path: resolve(process.cwd(), "../../.env") });
 
 const getSocketUrl = () => {
   if (typeof window === "undefined") return "ws://localhost:4001";
-  const protocol = window.location.protocol === "https:" ? "wss:" : "wsl:";
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const host = "localhost";
   const port = "4001";
 
