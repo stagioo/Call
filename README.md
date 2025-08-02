@@ -1,46 +1,31 @@
-<div align="center">
-  <img src="apps/web/public/logo.png" alt="Call Logo" width="120" height="120" style="border-radius: 20px;">
-  <h1 align="center">Call</h1>
-  <p align="center">
-    <strong>An Open-source AI-native alternative to Google Meet and Zoom</strong>
-  </p>
-  <p align="center">
-    Ready to escape complex, data-hungry meeting apps? Join the future of video calling.
-  </p>
+# Call
 
-  <div align="center">
-    <a href="https://joincall.co">
-      <img src="https://img.shields.io/badge/Website-joincall.co-blue?style=for-the-badge&logo=globe" alt="Website">
-    </a>
-    <a href="https://github.com/joincalldotco/call">
-      <img src="https://img.shields.io/badge/GitHub-joincalldotco/call-black?style=for-the-badge&logo=github" alt="GitHub">
-    </a>
-    <a href="https://discord.com/invite/bre4echNxB">
-      <img src="https://img.shields.io/badge/Discord-Join%20Community-blue?style=for-the-badge&logo=discord" alt="Discord">
-    </a>
-    <a href="https://x.com/joincalldotco">
-      <img src="https://img.shields.io/badge/X-%40joincalldotco-black?style=for-the-badge&logo=x" alt="X (Twitter)">
-    </a>
-  </div>
-</div>
+An Open-source AI-native alternative to Google Meet and Zoom
+
+Ready to escape complex, data-hungry meeting apps? Join the future of video calling.
+
+- [Website](https://joincall.co)
+- [GitHub](https://github.com/joincalldotco/call)
+- [Discord](https://discord.com/invite/bre4echNxB)
+- [Twitter](https://x.com/joincalldotco)
 
 ---
 
-## 🚀 Features
+## Features
 
-### 🎥 **Video Calling**
+### Video Calling
 
-### 👥 **Team Collaboration**
+### Team Collaboration
 
-### 📞 **Contact Management**
+### Contact Management
 
-### 📅 **Meeting Scheduling**
+### Meeting Scheduling
 
-### 🤖 **AI-Powered Features**
+### AI-Powered Features
 
-### 🔒 **Security & Privacy**
+### Security & Privacy
 
-### 🌐 **Cross-Platform**
+### Cross-Platform
 
 - **Web-based** - works on any modern browser
 - **Mobile responsive** design
@@ -49,7 +34,7 @@
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Frontend
 
@@ -57,13 +42,13 @@
 - **TypeScript** - Type-safe development
 - **Tailwind CSS** - Utility-first styling
 - **shadcn/ui** - Beautiful component library
-- **LiveKit** - Real-time video/audio communication - Working on the migration to Mediasoup
+- **Mediasoup-SFU** - Scalable Selective Forwarding Unit for real-time audio/video conferencing
 - **React Query** - Server state management
+- **Zustand** - For Distributed state management
 
 ### Backend
 
 - **Hono** - Fast web framework
-- **Bun** - JavaScript runtime
 - **PostgreSQL** - Reliable database
 - **Drizzle ORM** - Type-safe database queries
 - **Better Auth** - Authentication system
@@ -77,7 +62,7 @@
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -103,11 +88,13 @@
 
    This script will automatically:
 
-   - ✅ Create a `.env` file if it doesn't exist
-   - 📦 Install dependencies if needed
-   - 🐳 Start Docker services (PostgreSQL)
-   - ⏳ Wait for the database to be ready
-   - 🚀 Start the development environment
+   - Create a `.env` file if it doesn't exist
+   - Install dependencies if needed
+   - Start Docker services (PostgreSQL)
+   - Wait for the database to be ready
+   - Start the development environment
+
+   > **Note:** If you encounter any issues during setup, check the [ERRORS.md](ERRORS.md) file for troubleshooting guidance.
 
 3. **Open your browser**
    - Web app: http://localhost:3000
@@ -159,7 +146,7 @@ pnpm docker:clean
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 call/
@@ -190,7 +177,7 @@ call/
 
 ---
 
-## 🧪 Development
+## Development
 
 ### Available Scripts
 
@@ -282,11 +269,11 @@ This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participatin
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **All contributors** who help make Call better every day
 
-## 📞 Support
+## Support
 
 - **Discord**: [Join our community](https://discord.com/invite/bre4echNxB)
 - **Email**: attiyassr@gmail.com
@@ -294,12 +281,6 @@ This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participatin
 
 ---
 
-<div align="center">
-  <p>Made with ❤️ by the Call team</p>
-  <p>
-    <a href="https://joincall.co">Website</a> •
-    <a href="https://github.com/Call0dotco/call">GitHub</a> •
-    <a href="https://discord.com/invite/bre4echNxB">Discord</a> •
-    <a href="https://x.com/joincalldotco">Twitter</a>
-  </p>
-</div>
+Made with ❤️ by the Call team
+
+[Website](https://joincall.co) • [GitHub](https://github.com/Call0dotco/call) • [Discord](https://discord.com/invite/bre4echNxB) • [Twitter](https://x.com/joincalldotco)
