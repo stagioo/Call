@@ -2,15 +2,10 @@ import * as mediasoup from "mediasoup";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import os from "os";
-import dotenv from "dotenv";
+import { config } from "dotenv";
+import { resolve } from "path";
 
-// Configurar dotenv al inicio
-dotenv.config();
-
-if (!process.env.MEDIASOUP_ANNOUNCED_IP) {
-  throw new Error("MEDIASOUP_ANNOUNCED_IP must be defined in environment variables");
-}
-
+config({ path: resolve(process.cwd(), "../../.env") });
 
 // --- Types -----
 type Consumer = mediasoup.types.Consumer;
@@ -117,7 +112,9 @@ const mediasoupConfig = {
     ],
   },
   webRtcTransport: {
-    listenIps: [{ ip: "0.0.0.0", announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP }],
+    listenIps: [
+      { ip: "0.0.0.0", announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP },
+    ],
     enableUdp: true,
     enableTcp: true,
     preferUdp: true,
