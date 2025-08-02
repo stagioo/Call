@@ -13,7 +13,7 @@ export const CONTACTS_QUERY = {
     const res = await apiClient.post("/contacts/invite", {
       receiverEmail: data.email,
     });
-    if (res.status === 200) {
+    if (res.status === 200 || res.status === 201) {
       return res.data;
     }
     throw new Error("Failed to create contact");
