@@ -237,6 +237,7 @@ contactsRoutes.get("/", async (c) => {
         id: userTable.id,
         name: userTable.name,
         email: userTable.email,
+        image: userTable.image,
         createdAt: contacts.createdAt,
       })
       .from(contacts)
