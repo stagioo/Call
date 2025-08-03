@@ -1290,7 +1290,7 @@ export default function CallPreviewPage() {
               <Button onClick={handleJoin} disabled={!connected}>
                 Join Call
               </Button>
-            ) : (
+            ) : !isCreator && (
               <Button
                 onClick={handleRequestAccess}
                 disabled={!connected || isRequestingAccess}
