@@ -131,15 +131,7 @@ export function CallHistory() {
                 </Button>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                className="bg-inset-accent-foreground hover:bg-inset-accent-foreground/80 size-11"
-                variant="ghost"
-              >
-                <Icons.filter className="h-4 w-4" />
-                <span className="sr-only">Filter</span>
-              </Button>
-            </div>
+        
           </div>
         ) : null}
         
