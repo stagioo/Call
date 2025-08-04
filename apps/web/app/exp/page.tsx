@@ -15,10 +15,16 @@ import {
   participantVariants,
   screenShareVariants,
 } from "@/lib/constants";
+import NumberFlow from "@number-flow/react";
 
 export default function GoogleMeetLayout() {
   const [participants, setParticipants] = useState([{ id: 1, name: "You" }]);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+
+  const maxParticipants = 11;
+
+  const visibleParticipants = participants.slice(0, maxParticipants);
+  const remainingParticipants = participants.slice(maxParticipants);
 
   const addParticipant = () => {
     const newId = Math.max(...participants.map((p) => p.id)) + 1;
@@ -43,16 +49,16 @@ export default function GoogleMeetLayout() {
     if (count <= 4) return "grid-cols-2";
     if (count <= 9) return "grid-cols-3";
     if (count <= 16) return "grid-cols-4";
-    return "grid-cols-5";
+    return "grid-cols-4";
   };
 
   const getGridRows = (count: number) => {
-    if (count <= 1) return "grid-rows-1";
-    if (count <= 2) return "grid-rows-1";
-    if (count <= 4) return "grid-rows-2";
-    if (count <= 9) return "grid-rows-3";
-    if (count <= 16) return "grid-rows-4";
-    return "grid-rows-5";
+    if (count <= 1) return "grid-rows-1 bg-red";
+    if (count <= 2) return "grid-rows-1 bg-red";
+    if (count <= 4) return "grid-rows-2 bg-red";
+    if (count <= 9) return "grid-rows-3 bg-red";
+    if (count <= 16) return "grid-rows-4 bg-red";
+    return "grid-rows-4";
   };
 
   return (
@@ -150,7 +156,7 @@ export default function GoogleMeetLayout() {
         <LayoutGroup>
           <motion.div
             className={cn(
-              "grid w-full gap-4",
+              "grid w-full justify-center gap-4",
               getGridLayout(participants.length),
               getGridRows(participants.length),
               "auto-rows-fr"
@@ -169,7 +175,7 @@ export default function GoogleMeetLayout() {
             }}
           >
             <AnimatePresence mode="popLayout">
-              {participants.map((participant, index) => (
+              {visibleParticipants.map((participant, index) => (
                 <motion.div
                   key={participant.id}
                   layoutId={`participant-${participant.id}`}
@@ -181,15 +187,15 @@ export default function GoogleMeetLayout() {
                   className={cn(
                     "bg-inset-accent border-inset-accent-foreground relative flex min-h-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-4",
                     {
-                      "w-auto": participants.length > 9,
-                      "aspect-video": participants.length <= 9,
+                      "w-auto": visibleParticipants.length > 9,
+                      "aspect-video": visibleParticipants.length <= 9,
                     }
                   )}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => removeParticipant(participant.id)}
                 >
                   <motion.div
-                    className="absolute bottom-4 left-4 rounded bg-black/70 px-3 py-1 text-sm font-medium text-white"
+                    className="sls pointer-events-none absolute bottom-4 left-4 rounded bg-black/70 px-3 py-1 text-sm font-medium text-white"
                     layoutId={`participant-name-${participant.id}`}
                   >
                     {participant.name}
@@ -208,6 +214,15 @@ export default function GoogleMeetLayout() {
                   )}
                 </motion.div>
               ))}
+              {remainingParticipants.length > 0 && (
+                <div className="bg-inset-accent border-inset-accent-foreground relative flex min-h-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-4">
+                  <span className="text-2xl font-bold text-white">
+                    <span className="text-sm"> + </span>
+                    <NumberFlow value={remainingParticipants.length} />
+                    <span className="text-sm"> more</span>
+                  </span>
+                </div>
+              )}
             </AnimatePresence>
           </motion.div>
         </LayoutGroup>
