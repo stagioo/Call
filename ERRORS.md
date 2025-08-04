@@ -14,7 +14,7 @@ This document outlines common errors that may occur when running `setup-dev.sh` 
 - **Ubuntu/Debian:** `sudo apt-get update && sudo apt-get install -y build-essential python3`
 - **CentOS/RHEL:** `sudo yum groupinstall -y "Development Tools" && sudo yum install -y python3`
 - **Fedora:** `sudo dnf groupinstall -y "Development Tools" && sudo dnf install -y python3`
-- **Windows:** Install Visual Studio Build Tools and Python 3.x manually
+- **Windows:** [Microsoft Visual C++ Redistributable for Visual Studio 2022](https://aka.ms/vs/17/release/vc_redist.x64.exe) and Python 3.x manually
 
 ### 2. Missing Docker Compose
 
