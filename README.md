@@ -70,6 +70,7 @@ Ready to escape complex, data-hungry meeting apps? Join the future of video call
 - **pnpm** package manager
 - **Docker** and Docker Compose
 - **Git**
+- **Microsoft Visual C++ Redistributable for Visual Studio 2022** (For Windows)
 
 ### Installation
 
@@ -80,21 +81,27 @@ Ready to escape complex, data-hungry meeting apps? Join the future of video call
    cd call
    ```
 
-2. **Start the development environment**
+2.1 **Start the development environment**
 
-   ```bash
-   ./setup-dev.sh
-   ```
+```bash
+./setup-dev.sh
+```
 
-   This script will automatically:
+2.2 2. **Start the development environment (Winodws)**
 
-   - Create a `.env` file if it doesn't exist
-   - Install dependencies if needed
-   - Start Docker services (PostgreSQL)
-   - Wait for the database to be ready
-   - Start the development environment
+```bash
+./setup_dev_windows.sh
+```
 
-   > **Note:** If you encounter any issues during setup, check the [ERRORS.md](ERRORS.md) file for troubleshooting guidance.
+This script will automatically:
+
+- Create a `.env` file if it doesn't exist
+- Install dependencies if needed
+- Start Docker services (PostgreSQL)
+- Wait for the database to be ready
+- Start the development environment
+
+> **Note:** If you encounter any issues during setup, check the [ERRORS.md](ERRORS.md) file for troubleshooting guidance.
 
 3. **Open your browser**
    - Web app: http://localhost:3000
