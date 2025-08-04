@@ -8,8 +8,9 @@ import {
   user as userTable,
   callParticipants,
   callJoinRequests,
+  hiddenCalls,
 } from "@call/db/schema";
-import { eq, inArray, desc, and } from "drizzle-orm";
+import { eq, inArray, desc, and, sql } from "drizzle-orm";
 import type { ReqVariables } from "../../index.js";
 
 const callsRoutes = new Hono<{ Variables: ReqVariables }>();
@@ -195,7 +196,7 @@ callsRoutes.get("/participated", async (c) => {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    // Get all calls where user was a participant with participant details
+    // Get all calls where user was a participant with participant details, excluding hidden calls
     const participatedCalls = await db
       .select({
         id: calls.id,
@@ -206,7 +207,14 @@ callsRoutes.get("/participated", async (c) => {
       })
       .from(callParticipants)
       .innerJoin(calls, eq(callParticipants.callId, calls.id))
-      .where(eq(callParticipants.userId, user.id as string))
+      .leftJoin(hiddenCalls, and(
+        eq(hiddenCalls.callId, calls.id),
+        eq(hiddenCalls.userId, user.id as string)
+      ))
+      .where(and(
+        eq(callParticipants.userId, user.id as string),
+        sql`${hiddenCalls.id} IS NULL` // Only show calls that are not hidden
+      ))
       .orderBy(desc(callParticipants.joinedAt));
 
     // Get participants for each call
@@ -218,6 +226,8 @@ callsRoutes.get("/participated", async (c) => {
             name: userTable.name,
             email: userTable.email,
             image: userTable.image,
+            joinedAt: callParticipants.joinedAt,
+            leftAt: callParticipants.leftAt,
           })
           .from(callParticipants)
           .innerJoin(userTable, eq(callParticipants.userId, userTable.id))
@@ -694,6 +704,57 @@ callsRoutes.get("/:id/creator", async (c) => {
   } catch (error) {
     console.error("Error getting call creator:", error);
     return c.json({ error: "Failed to get creator info" }, 500);
+  }
+});
+
+// POST /api/calls/:id/hide
+callsRoutes.post("/:id/hide", async (c) => {
+  try {
+    const user = c.get("user");
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const callId = c.req.param("id");
+    if (!callId) {
+      return c.json({ error: "Call ID is required" }, 400);
+    }
+
+    // Check if the user is a participant in the call
+    const participation = await db
+      .select()
+      .from(callParticipants)
+      .where(
+        and(
+          eq(callParticipants.callId, callId),
+          eq(callParticipants.userId, user.id as string)
+        )
+      )
+      .limit(1);
+
+    if (!participation || participation.length === 0) {
+      return c.json({ error: "Call not found or user not a participant" }, 404);
+    }
+
+    // Hide the call for this user
+    await db.insert(hiddenCalls).values({
+      callId,
+      userId: user.id as string,
+    });
+
+    return c.json({ success: true, message: "Call hidden successfully" });
+  } catch (error: unknown) {
+    console.error("Error hiding call:", error);
+    // If the error is due to the call already being hidden, return success
+    if (
+      typeof error === 'object' && 
+      error !== null && 
+      'code' in error && 
+      error.code === "23505"
+    ) { // PostgreSQL unique violation error code
+      return c.json({ success: true, message: "Call already hidden" });
+    }
+    return c.json({ error: "Failed to hide call" }, 500);
   }
 });
 

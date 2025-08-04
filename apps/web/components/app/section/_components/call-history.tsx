@@ -10,9 +10,15 @@ import { Icons } from "@call/ui/components/icons";
 import { Input } from "@call/ui/components/input";
 import { iconvVariants, UserProfile } from "@call/ui/components/use-profile";
 import { cn } from "@call/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { MoreVertical, X, Loader2, Phone } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { MoreVertical, X, Loader2, Phone, Trash, Users } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@call/ui/components/dropdown-menu";
 
 type FilterType = "all" | "my-calls" | "shared-with-me";
 
@@ -125,15 +131,7 @@ export function CallHistory() {
                 </Button>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                className="bg-inset-accent-foreground hover:bg-inset-accent-foreground/80 size-11"
-                variant="ghost"
-              >
-                <Icons.filter className="h-4 w-4" />
-                <span className="sr-only">Filter</span>
-              </Button>
-            </div>
+        
           </div>
         ) : null}
         
@@ -180,6 +178,22 @@ interface CallHistoryCardProps {
 const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
   const participantsToShow = 3;
   const remainingParticipants = call.participants.length - participantsToShow;
+  const queryClient = useQueryClient();
+
+  const handleHideCall = async () => {
+    try {
+      await CALLS_QUERY.hideCall(call.id);
+      // Invalidate and refetch calls
+      queryClient.invalidateQueries({ queryKey: ["calls"] });
+    } catch (error) {
+      console.error("Failed to hide call:", error);
+    }
+  };
+
+  const handleViewUsers = () => {
+    // This could be implemented later to show a modal with all participants
+    console.log("View users clicked", call.participants);
+  };
 
   return (
     <div className="bg-inset-accent flex flex-col gap-3 rounded-xl border p-4">
@@ -187,9 +201,23 @@ const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
         <h1 className="text-lg font-medium first-letter:uppercase">
           {call.name}
         </h1>
-        <Button variant="ghost" size="icon">
-          <MoreVertical className="h-4 w-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleViewUsers}>
+              <Users className="mr-2 h-4 w-4" />
+              View Users
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleHideCall} variant="destructive">
+              <Trash className="mr-2 h-4 w-4" />
+              Hide Call
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
