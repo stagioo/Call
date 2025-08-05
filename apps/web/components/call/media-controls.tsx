@@ -17,6 +17,11 @@ import {
   FiVideo,
   FiVideoOff,
 } from "react-icons/fi";
+import {
+  SIDEBAR_WIDTH,
+  SIDEBAR_WIDTH_ICON,
+  useSidebar,
+} from "@call/ui/components/sidebar";
 
 interface MediaControlsProps {
   localStream: MediaStream | null;
@@ -54,6 +59,7 @@ export const MediaControls = ({
   selectedAudio,
 }: MediaControlsProps) => {
   const [isCameraOn, setIsCameraOn] = useState(true);
+  const { state } = useSidebar();
 
   useEffect(() => {
     if (localStream) {
@@ -75,8 +81,14 @@ export const MediaControls = ({
   };
 
   return (
-    <>
-      <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 gap-2 rounded-lg bg-black/80 p-3 backdrop-blur-sm">
+    <div className="fixed bottom-0 left-0 flex h-20 w-full items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div
+        className="pointer-events-none h-full w-full transition-all duration-300 ease-in-out"
+        style={{
+          width: state === "expanded" ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON,
+        }}
+      />
+      <div className="z-10 z-50 flex flex-1 items-center justify-center">
         <Button
           variant="ghost"
           size="icon"
@@ -215,7 +227,7 @@ export const MediaControls = ({
           <FiPhoneOff size={20} />
         </Button>
       </div>
-    </>
+    </div>
   );
 };
 

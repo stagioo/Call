@@ -50,7 +50,7 @@ export const CallVideoGrid = () => {
   );
 
   return (
-    <div className="relative flex flex-wrap items-start justify-center gap-4">
+    <div className="relative flex flex-wrap items-start justify-center gap-4 bg-red-500">
       {mediasoup.localStream && (
         <div className="relative">
           <video
