@@ -51,7 +51,7 @@ function CallPageContent() {
   }, [mediasoup.remoteStreams, dispatch]);
 
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-6">
+    <div className="flex min-h-[calc(100vh-5.5rem)] flex-col items-center justify-center">
       {!state.joined ? (
         <CallPreview />
       ) : (
