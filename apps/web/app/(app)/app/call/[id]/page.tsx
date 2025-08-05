@@ -273,16 +273,17 @@ interface RemoteStream {
 
 const recordCallParticipation = async (callId: string) => {
   try {
-
-            await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-participation`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ callId }),
-    });
-
+    await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-participation`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ callId }),
+      }
+    );
   } catch (error) {
     console.error("Error recording call participation:", error);
   }
@@ -323,10 +324,8 @@ export default function CallPreviewPage() {
     const fetchCreatorInfo = async () => {
       try {
         const response = await fetch(
-
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/creator`,
-          {   
-
+          {
             credentials: "include",
           }
         );
@@ -381,7 +380,7 @@ export default function CallPreviewPage() {
     setIsRequestingAccess(true);
     try {
       const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/request-join`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/request-join`,
         {
           method: "POST",
           headers: {
@@ -944,15 +943,17 @@ export default function CallPreviewPage() {
     try {
       // Record that the user is leaving the call
 
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ callId }),
-      });
-
+      await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ callId }),
+        }
+      );
     } catch (error) {
       console.error("Failed to record call leave:", error);
       // Continue with hangup even if recording fails
@@ -1013,16 +1014,17 @@ export default function CallPreviewPage() {
       // Record that the user is leaving the call if they were joined
       if (joined) {
         try {
-
-          await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ callId }),
-          });
-
+          await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({ callId }),
+            }
+          );
         } catch (error) {
           console.error("Failed to record call leave on cleanup:", error);
         }
@@ -1247,158 +1249,229 @@ export default function CallPreviewPage() {
   console.log("[Call] Filtered screen streams:", remoteScreenStreams);
   console.log("[Call] Remote audios:", remoteAudios);
 
-  // Calculate total participants for grid layout
-  const totalParticipants = remoteVideoStreams.length + (localStream ? 1 : 0);
-  const shouldUseEqualGrid = totalParticipants >= 3;
-
-  // Create a combined array of all video streams (local + remote)
-  const allVideoStreams = [
-    // Add local stream if available
-    ...(localStream ? [{
-      stream: localStream,
-      peerId: userId,
-      displayName: displayName,
-      producerId: 'local',
-      isLocal: true
-    }] : []),
-    // Add remote streams
-    ...remoteVideoStreams.map(stream => ({
-      ...stream,
-      isLocal: false
-    }))
-  ];
-
-  // Determine grid layout based on number of participants
-  const getGridLayout = (count: number) => {
-    if (count === 1) return "grid-cols-1";
-    if (count === 2) return "grid-cols-2";
-    if (count === 3) return "grid-cols-3";
-    if (count === 4) return "grid-cols-4";
-    if (count === 5 || count === 6 || count === 7 || count === 8) return "grid-cols-4 grid-rows-2";
-    if (count === 9 || count === 10 || count === 11 || count === 12) return "grid-cols-4 grid-rows-3";
-    if (count === 13 || count === 14 || count === 15 || count === 16) return "grid-cols-4 grid-rows-4";
-    return "grid-cols-4 grid-rows-4"; // Default for 16+ participants
-  };
-
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-background to-background/95">
+    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-6">
       {!joined ? (
-        <div className="flex flex-1 items-center justify-center p-4">
-          <div className="w-full max-w-md space-y-8 rounded-2xl bg-card p-8 shadow-lg">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold tracking-tight">Join Call</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Check your camera and microphone before joining
-              </p>
-            </div>
+        <>
+          <div className="flex w-full max-w-xs flex-col gap-4">
+            <label className="font-semibold">Camera</label>
+            <select
+              value={selectedVideo}
+              onChange={(e) => setSelectedVideo(e.target.value)}
+              className="rounded-md border p-2"
+            >
+              {videoDevices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Camera ${device.deviceId}`}
+                </option>
+              ))}
+            </select>
 
-            <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black/90 shadow-inner">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="h-full w-full object-cover"
-              />
-              {!previewStream && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-sm text-muted-foreground">
-                    No camera detected
-                  </div>
-                </div>
-              )}
-            </div>
+            <label className="font-semibold">Microphone</label>
+            <select
+              value={selectedAudio}
+              onChange={(e) => setSelectedAudio(e.target.value)}
+              className="rounded-md border p-2"
+            >
+              {audioDevices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Microphone ${device.deviceId}`}
+                </option>
+              ))}
+            </select>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Camera</label>
-                <select
-                  value={selectedVideo}
-                  onChange={(e) => setSelectedVideo(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                >
-                  {videoDevices.map((device) => (
-                    <option key={device.deviceId} value={device.deviceId}>
-                      {device.label || `Camera ${device.deviceId}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="aspect-video w-full rounded-lg bg-black"
+            />
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Microphone</label>
-                <select
-                  value={selectedAudio}
-                  onChange={(e) => setSelectedAudio(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                >
-                  {audioDevices.map((device) => (
-                    <option key={device.deviceId} value={device.deviceId}>
-                      {device.label || `Microphone ${device.deviceId}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {(isCreator || hasAccess) ? (
-              <Button 
-                onClick={handleJoin} 
-                disabled={!connected}
-                className="w-full py-6 text-lg font-medium"
-              >
+            {isCreator || hasAccess ? (
+              <Button onClick={handleJoin} disabled={!connected}>
                 Join Call
               </Button>
-            ) : !isCreator && (
-              <div className="space-y-4">
-                <div className="rounded-lg bg-muted/50 p-4 text-sm">
-                  <p className="text-center text-muted-foreground">
-                    You need permission from the host to join this call
-                  </p>
-                </div>
+            ) : (
+              !isCreator && (
                 <Button
                   onClick={handleRequestAccess}
                   disabled={!connected || isRequestingAccess}
                   variant="secondary"
-                  className="w-full py-6 text-lg font-medium"
                 >
                   {isRequestingAccess ? "Sending Request..." : "Request Access"}
                 </Button>
-              </div>
+              )
             )}
           </div>
-        </div>
+        </>
       ) : (
-        <div className="relative flex min-h-screen flex-col">
-          {/* Main content area */}
-          <div className="relative flex-1">
-            {/* Grid for all videos */}
-            <div className={`grid h-full flex-1 gap-4 p-4 ${getGridLayout(allVideoStreams.length)}`}>
-              {/* All video streams (local + remote) in equal grid */}
-              {allVideoStreams.map(
-                ({
-                  stream,
-                  peerId,
-                  displayName: peerDisplayName,
-                  producerId,
-                  isLocal,
-                }) => (
-                  <div 
-                    key={producerId || peerId}
-                    className="relative aspect-video w-full overflow-hidden rounded-xl bg-black/90 shadow-lg"
-                  >
+        <>
+          <div className="relative flex flex-wrap items-start justify-center gap-4">
+            {/* Local camera */}
+            {localStream && (
+              <div className="relative">
+                <video
+                  autoPlay
+                  playsInline
+                  muted
+                  className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                  ref={(el) => {
+                    if (el && localStream) {
+                      el.srcObject = localStream;
+                    }
+                  }}
+                />
+                <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+                  You
+                </span>
+              </div>
+            )}
+
+            {/* Local screen share */}
+            {screenStream &&
+              screenStream.getVideoTracks().length > 0 &&
+              screenStream
+                .getVideoTracks()
+                .some(
+                  (track) => track.readyState === "live" && track.enabled
+                ) && (
+                <div className="relative">
+                  <video
+                    autoPlay
+                    playsInline
+                    muted
+                    className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                    ref={(el) => {
+                      if (el && screenStream) {
+                        el.srcObject = screenStream;
+                        el.onloadedmetadata = () => {
+                          el.play().catch((e) =>
+                            console.warn("Error forcing play:", e)
+                          );
+                        };
+                      }
+                    }}
+                  />
+                  <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+                    Your screen
+                  </span>
+                </div>
+              )}
+
+            {/* Remote cameras */}
+            {remoteVideoStreams.map(
+              ({
+                stream,
+                peerId,
+                displayName: peerDisplayName,
+                producerId,
+              }) => {
+                console.log(
+                  `[Call] Rendering remote video for ${peerDisplayName}:`,
+                  {
+                    streamId: stream.id,
+                    active: stream.active,
+                    videoTracks: stream.getVideoTracks().map((t) => ({
+                      id: t.id,
+                      kind: t.kind,
+                      enabled: t.enabled,
+                      readyState: t.readyState,
+                      muted: t.muted,
+                    })),
+                  }
+                );
+
+                return (
+                  <div className="relative" key={producerId || peerId}>
                     <video
                       autoPlay
                       playsInline
-                      muted={isLocal}
-                      className="h-full w-full object-cover"
+                      className={cn(
+                        "h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                      )}
                       ref={(el) => {
                         if (el && stream) {
+                          console.log(
+                            `[Call] Setting remote video element for ${peerDisplayName}`
+                          );
                           el.srcObject = stream;
                           el.onloadedmetadata = () => {
+                            console.log(
+                              `[Call] Remote video metadata loaded for ${peerDisplayName}`
+                            );
                             el.play().catch((e) =>
                               console.warn(
-                                `Error playing video for ${peerDisplayName}:`,
+                                `Error playing remote video for ${peerDisplayName}:`,
+                                e
+                              )
+                            );
+                          };
+                          el.oncanplay = () => {
+                            console.log(
+                              `[Call] Remote video can play for ${peerDisplayName}`
+                            );
+                          };
+                          el.onerror = (e) => {
+                            console.error(
+                              `[Call] Remote video error for ${peerDisplayName}:`,
+                              e
+                            );
+                          };
+                        }
+                      }}
+                    />
+                    <div className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-white">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs">
+                          {peerDisplayName || "User"}
+                        </span>
+                        {peerAudioStatus[peerId]?.muted && <MicOff size={12} />}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+            )}
+
+            {/* Remote screens */}
+            {remoteScreenStreams.map(
+              ({
+                stream,
+                peerId,
+                displayName: peerDisplayName,
+                producerId,
+              }) => {
+                if (
+                  !stream
+                    ?.getVideoTracks()
+                    .some(
+                      (track) => track.readyState === "live" && track.enabled
+                    )
+                ) {
+                  return null;
+                }
+
+                return (
+                  <div className="relative" key={producerId || peerId}>
+                    <video
+                      autoPlay
+                      playsInline
+                      className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+                      ref={(el) => {
+                        if (el) {
+                          console.log(
+                            `[Call] Setting screen share stream for ${peerDisplayName}:`,
+                            stream
+                          );
+                          el.srcObject = stream;
+                          el.onloadedmetadata = () => {
+                            console.log(
+                              `[Call] Screen share metadata loaded for ${peerDisplayName}`
+                            );
+                            el.play().catch((e) =>
+                              console.warn(
+                                `Error playing screen share for ${peerDisplayName}:`,
                                 e
                               )
                             );
@@ -1406,106 +1479,13 @@ export default function CallPreviewPage() {
                         }
                       }}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-white">
-                          {isLocal ? "You" : (peerDisplayName || "User")}
-                        </span>
-                        {!isLocal && peerAudioStatus[peerId]?.muted && (
-                          <MicOff className="h-4 w-4 text-red-500" />
-                        )}
-                        {isLocal && !isLocalMicOn && (
-                          <MicOff className="h-4 w-4 text-red-500" />
-                        )}
-                      </div>
-                    </div>
+                    <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+                      {`${peerDisplayName || "User"}'s screen`}
+                    </span>
                   </div>
-                )
-              )}
-
-              {/* Screen shares - always full width */}
-              {screenStream &&
-                screenStream.getVideoTracks().length > 0 &&
-                screenStream
-                  .getVideoTracks()
-                  .some(
-                    (track) => track.readyState === "live" && track.enabled
-                  ) && (
-                  <div className="relative col-span-full aspect-video w-full overflow-hidden rounded-xl bg-black/90 shadow-lg">
-                    <video
-                      autoPlay
-                      playsInline
-                      muted
-                      className="h-full w-full object-cover"
-                      ref={(el) => {
-                        if (el && screenStream) {
-                          el.srcObject = screenStream;
-                          el.onloadedmetadata = () => {
-                            el.play().catch((e) =>
-                              console.warn("Error forcing play:", e)
-                            );
-                          };
-                        }
-                      }}
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-3">
-                      <span className="text-sm font-medium text-white">Your screen</span>
-                    </div>
-                  </div>
-                )}
-
-              {remoteScreenStreams.map(
-                ({
-                  stream,
-                  peerId,
-                  displayName: peerDisplayName,
-                  producerId,
-                }) => {
-                  if (
-                    !stream
-                      ?.getVideoTracks()
-                      .some(
-                        (track) => track.readyState === "live" && track.enabled
-                      )
-                  ) {
-                    return null;
-                  }
-
-                  return (
-                    <div 
-                      key={producerId || peerId}
-                      className="relative col-span-full aspect-video w-full overflow-hidden rounded-xl bg-black/90 shadow-lg"
-                    >
-                      <video
-                        autoPlay
-                        playsInline
-                        className="h-full w-full object-cover"
-                        ref={(el) => {
-                          if (el) {
-                            el.srcObject = stream;
-                            el.onloadedmetadata = () => {
-                              el.play().catch((e) =>
-                                console.warn(
-                                  `Error playing screen share for ${peerDisplayName}:`,
-                                  e
-                                )
-                              );
-                            };
-                          }
-                        }}
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-3">
-                        <span className="text-sm font-medium text-white">
-                          {`${peerDisplayName || "User"}'s screen`}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                }
-              )}
-            </div>
-
-            {/* Remote audios */}
+                );
+              }
+            )}
             {remoteAudios.map(({ stream, id, peerId, displayName }) => (
               <audio
                 key={id}
@@ -1513,8 +1493,15 @@ export default function CallPreviewPage() {
                 playsInline
                 ref={(el) => {
                   if (el) {
+                    console.log(
+                      `[Call] Setting audio stream for ${displayName || peerId}:`,
+                      stream
+                    );
                     el.srcObject = stream;
                     el.onloadedmetadata = () => {
+                      console.log(
+                        `[Call] Audio metadata loaded for ${displayName || peerId}`
+                      );
                       el.play().catch((e) =>
                         console.warn(
                           `Error playing audio for ${displayName || peerId}:`,
@@ -1527,31 +1514,25 @@ export default function CallPreviewPage() {
               />
             ))}
           </div>
-
-          {/* Controls */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/80 to-transparent px-4 pb-6 pt-12">
-            <div className="mx-auto flex max-w-screen-xl items-center justify-center gap-2">
-              <MediaControls
-                localStream={localStream}
-                joined={joined}
-                onHangup={handleHangup}
-                isScreenSharing={isScreenSharing}
-                onToggleScreenShare={handleToggleScreenShare}
-                onToggleCamera={toggleCamera}
-                onToggleMic={toggleMic}
-                isMicOn={isLocalMicOn}
-                onToggleChat={() => setIsChatOpen(!isChatOpen)}
-                onToggleParticipants={() =>
-                  setIsParticipantsSidebarOpen(!isParticipantsSidebarOpen)
-                }
-                onDeviceChange={handleDeviceChange}
-                videoDevices={videoDevices}
-                audioDevices={audioDevices}
-                selectedVideo={selectedVideo || ""}
-                selectedAudio={selectedAudio || ""}
-              />
-            </div>
-          </div>
+          <MediaControls
+            localStream={localStream}
+            joined={joined}
+            onHangup={handleHangup}
+            isScreenSharing={isScreenSharing}
+            onToggleScreenShare={handleToggleScreenShare}
+            onToggleCamera={toggleCamera}
+            onToggleMic={toggleMic}
+            isMicOn={isLocalMicOn}
+            onToggleChat={() => setIsChatOpen(!isChatOpen)}
+            onToggleParticipants={() =>
+              setIsParticipantsSidebarOpen(!isParticipantsSidebarOpen)
+            }
+            onDeviceChange={handleDeviceChange}
+            videoDevices={videoDevices}
+            audioDevices={audioDevices}
+            selectedVideo={selectedVideo || ""}
+            selectedAudio={selectedAudio || ""}
+          />
 
           <ChatSidebar
             open={isChatOpen}
@@ -1567,6 +1548,7 @@ export default function CallPreviewPage() {
             callId={callId}
             isCreator={isCreator}
             participants={[
+              // Add creator if we have their info
               ...(creatorInfo
                 ? [
                     {
@@ -1580,6 +1562,8 @@ export default function CallPreviewPage() {
                           : !peerAudioStatus[creatorInfo.creatorId]?.muted,
                       isCameraOn: (() => {
                         const isLocalCreator = creatorInfo.creatorId === userId;
+
+                        // Si es el creador local
                         if (isLocalCreator) {
                           return (
                             localStream
@@ -1587,17 +1571,22 @@ export default function CallPreviewPage() {
                               .some((track) => track.enabled) ?? false
                           );
                         }
+
+                        // Si es el creador remoto, buscar en los streams remotos
                         const remoteStreams = hookRemoteStreams.filter(
                           (stream) =>
                             stream.peerId === creatorInfo.creatorId &&
                             stream.kind === "video" &&
                             stream.source === "webcam"
                         );
+
+                        // Si encontramos algún stream de video del creador, significa que su cámara está activa
                         return remoteStreams.length > 0;
                       })(),
                     },
                   ]
                 : []),
+              // Add other peers (excluding creator)
               ...peers
                 .filter((peer) => peer.id !== creatorInfo?.creatorId)
                 .map((peer) => {
@@ -1626,7 +1615,7 @@ export default function CallPreviewPage() {
             ]}
             currentUserId={userId}
           />
-        </div>
+        </>
       )}
     </div>
   );
