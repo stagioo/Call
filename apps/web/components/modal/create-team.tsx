@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { useContacts } from "@/components/providers/contacts";
 import { useModal } from "@/hooks/use-modal";
 import { TEAMS_QUERY } from "@/lib/QUERIES";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@call/ui/components/dialog";
@@ -19,6 +18,7 @@ import { Input } from "@call/ui/components/input";
 import { LoadingButton } from "@call/ui/components/loading-button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -65,7 +65,9 @@ export const CreateTeam = () => {
     },
     onSuccess: (data) => {
       if (selectedContacts.length > 0) {
-        toast.success(`Team created with ${selectedContacts.length} member${selectedContacts.length !== 1 ? "s" : ""}`);
+        toast.success(
+          `Team created with ${selectedContacts.length} member${selectedContacts.length !== 1 ? "s" : ""}`
+        );
       } else {
         toast.success("Team created successfully");
       }
@@ -105,8 +107,11 @@ export const CreateTeam = () => {
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
       <DialogContent>
-        <DialogHeader>
+        <DialogHeader className="flex flex-col items-center">
           <DialogTitle>Create Team</DialogTitle>
+          <DialogDescription>
+            Create a new team with your contacts.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

@@ -273,16 +273,17 @@ interface RemoteStream {
 
 const recordCallParticipation = async (callId: string) => {
   try {
-
-            await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-participation`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ callId }),
-    });
-
+    await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-participation`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ callId }),
+      }
+    );
   } catch (error) {
     console.error("Error recording call participation:", error);
   }
@@ -323,10 +324,8 @@ export default function CallPreviewPage() {
     const fetchCreatorInfo = async () => {
       try {
         const response = await fetch(
-
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/creator`,
-          {   
-
+          {
             credentials: "include",
           }
         );
@@ -381,7 +380,7 @@ export default function CallPreviewPage() {
     setIsRequestingAccess(true);
     try {
       const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/request-join`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}/request-join`,
         {
           method: "POST",
           headers: {
@@ -944,15 +943,17 @@ export default function CallPreviewPage() {
     try {
       // Record that the user is leaving the call
 
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ callId }),
-      });
-
+      await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ callId }),
+        }
+      );
     } catch (error) {
       console.error("Failed to record call leave:", error);
       // Continue with hangup even if recording fails
@@ -1013,16 +1014,17 @@ export default function CallPreviewPage() {
       // Record that the user is leaving the call if they were joined
       if (joined) {
         try {
-
-          await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ callId }),
-          });
-
+          await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/record-leave`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({ callId }),
+            }
+          );
         } catch (error) {
           console.error("Failed to record call leave on cleanup:", error);
         }
@@ -1286,18 +1288,20 @@ export default function CallPreviewPage() {
               className="aspect-video w-full rounded-lg bg-black"
             />
 
-            {(isCreator || hasAccess) ? (
+            {isCreator || hasAccess ? (
               <Button onClick={handleJoin} disabled={!connected}>
                 Join Call
               </Button>
-            ) : !isCreator && (
-              <Button
-                onClick={handleRequestAccess}
-                disabled={!connected || isRequestingAccess}
-                variant="secondary"
-              >
-                {isRequestingAccess ? "Sending Request..." : "Request Access"}
-              </Button>
+            ) : (
+              !isCreator && (
+                <Button
+                  onClick={handleRequestAccess}
+                  disabled={!connected || isRequestingAccess}
+                  variant="secondary"
+                >
+                  {isRequestingAccess ? "Sending Request..." : "Request Access"}
+                </Button>
+              )
             )}
           </div>
         </>
@@ -1482,8 +1486,6 @@ export default function CallPreviewPage() {
                 );
               }
             )}
-
-            {/* Remote audios */}
             {remoteAudios.map(({ stream, id, peerId, displayName }) => (
               <audio
                 key={id}
