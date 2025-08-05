@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, useReducer, type ReactNode } from "react";
 import { useMediasoupClient } from "@/hooks/useMediasoupClient";
-import { useSession } from "@/hooks/useSession";
+import { useSession } from "@/components/providers/session";
+import { createContext, useContext, useReducer, type ReactNode } from "react";
 
 interface CallState {
   callId: string | null;
