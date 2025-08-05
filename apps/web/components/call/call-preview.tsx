@@ -8,7 +8,7 @@ import { useCallAccess } from "@/hooks/use-call-access";
 import { useCallJoin } from "@/hooks/use-call-join";
 
 export const CallPreview = () => {
-  const { state, mediasoup } = useCallContext();
+  const { state, dispatch, mediasoup } = useCallContext();
   const {
     videoDevices,
     audioDevices,
@@ -21,6 +21,7 @@ export const CallPreview = () => {
   const { handleJoin } = useCallJoin();
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Get stream with the selected devices for preview
   useEffect(() => {
     let active = true;
     const getStream = async () => {
@@ -33,14 +34,12 @@ export const CallPreview = () => {
         };
         const s = await navigator.mediaDevices.getUserMedia(constraints);
         if (active) {
-          // @ts-ignore - dispatch is available in context
-          state.dispatch({ type: "SET_PREVIEW_STREAM", payload: s });
+          dispatch({ type: "SET_PREVIEW_STREAM", payload: s });
         }
       } catch (err) {
         console.error("Error getting preview stream:", err);
         if (active) {
-          // @ts-ignore - dispatch is available in context
-          state.dispatch({ type: "SET_PREVIEW_STREAM", payload: null });
+          dispatch({ type: "SET_PREVIEW_STREAM", payload: null });
         }
       }
     };
@@ -48,8 +47,9 @@ export const CallPreview = () => {
     return () => {
       active = false;
     };
-  }, [selectedVideo, selectedAudio, state.joined]);
+  }, [selectedVideo, selectedAudio, state.joined, dispatch]);
 
+  // Assign stream to the preview video
   useEffect(() => {
     if (videoRef.current && state.previewStream) {
       videoRef.current.srcObject = state.previewStream;
