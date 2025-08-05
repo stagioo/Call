@@ -1,21 +1,23 @@
-import { useState } from "react";
-import { useContacts } from "@/components/providers/contacts";
+import { useSession } from "@/components/providers/session";
 import { useModal } from "@/hooks/use-modal";
+import { CALLS_QUERY } from "@/lib/QUERIES";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@call/ui/components/dialog";
 import { Input } from "@call/ui/components/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
-import { CALLS_QUERY } from "@/lib/QUERIES";
 import { LoadingButton } from "@call/ui/components/loading-button";
-import { toast } from "sonner";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import { ContactSelector } from "./contact-selector";
-import { useSession } from "@/components/providers/session";
 
 const formSchema = z.object({
   name: z.string().trim(),
@@ -24,7 +26,6 @@ const formSchema = z.object({
 export const StartCall = () => {
   const { isOpen, onClose, type } = useModal();
   const router = useRouter();
-  const { contacts, isLoading, error } = useContacts();
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const { user } = useSession();
 
@@ -32,7 +33,9 @@ export const StartCall = () => {
     mutationFn: CALLS_QUERY.createCall,
     onSuccess: (data) => {
       if (selectedContacts.length > 0) {
-        toast.success(`Invitations sent to ${selectedContacts.length} contact${selectedContacts.length !== 1 ? "s" : ""}`);
+        toast.success(
+          `Invitations sent to ${selectedContacts.length} contact${selectedContacts.length !== 1 ? "s" : ""}`
+        );
       }
       onClose();
       form.reset();
@@ -54,7 +57,8 @@ export const StartCall = () => {
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     const userName = user?.name || "User";
     createCall({
-      name: data.name && data.name.trim() !== "" ? data.name : `${userName}-call`,
+      name:
+        data.name && data.name.trim() !== "" ? data.name : `${userName}-call`,
       members: selectedContacts,
     });
   };
@@ -71,7 +75,13 @@ export const StartCall = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
-      <DialogContent className="max-w-md p-6 space-y-6">
+      <DialogContent className="max-w-md p-6">
+        <DialogHeader className="flex flex-col items-center">
+          <DialogTitle>Start Call</DialogTitle>
+          <DialogDescription>
+            Start a call with your contacts.
+          </DialogDescription>
+        </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Input
             {...form.register("name")}
@@ -88,7 +98,7 @@ export const StartCall = () => {
 
           <LoadingButton
             type="submit"
-            className="w-full h-12 text-lg font-medium"
+            className="h-12 w-full text-lg font-medium"
             loading={isPending}
             disabled={isPending}
           >
