@@ -23,10 +23,8 @@ function CallPageContent() {
     isMicOn,
   } = useCallMediaControls();
 
-  // Use the producers hook to handle existing and new producers
   useCallProducers();
 
-  // Set call ID from params
   useEffect(() => {
     const callId = params?.id as string;
     if (callId) {
@@ -34,7 +32,6 @@ function CallPageContent() {
     }
   }, [params?.id, dispatch]);
 
-  // Handle remote audio streams from hook
   useEffect(() => {
     const audioStreams = mediasoup.remoteStreams.filter(
       (stream) =>
