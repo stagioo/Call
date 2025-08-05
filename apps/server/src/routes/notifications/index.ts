@@ -33,6 +33,7 @@ notificationsRoutes.get("/", async (c) => {
         invitationStatus: callInvitations.status,
         inviterName: userTable.name,
         inviterEmail: userTable.email,
+        inviterProfilePictureUrl: userTable.image,
       })
       .from(notifications)
       .leftJoin(calls, eq(notifications.callId, calls.id))
