@@ -98,7 +98,7 @@ export const MediaControls = ({
               {isCameraOn ? (
                 <Icons.videoIcon className="size-5" />
               ) : (
-                <FiVideoOff className="size-5" />
+                <FiVideoOff className="fill-primary-red stroke-primary-red size-5 transition-all duration-300" />
               )}
             </button>
 
@@ -138,9 +138,9 @@ export const MediaControls = ({
           <ControlButton className="flex items-center">
             <button onClick={onToggleMic}>
               {isMicOn ? (
-                <Icons.micIcon className="size-5" fill="red" />
+                <Icons.micIcon className="size-5" />
               ) : (
-                <FiMicOff className="size-5" />
+                <FiMicOff className="fill-primary-red stroke-primary-red size-5 transition-all duration-300" />
               )}
             </button>
 
@@ -203,7 +203,7 @@ export const MediaControls = ({
 
           <ControlButton
             onClick={onHangup}
-            className="border-[#FF3E3E] bg-[#FF3E3E]"
+            className="border-primary-red bg-primary-red"
           >
             <FiPhoneOff className="size-5 fill-white" />
           </ControlButton>
