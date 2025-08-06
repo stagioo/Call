@@ -63,7 +63,7 @@ export const useCallAccess = () => {
 
   const handleRequestAccess = useCallback(async () => {
     if (!state.callId || !user.id) {
-      alert("You must be logged in to request access");
+    
       return;
     }
 
@@ -81,14 +81,14 @@ export const useCallAccess = () => {
       );
 
       if (response.ok) {
-        alert("Request sent! Please wait for the host to approve.");
+   
       } else {
         const data = await response.json();
         alert(data.error || "Failed to send request");
       }
     } catch (error) {
       console.error("Error requesting access:", error);
-      alert("Failed to send request");
+      
     } finally {
       dispatch({ type: "SET_REQUESTING_ACCESS", payload: false });
     }

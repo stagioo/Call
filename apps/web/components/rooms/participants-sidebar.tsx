@@ -106,7 +106,7 @@ export function ParticipantsSidebar({
       }
     } catch (error) {
       console.error("Error approving request:", error);
-      alert("Failed to approve request");
+
     } finally {
       setLoading(false);
     }
@@ -133,7 +133,7 @@ export function ParticipantsSidebar({
       }
     } catch (error) {
       console.error("Error rejecting request:", error);
-      alert("Failed to reject request");
+   
     } finally {
       setLoading(false);
     }

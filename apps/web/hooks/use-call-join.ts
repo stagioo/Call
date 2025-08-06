@@ -26,7 +26,7 @@ export const useCallJoin = () => {
 
   const handleJoin = useCallback(async () => {
     if (!state.callId || !mediasoup.connected) {
-      alert("Not connected to server");
+     
       return;
     }
 
@@ -38,7 +38,7 @@ export const useCallJoin = () => {
 
       const rtpCapabilities = joinRes.rtpCapabilities;
       if (!rtpCapabilities) {
-        alert("No RTP capabilities received from the router");
+   
         return;
       }
       dispatch({ type: "SET_PRODUCERS", payload: joinRes.producers || [] });
@@ -99,7 +99,7 @@ export const useCallJoin = () => {
           console.log(`[Call] Enabled ${track.kind} track:`, track.id);
         });
       } catch (err) {
-        alert("Error accessing camera/microphone. Check permissions.");
+        
         console.error("Error getUserMedia:", err);
         return;
       }
@@ -109,7 +109,7 @@ export const useCallJoin = () => {
       console.log("[Call] Production result:", myProducers);
 
       if (!myProducers || !myProducers.length) {
-        alert("Could not produce audio/video. Check console for more details.");
+  
         console.error("Empty producers:", myProducers);
         return;
       }
