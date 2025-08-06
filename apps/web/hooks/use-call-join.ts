@@ -77,9 +77,11 @@ export const useCallJoin = () => {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
 
         if (!stream || !stream.getTracks().length) {
+
           toast.error(
             "No audio/video tracks detected. Check permissions and devices."
           );
+
           console.error("Empty local stream:", stream);
           return;
         }
@@ -129,7 +131,7 @@ export const useCallJoin = () => {
       console.error("Error joining call:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      alert(`Failed to join call: ${errorMessage}`);
+      toast.error(`Failed to join call: ${errorMessage}`);
     }
   }, [state, mediasoup, dispatch]);
 

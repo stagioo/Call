@@ -102,7 +102,9 @@ export function ParticipantsSidebar({
         setJoinRequests(prev => prev.filter(req => req.userId !== userId));
       } else {
         const data = await response.json();
+
         toast.error(data.error || "Failed to approve request");
+
       }
     } catch (error) {
       console.error("Error approving request:", error);
@@ -129,7 +131,9 @@ export function ParticipantsSidebar({
         setJoinRequests(prev => prev.filter(req => req.userId !== userId));
       } else {
         const data = await response.json();
+
         toast.error(data.error || "Failed to reject request");
+
       }
     } catch (error) {
       console.error("Error rejecting request:", error);
