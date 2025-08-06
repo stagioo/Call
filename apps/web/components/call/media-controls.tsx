@@ -90,103 +90,106 @@ export const MediaControls = ({
       />
       <div className="z-10 z-50 flex flex-1 items-center justify-center">
         <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`relative h-12 w-12 rounded-full ${
-              isMicOn
-                ? "bg-gray-700 text-white hover:bg-gray-600"
-                : "bg-red-600 text-white hover:bg-red-700"
-            }`}
-            onClick={onToggleMic}
-          >
-            {isMicOn ? <FiMic size={20} /> : <FiMicOff size={20} />}
-          </Button>
+          <div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`relative h-12 w-12 rounded-full ${
+                isMicOn
+                  ? "bg-gray-700 text-white hover:bg-gray-600"
+                  : "bg-red-600 text-white hover:bg-red-700"
+              }`}
+              onClick={onToggleMic}
+            >
+              {isMicOn ? <FiMic size={20} /> : <FiMicOff size={20} />}
+            </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full bg-gray-700 text-white hover:bg-gray-600"
-              >
-                <FiChevronDown size={14} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="mb-2 w-56">
-              <div className="px-2 py-1 text-xs font-semibold text-gray-600">
-                Microphone
-              </div>
-              {audioDevices.map((device) => (
-                <DropdownMenuItem
-                  key={device.deviceId}
-                  onClick={() => handleDeviceChange("audio", device.deviceId)}
-                  className={`cursor-pointer ${
-                    selectedAudio === device.deviceId ? "bg-blue-50" : ""
-                  }`}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full bg-gray-700 text-white hover:bg-gray-600"
                 >
-                  <div className="flex w-full items-center justify-between">
-                    <span className="truncate">
-                      {device.label ||
-                        `Microphone (${device.deviceId.slice(0, 8)}...)`}
-                    </span>
-                    {selectedAudio === device.deviceId && (
-                      <div className="ml-2 h-2 w-2 rounded-full bg-blue-600"></div>
-                    )}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <FiChevronDown size={14} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="mb-2 w-56">
+                <div className="px-2 py-1 text-xs font-semibold text-gray-600">
+                  Microphone
+                </div>
+                {audioDevices.map((device) => (
+                  <DropdownMenuItem
+                    key={device.deviceId}
+                    onClick={() => handleDeviceChange("audio", device.deviceId)}
+                    className={`cursor-pointer ${
+                      selectedAudio === device.deviceId ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    <div className="flex w-full items-center justify-between">
+                      <span className="truncate">
+                        {device.label ||
+                          `Microphone (${device.deviceId.slice(0, 8)}...)`}
+                      </span>
+                      {selectedAudio === device.deviceId && (
+                        <div className="ml-2 h-2 w-2 rounded-full bg-blue-600"></div>
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`relative h-12 w-12 rounded-full ${
+                isCameraOn
+                  ? "bg-gray-700 text-white hover:bg-gray-600"
+                  : "bg-red-600 text-white hover:bg-red-700"
+              }`}
+              onClick={handleToggleCamera}
+            >
+              {isCameraOn ? <FiVideo size={20} /> : <FiVideoOff size={20} />}
+            </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`relative h-12 w-12 rounded-full ${
-              isCameraOn
-                ? "bg-gray-700 text-white hover:bg-gray-600"
-                : "bg-red-600 text-white hover:bg-red-700"
-            }`}
-            onClick={handleToggleCamera}
-          >
-            {isCameraOn ? <FiVideo size={20} /> : <FiVideoOff size={20} />}
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full bg-gray-700 text-white hover:bg-gray-600"
-              >
-                <FiChevronDown size={14} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="mb-2 w-56">
-              <div className="px-2 py-1 text-xs font-semibold text-gray-600">
-                Camera
-              </div>
-              {videoDevices.map((device) => (
-                <DropdownMenuItem
-                  key={device.deviceId}
-                  onClick={() => handleDeviceChange("video", device.deviceId)}
-                  className={`cursor-pointer ${
-                    selectedVideo === device.deviceId ? "bg-blue-50" : ""
-                  }`}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full bg-gray-700 text-white hover:bg-gray-600"
                 >
-                  <div className="flex w-full items-center justify-between">
-                    <span className="truncate">
-                      {device.label ||
-                        `Camera (${device.deviceId.slice(0, 8)}...)`}
-                    </span>
-                    {selectedVideo === device.deviceId && (
-                      <div className="ml-2 h-2 w-2 rounded-full bg-blue-600"></div>
-                    )}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <FiChevronDown size={14} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="mb-2 w-56">
+                <div className="px-2 py-1 text-xs font-semibold text-gray-600">
+                  Camera
+                </div>
+                {videoDevices.map((device) => (
+                  <DropdownMenuItem
+                    key={device.deviceId}
+                    onClick={() => handleDeviceChange("video", device.deviceId)}
+                    className={`cursor-pointer ${
+                      selectedVideo === device.deviceId ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    <div className="flex w-full items-center justify-between">
+                      <span className="truncate">
+                        {device.label ||
+                          `Camera (${device.deviceId.slice(0, 8)}...)`}
+                      </span>
+                      {selectedVideo === device.deviceId && (
+                        <div className="ml-2 h-2 w-2 rounded-full bg-blue-600"></div>
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           <Button
             variant="ghost"
