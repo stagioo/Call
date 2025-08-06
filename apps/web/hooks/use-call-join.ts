@@ -2,7 +2,7 @@
 
 import { useCallContext } from "@/contexts/call-context";
 import { useCallback } from "react";
-
+import { toast } from "sonner";
 export const useCallJoin = () => {
   const { state, dispatch, mediasoup } = useCallContext();
 
@@ -77,7 +77,7 @@ export const useCallJoin = () => {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
 
         if (!stream || !stream.getTracks().length) {
-          alert(
+          toast.error(
             "No audio/video tracks detected. Check permissions and devices."
           );
           console.error("Empty local stream:", stream);

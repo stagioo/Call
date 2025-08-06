@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback } from "react";
 import { useCallContext } from "@/contexts/call-context";
-
+import { toast } from "sonner";
 export const useCallAccess = () => {
   const {
     state,
@@ -84,7 +84,7 @@ export const useCallAccess = () => {
    
       } else {
         const data = await response.json();
-        alert(data.error || "Failed to send request");
+        toast.error(data.error || "Failed to send request");
       }
     } catch (error) {
       console.error("Error requesting access:", error);
