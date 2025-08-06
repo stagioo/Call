@@ -2,6 +2,10 @@ import { sendToDiscordWebhook } from "@/lib/discord";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { ReqVariables } from "@/index";
+import { config } from "dotenv";
+import { resolve } from "path";
+
+config({ path: resolve(process.cwd(), "../../.env") });
 
 const thoughtsRoutes = new Hono<{ Variables: ReqVariables }>();
 
