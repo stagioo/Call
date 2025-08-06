@@ -3,7 +3,8 @@
 import * as React from "react";
 import type { SVGProps } from "react";
 import { siteConfig } from "@/lib/site";
-import { WaitlistForm } from "./waitlist";
+import { Button } from "@call/ui/components/button";
+import Link from "next/link";
 import { Badge } from "@call/ui/components/badge";
 
 const Vercel = (props: SVGProps<SVGSVGElement>) => (
@@ -28,7 +29,14 @@ const HeroWithForm = () => {
       <h1 className="font-lora text-primary/80 max-w-lg text-center text-4xl font-bold">
         {siteConfig.description}
       </h1>
-      <WaitlistForm />
+      <p className="text-center text-muted-foreground max-w-lg">
+        We are in early development phase, but you can already access the platform and try its features.
+      </p>
+      <Button asChild size="lg" className="mt-4">
+        <Link href="/login">
+          Access Platform
+        </Link>
+      </Button>
     </div>
   );
 };

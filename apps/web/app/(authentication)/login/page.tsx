@@ -8,7 +8,7 @@ const Page = () => {
     <div className="flex h-screen w-screen items-center justify-center">
       <div className="flex flex-col items-center justify-center gap-6 w-full max-w-sm px-4">
         <Logo />
-        <div className="">
+        <div >
           <SocialButton />
         </div>
       </div>
