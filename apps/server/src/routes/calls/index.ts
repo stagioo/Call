@@ -12,6 +12,7 @@ import {
 } from "@call/db/schema";
 import { eq, inArray, desc, and, sql } from "drizzle-orm";
 import type { ReqVariables } from "../../index.js";
+import { sendMail } from '@call/auth/utils/send-mail';
 
 const callsRoutes = new Hono<{ Variables: ReqVariables }>();
 
@@ -133,6 +134,13 @@ callsRoutes.post("/create", async (c) => {
           createdAt: new Date(),
         });
         console.log(`✅ [CALLS DEBUG] Notification created for ${email}`);
+        
+        await sendMail({
+          to: email,
+          subject: "Invitation to join Call",
+          text: `Hello,\n\n${user.name || user.email} is inviting you to a call: ${name}\n\nJoin the call: ${process.env.FRONTEND_URL}/calls/${callId}`,
+        });
+        console.log(`✅ [CALLS DEBUG] Email sent to ${email}`);
       }
     }
     console.log("✅ [CALLS DEBUG] All invitations and notifications created");
