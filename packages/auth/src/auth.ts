@@ -36,21 +36,7 @@ export const auth = betterAuth({
   ],
 
   emailAndPassword: {
-    enabled: true,
-    autoSignIn: true,
-    minPasswordLength: 8,
-    maxPasswordLength: 100,
-    resetPasswordTokenExpiresIn: 600, // 10 minutes
-    sendResetPassword: async ({ user, url }) => {
-      const token = extractTokenFromUrl(url);
-      const frontendResetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-
-      await sendMail({
-        to: user.email,
-        subject: "Reset your password",
-        text: `Click the link to reset your password: ${frontendResetUrl}`,
-      });
-    },
+    enabled: false,
   },
 
   socialProviders: {
