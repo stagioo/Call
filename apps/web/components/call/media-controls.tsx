@@ -22,6 +22,9 @@ import {
   SIDEBAR_WIDTH_ICON,
   useSidebar,
 } from "@call/ui/components/sidebar";
+import { motion as m, type HTMLMotionProps } from "motion/react";
+import { cn } from "@call/ui/lib/utils";
+import { Icons } from "@call/ui/components/icons";
 
 interface MediaControlsProps {
   localStream: MediaStream | null;
@@ -89,80 +92,22 @@ export const MediaControls = ({
         }}
       />
       <div className="z-10 z-50 flex flex-1 items-center justify-center">
-        <div className="flex items-center justify-center gap-2">
-          <div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`relative h-12 w-12 rounded-full ${
-                isMicOn
-                  ? "bg-gray-700 text-white hover:bg-gray-600"
-                  : "bg-red-600 text-white hover:bg-red-700"
-              }`}
-              onClick={onToggleMic}
-            >
-              {isMicOn ? <FiMic size={20} /> : <FiMicOff size={20} />}
-            </Button>
+        <div className="flex items-center justify-center gap-2.5">
+          <ControlButton className="flex items-center">
+            <button onClick={handleToggleCamera}>
+              {isCameraOn ? (
+                <Icons.videoIcon className="size-5" />
+              ) : (
+                <FiVideoOff className="size-5" />
+              )}
+            </button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full bg-gray-700 text-white hover:bg-gray-600"
-                >
+                <button className="flex items-center gap-2.5">
+                  <span className="text-lg">Camera</span>
                   <FiChevronDown size={14} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="mb-2 w-56">
-                <div className="px-2 py-1 text-xs font-semibold text-gray-600">
-                  Microphone
-                </div>
-                {audioDevices.map((device) => (
-                  <DropdownMenuItem
-                    key={device.deviceId}
-                    onClick={() => handleDeviceChange("audio", device.deviceId)}
-                    className={`cursor-pointer ${
-                      selectedAudio === device.deviceId ? "bg-blue-50" : ""
-                    }`}
-                  >
-                    <div className="flex w-full items-center justify-between">
-                      <span className="truncate">
-                        {device.label ||
-                          `Microphone (${device.deviceId.slice(0, 8)}...)`}
-                      </span>
-                      {selectedAudio === device.deviceId && (
-                        <div className="ml-2 h-2 w-2 rounded-full bg-blue-600"></div>
-                      )}
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`relative h-12 w-12 rounded-full ${
-                isCameraOn
-                  ? "bg-gray-700 text-white hover:bg-gray-600"
-                  : "bg-red-600 text-white hover:bg-red-700"
-              }`}
-              onClick={handleToggleCamera}
-            >
-              {isCameraOn ? <FiVideo size={20} /> : <FiVideoOff size={20} />}
-            </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full bg-gray-700 text-white hover:bg-gray-600"
-                >
-                  <FiChevronDown size={14} />
-                </Button>
+                </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="mb-2 w-56">
                 <div className="px-2 py-1 text-xs font-semibold text-gray-600">
@@ -189,50 +134,96 @@ export const MediaControls = ({
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          </ControlButton>
+          <ControlButton className="flex items-center">
+            <button onClick={onToggleMic}>
+              {isMicOn ? (
+                <Icons.micIcon className="size-5" fill="red" />
+              ) : (
+                <FiMicOff className="size-5" />
+              )}
+            </button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`h-12 w-12 rounded-full ${
-              isScreenSharing
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-gray-700 text-white hover:bg-gray-600"
-            }`}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2.5">
+                  <span className="text-lg">Microphone</span>
+                  <FiChevronDown size={14} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="mb-2 w-56">
+                <div className="px-2 py-1 text-xs font-semibold text-gray-600">
+                  Microphone
+                </div>
+                {audioDevices.map((device) => (
+                  <DropdownMenuItem
+                    key={device.deviceId}
+                    onClick={() => handleDeviceChange("audio", device.deviceId)}
+                    className={`cursor-pointer ${
+                      selectedAudio === device.deviceId ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    <div className="flex w-full items-center justify-between">
+                      <span className="truncate">
+                        {device.label ||
+                          `Microphone (${device.deviceId.slice(0, 8)}...)`}
+                      </span>
+                      {selectedAudio === device.deviceId && (
+                        <div className="ml-2 h-2 w-2 rounded-full bg-blue-600"></div>
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </ControlButton>
+
+          <ControlButton
+            className={cn(
+              isScreenSharing &&
+                "border-primary-blue bg-primary-blue hover:bg-primary-blue"
+            )}
             onClick={onToggleScreenShare}
           >
-            <FiMonitor size={20} />
-          </Button>
+            <FiMonitor
+              className={cn(
+                "fill-primary-icon stroke-primary-icon size-5 transition-all duration-300",
+                isScreenSharing && "fill-white stroke-white"
+              )}
+            />
+          </ControlButton>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative h-12 w-12 rounded-full bg-gray-700 text-white hover:bg-gray-600"
-            onClick={onToggleParticipants}
-          >
-            <FiUsers size={20} />
-          </Button>
+          <ControlButton onClick={onToggleParticipants}>
+            <Icons.users className="size-5 fill-[#929292]" />
+          </ControlButton>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative h-12 w-12 rounded-full bg-gray-700 text-white hover:bg-gray-600"
-            onClick={onToggleChat}
-          >
-            <FiMessageCircle size={20} />
-          </Button>
+          <ControlButton onClick={onToggleChat}>
+            <Icons.messageIcon className="size-5" />
+          </ControlButton>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative h-12 w-12 rounded-full bg-red-600 text-white hover:bg-red-700"
+          <ControlButton
             onClick={onHangup}
+            className="border-[#FF3E3E] bg-[#FF3E3E]"
           >
-            <FiPhoneOff size={20} />
-          </Button>
+            <FiPhoneOff className="size-5 fill-white" />
+          </ControlButton>
         </div>
       </div>
     </div>
+  );
+};
+
+const ControlButton = (props: HTMLMotionProps<"div">) => {
+  const { className, ...rest } = props;
+  return (
+    <m.div
+      className={cn(
+        "bg-inset-accent flex min-h-[46px] min-w-[58px] cursor-pointer items-center justify-center gap-2.5 rounded-3xl border px-4 py-2.5",
+        className
+      )}
+      {...rest}
+      whileTap={{ scale: 0.98 }}
+    />
   );
 };
 
