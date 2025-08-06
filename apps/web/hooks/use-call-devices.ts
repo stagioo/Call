@@ -2,7 +2,7 @@
 
 import { useCallContext } from "@/contexts/call-context";
 import { useCallback, useEffect } from "react";
-
+import { toast } from "sonner";
 export const useCallDevices = () => {
   const { state, dispatch, mediasoup } = useCallContext();
 
@@ -92,7 +92,7 @@ export const useCallDevices = () => {
         mediasoup.setLocalStream(mediasoup.localStream);
       } catch (error) {
         console.error(`[Call] Error switching ${type} device:`, error);
-        alert(`Failed to switch ${type} device. Please try again.`);
+        toast.error(`Failed to switch ${type} device. Please try again.`);
       }
     },
     [

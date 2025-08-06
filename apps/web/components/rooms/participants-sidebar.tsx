@@ -18,7 +18,7 @@ import {
   FiStar,
   FiClock
 } from "react-icons/fi";
-
+import { toast } from "sonner";
 interface Participant {
   id: string;
   displayName: string;
@@ -102,11 +102,13 @@ export function ParticipantsSidebar({
         setJoinRequests(prev => prev.filter(req => req.userId !== userId));
       } else {
         const data = await response.json();
-        alert(data.error || "Failed to approve request");
+
+        toast.error(data.error || "Failed to approve request");
+
       }
     } catch (error) {
       console.error("Error approving request:", error);
-      alert("Failed to approve request");
+
     } finally {
       setLoading(false);
     }
@@ -129,11 +131,13 @@ export function ParticipantsSidebar({
         setJoinRequests(prev => prev.filter(req => req.userId !== userId));
       } else {
         const data = await response.json();
-        alert(data.error || "Failed to reject request");
+
+        toast.error(data.error || "Failed to reject request");
+
       }
     } catch (error) {
       console.error("Error rejecting request:", error);
-      alert("Failed to reject request");
+   
     } finally {
       setLoading(false);
     }

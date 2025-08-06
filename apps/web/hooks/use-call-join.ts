@@ -2,7 +2,7 @@
 
 import { useCallContext } from "@/contexts/call-context";
 import { useCallback } from "react";
-
+import { toast } from "sonner";
 export const useCallJoin = () => {
   const { state, dispatch, mediasoup } = useCallContext();
 
@@ -26,7 +26,7 @@ export const useCallJoin = () => {
 
   const handleJoin = useCallback(async () => {
     if (!state.callId || !mediasoup.connected) {
-      alert("Not connected to server");
+     
       return;
     }
 
@@ -38,7 +38,7 @@ export const useCallJoin = () => {
 
       const rtpCapabilities = joinRes.rtpCapabilities;
       if (!rtpCapabilities) {
-        alert("No RTP capabilities received from the router");
+   
         return;
       }
       dispatch({ type: "SET_PRODUCERS", payload: joinRes.producers || [] });
@@ -77,9 +77,11 @@ export const useCallJoin = () => {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
 
         if (!stream || !stream.getTracks().length) {
-          alert(
+
+          toast.error(
             "No audio/video tracks detected. Check permissions and devices."
           );
+
           console.error("Empty local stream:", stream);
           return;
         }
@@ -99,7 +101,7 @@ export const useCallJoin = () => {
           console.log(`[Call] Enabled ${track.kind} track:`, track.id);
         });
       } catch (err) {
-        alert("Error accessing camera/microphone. Check permissions.");
+        
         console.error("Error getUserMedia:", err);
         return;
       }
@@ -109,7 +111,7 @@ export const useCallJoin = () => {
       console.log("[Call] Production result:", myProducers);
 
       if (!myProducers || !myProducers.length) {
-        alert("Could not produce audio/video. Check console for more details.");
+  
         console.error("Empty producers:", myProducers);
         return;
       }
@@ -129,7 +131,7 @@ export const useCallJoin = () => {
       console.error("Error joining call:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      alert(`Failed to join call: ${errorMessage}`);
+      toast.error(`Failed to join call: ${errorMessage}`);
     }
   }, [state, mediasoup, dispatch]);
 
