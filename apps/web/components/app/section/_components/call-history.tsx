@@ -2,6 +2,7 @@
 
 import { useSession } from "@/components/providers/session";
 import { useModal } from "@/hooks/use-modal";
+
 import { CALLS_QUERY } from "@/lib/QUERIES";
 import type { Call } from "@/lib/types";
 import { formatCallDuration, formatCustomDate } from "@/lib/utils";
@@ -184,9 +185,22 @@ const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
       console.error("Failed to hide call:", error);
     }
   };
-
+  const { onOpen } = useModal();
   const handleViewUsers = () => {
-    console.log("View users clicked", call.participants);
+    onOpen("view-participants", {
+      participants: call.participants.map((p) => ({
+        id: p.id,
+        name: p.name,
+        email: p.email,
+        image: p.image ?? undefined,
+        joinedAt: p.joinedAt ?? undefined,
+        leftAt: p.leftAt ?? undefined,
+      })),
+      callInfo: {
+        id: call.id,
+        name: call.name,
+      },
+    });
   };
 
   return (
