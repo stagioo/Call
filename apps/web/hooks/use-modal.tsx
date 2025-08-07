@@ -10,15 +10,6 @@ type ModalType =
   | "add-member-to-team"
   | "view-participants";
 
-// interface Participant {
-//   id: string;
-//   name: string;
-//   email: string;
-//   image?: string;
-//   joinedAt?: Date | string;
-//   leftAt?: Date | string;
-// }
-
 interface CallInfo {
   id: string;
   name: string;
