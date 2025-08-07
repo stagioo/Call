@@ -1,31 +1,19 @@
-import { Button } from "@call/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@call/ui/components/dropdown-menu";
-import { useEffect, useState } from "react";
-import {
-  FiChevronDown,
-  FiMessageCircle,
-  FiMic,
-  FiMicOff,
-  FiMonitor,
-  FiPhoneOff,
-  FiUsers,
-  FiVideo,
-  FiVideoOff,
-} from "react-icons/fi";
+import { Icons } from "@call/ui/components/icons";
 import {
   SIDEBAR_WIDTH,
   SIDEBAR_WIDTH_ICON,
   useSidebar,
 } from "@call/ui/components/sidebar";
-import { motion as m, type HTMLMotionProps } from "motion/react";
 import { cn } from "@call/ui/lib/utils";
-import { Icons } from "@call/ui/components/icons";
-import { Icon } from "lucide-react";
+import { motion as m, type HTMLMotionProps } from "motion/react";
+import { useEffect, useState } from "react";
+import { FiChevronDown, FiMonitor, FiVideoOff } from "react-icons/fi";
 
 interface MediaControlsProps {
   localStream: MediaStream | null;
