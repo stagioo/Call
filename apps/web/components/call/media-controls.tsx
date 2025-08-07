@@ -25,6 +25,7 @@ import {
 import { motion as m, type HTMLMotionProps } from "motion/react";
 import { cn } from "@call/ui/lib/utils";
 import { Icons } from "@call/ui/components/icons";
+import { Icon } from "lucide-react";
 
 interface MediaControlsProps {
   localStream: MediaStream | null;
@@ -93,7 +94,11 @@ export const MediaControls = ({
       />
       <div className="z-10 z-50 flex flex-1 items-center justify-center">
         <div className="flex items-center justify-center gap-2.5">
-          <ControlButton className="flex items-center">
+          <ControlButton
+            className={cn(
+              !isCameraOn && "bg-primary-red/10 border-primary-red/10"
+            )}
+          >
             <button onClick={handleToggleCamera}>
               {isCameraOn ? (
                 <Icons.videoIcon className="size-5" />
@@ -135,12 +140,16 @@ export const MediaControls = ({
               </DropdownMenuContent>
             </DropdownMenu>
           </ControlButton>
-          <ControlButton className="flex items-center">
+          <ControlButton
+            className={cn(
+              !isMicOn && "bg-primary-red/10 border-primary-red/10"
+            )}
+          >
             <button onClick={onToggleMic}>
               {isMicOn ? (
                 <Icons.micIcon className="size-5" />
               ) : (
-                <FiMicOff className="fill-primary-red stroke-primary-red size-5 transition-all duration-300" />
+                <Icons.micOffIcon className="size-5" fill="fill-primary-red" />
               )}
             </button>
 
@@ -194,7 +203,7 @@ export const MediaControls = ({
           </ControlButton>
 
           <ControlButton onClick={onToggleParticipants}>
-            <Icons.users className="size-5 fill-[#929292]" />
+            <Icons.users className="fill-primary-icon size-5 transition-all duration-300" />
           </ControlButton>
 
           <ControlButton onClick={onToggleChat}>
@@ -205,7 +214,7 @@ export const MediaControls = ({
             onClick={onHangup}
             className="border-primary-red bg-primary-red"
           >
-            <FiPhoneOff className="size-5 fill-white" />
+            <Icons.phoneIcon className="size-5" fill="fill-white" />
           </ControlButton>
         </div>
       </div>
