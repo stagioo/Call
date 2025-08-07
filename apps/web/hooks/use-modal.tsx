@@ -7,10 +7,27 @@ type ModalType =
   | "start-call"
   | "create-contact"
   | "thoughts"
-  | "add-member-to-team";
+  | "add-member-to-team"
+  | "view-participants";
+
+interface Participant {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
+  joinedAt?: Date | string;
+  leftAt?: Date | string;
+}
+
+interface CallInfo {
+  id: string;
+  name: string;
+}
 
 interface ModalData {
   team?: Team;
+  participants?: Participant[];
+  callInfo?: CallInfo;
 }
 
 interface ModalStore {

@@ -2,6 +2,7 @@
 
 import { useSession } from "@/components/providers/session";
 import { useModal } from "@/hooks/use-modal";
+
 import { CALLS_QUERY } from "@/lib/QUERIES";
 import type { Call } from "@/lib/types";
 import { formatCallDuration, formatCustomDate } from "@/lib/utils";
@@ -184,9 +185,62 @@ const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
       console.error("Failed to hide call:", error);
     }
   };
-
+  const { onOpen } = useModal();
   const handleViewUsers = () => {
     console.log("View users clicked", call.participants);
+    const response = call.participants;
+    try {
+      if (response) {
+        const data = response;
+
+        onOpen("view-participants", {
+          participants: call.participants.map((p) => ({
+            id: p.id,
+            name: p.name,
+            email: p.email,
+            image: p.image,
+            joinedAt: call.joinedAt,
+            leftAt: call.leftAt ?? undefined,
+          })),
+          callInfo: {
+            id: call.id,
+            name: call.name,
+          },
+        });
+      } else {
+        console.warn("Failed to fetch latest participants, using cached data");
+        onOpen("view-participants", {
+          participants: call.participants.map((p) => ({
+            id: p.id,
+            name: p.name,
+            email: p.email,
+            image: p.image,
+            joinedAt: call.joinedAt,
+            leftAt: call.leftAt ?? undefined,
+          })),
+          callInfo: {
+            id: call.id,
+            name: call.name,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+      onOpen("view-participants", {
+        participants: call.participants.map((p) => ({
+          id: p.id,
+          name: p.name,
+          email: p.email,
+          image: p.image,
+          joinedAt: call.joinedAt,
+          leftAt: call.leftAt ?? undefined,
+        })),
+        callInfo: {
+          id: call.id,
+          name: call.name,
+        },
+      });
+    }
   };
 
   return (
