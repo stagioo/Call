@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { CallProvider, useCallContext } from "@/contexts/call-context";
 import { CallPreview } from "@/components/call/call-preview";
 import { CallVideoGrid } from "@/components/call/call-video-grid";
@@ -10,6 +10,15 @@ import { ChatSidebar } from "@/components/rooms/chat-sidebar";
 import { ParticipantsSidebar } from "@/components/rooms/participants-sidebar";
 import { useCallMediaControls } from "@/hooks/use-call-media-controls";
 import { useCallProducers } from "@/hooks/use-call-producers";
+import { useNotificationSound } from "@/hooks/use-notification-sound";
+
+interface JoinRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  timestamp: Date;
+}
 
 function CallPageContent() {
   const params = useParams();
@@ -22,8 +31,13 @@ function CallPageContent() {
     isScreenSharing,
     isMicOn,
   } = useCallMediaControls();
+  const { playNotificationSound } = useNotificationSound();
 
   useCallProducers();
+
+  // Track previous join requests to detect new ones
+  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
+  const previousJoinRequestsRef = useRef<JoinRequest[]>([]);
 
   useEffect(() => {
     const callId = params?.id as string;
@@ -49,6 +63,47 @@ function CallPageContent() {
       })),
     });
   }, [mediasoup.remoteStreams, dispatch]);
+
+  useEffect(() => {
+    if (!state.isCreator || !state.joined || !state.callId) return;
+
+    const fetchJoinRequests = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${state.callId}/join-requests`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const newJoinRequests = data.requests || [];
+
+          const previousIds = new Set(
+            previousJoinRequestsRef.current.map((req: JoinRequest) => req.id)
+          );
+          const newRequests = newJoinRequests.filter(
+            (req: JoinRequest) => !previousIds.has(req.id)
+          );
+
+          if (newRequests.length > 0) {
+            playNotificationSound();
+          }
+
+          previousJoinRequestsRef.current = newJoinRequests;
+          setJoinRequests(newJoinRequests);
+        }
+      } catch (error) {
+        console.error("Error fetching join requests:", error);
+      }
+    };
+
+    fetchJoinRequests();
+
+    const interval = setInterval(fetchJoinRequests, 5000);
+    return () => clearInterval(interval);
+  }, [state.isCreator, state.joined, state.callId, playNotificationSound]);
 
   return (
     <div className="flex min-h-[calc(100vh-5.5rem)] flex-col items-center justify-center">
