@@ -72,5 +72,5 @@ export interface Participant {
   email: string;
   image?: string | undefined;
   joinedAt?: string | undefined;
-  leftAt?: string | null | undefined;
+  leftAt?: string | undefined;
 }

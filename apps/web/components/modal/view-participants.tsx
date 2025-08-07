@@ -38,7 +38,7 @@ export const ViewParticipants = () => {
         <ScrollArea className="max-h-[500px] pr-4">
           <div className="space-y-4">
             {participants.length > 0 ? (
-              participants.map((participant: any, index: number) => (
+              participants.map((participant, index: number) => (
                 <div
                   key={participant.id || index}
                   className="hover:bg-muted/50 flex items-center gap-4 rounded-lg border p-3 transition-colors"

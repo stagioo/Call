@@ -187,60 +187,20 @@ const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
   };
   const { onOpen } = useModal();
   const handleViewUsers = () => {
-    console.log("View users clicked", call.participants);
-    const response = call.participants;
-    try {
-      if (response) {
-        const data = response;
-
-        onOpen("view-participants", {
-          participants: call.participants.map((p) => ({
-            id: p.id,
-            name: p.name,
-            email: p.email,
-            image: p.image,
-            joinedAt: call.joinedAt,
-            leftAt: call.leftAt ?? undefined,
-          })),
-          callInfo: {
-            id: call.id,
-            name: call.name,
-          },
-        });
-      } else {
-        console.warn("Failed to fetch latest participants, using cached data");
-        onOpen("view-participants", {
-          participants: call.participants.map((p) => ({
-            id: p.id,
-            name: p.name,
-            email: p.email,
-            image: p.image,
-            joinedAt: call.joinedAt,
-            leftAt: call.leftAt ?? undefined,
-          })),
-          callInfo: {
-            id: call.id,
-            name: call.name,
-          },
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching participants:", error);
-      onOpen("view-participants", {
-        participants: call.participants.map((p) => ({
-          id: p.id,
-          name: p.name,
-          email: p.email,
-          image: p.image,
-          joinedAt: call.joinedAt,
-          leftAt: call.leftAt ?? undefined,
-        })),
-        callInfo: {
-          id: call.id,
-          name: call.name,
-        },
-      });
-    }
+    onOpen("view-participants", {
+      participants: call.participants.map((p) => ({
+        id: p.id,
+        name: p.name,
+        email: p.email,
+        image: p.image ?? undefined,
+        joinedAt: p.joinedAt ?? undefined,
+        leftAt: p.leftAt ?? undefined,
+      })),
+      callInfo: {
+        id: call.id,
+        name: call.name,
+      },
+    });
   };
 
   return (

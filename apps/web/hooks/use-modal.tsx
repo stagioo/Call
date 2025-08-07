@@ -1,4 +1,4 @@
-import type { Team } from "@/lib/types";
+import type { Team, Participant } from "@/lib/types";
 import { create } from "zustand";
 
 type ModalType =
@@ -10,14 +10,14 @@ type ModalType =
   | "add-member-to-team"
   | "view-participants";
 
-interface Participant {
-  id: string;
-  name: string;
-  email: string;
-  image?: string;
-  joinedAt?: Date | string;
-  leftAt?: Date | string;
-}
+// interface Participant {
+//   id: string;
+//   name: string;
+//   email: string;
+//   image?: string;
+//   joinedAt?: Date | string;
+//   leftAt?: Date | string;
+// }
 
 interface CallInfo {
   id: string;
