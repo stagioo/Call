@@ -1,7 +1,7 @@
 "use client";
 
 import { authClient } from "@call/auth/auth-client";
-import { Button } from "@call/ui/components/button";
+import { LoadingButton } from "@call/ui/components/loading-button";
 import { Icons } from "@call/ui/components/icons";
 import { useCallback, useMemo, useState } from "react";
 
@@ -30,7 +30,8 @@ const SocialButton = () => {
   }, [isSigningIn, callbackUrl]);
 
   return (
-    <Button
+    <LoadingButton
+      loading={isLoading}
       onClick={handleGoogleLogin}
       variant="outline"
       size="lg"
