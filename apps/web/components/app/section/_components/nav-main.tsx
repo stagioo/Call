@@ -7,6 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@call/ui/components/sidebar";
 import type { JSX } from "react";
 import { useModal } from "@/hooks/use-modal";
@@ -28,6 +29,8 @@ export function NavMain({
   onSelect?: (title: string) => void;
 }) {
   const { onOpen } = useModal();
+  const { state } = useSidebar();
+  const isExpanded = state === "expanded";
 
   return (
     <SidebarGroup>
@@ -40,7 +43,7 @@ export function NavMain({
             className="flex items-center justify-center gap-2"
           >
             <Icons.plus className="size-4" />
-            <span>Start Call</span>
+            {isExpanded && <span>Start Call</span>}
           </SidebarMenuButton>
         </SidebarMenuItem>
         {items.map((item) => (
