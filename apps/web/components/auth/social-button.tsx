@@ -3,35 +3,45 @@
 import { authClient } from "@call/auth/auth-client";
 import { LoadingButton } from "@call/ui/components/loading-button";
 import { Icons } from "@call/ui/components/icons";
-import { useState } from "react";
-import { toast } from "sonner";
+import { useCallback, useMemo, useState } from "react";
 
 const SocialButton = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const handleGoogleLogin = async () => {
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
+  const callbackUrl = useMemo(() => {
+    
+    return (
+      process.env.NEXT_PUBLIC_CALLBACK_URL ||
+      (typeof window !== "undefined" ? `${window.location.origin}/app` : undefined)
+    );
+  }, []);
+
+  const handleGoogleLogin = useCallback(async () => {
+    if (isSigningIn) return; 
     try {
-      setIsLoading(true);
+      setIsSigningIn(true);
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: process.env.NEXT_PUBLIC_CALLBACK_URL,
+        callbackURL: callbackUrl,
       });
-    } catch (error) {
-      toast.error("Failed to sign in with Google");
     } finally {
-      setIsLoading(false);
+      setIsSigningIn(false);
     }
-  };
+  }, [isSigningIn, callbackUrl]);
 
   return (
     <LoadingButton
       loading={isLoading}
       onClick={handleGoogleLogin}
-      className="px-10"
-      disabled={isLoading}
+      variant="outline"
+      size="lg"
+      className="px-10!"
+      disabled={isSigningIn}
+      aria-busy={isSigningIn}
     >
       <Icons.google className="h-4 w-4" />
-      Continue with Google
-    </LoadingButton>
+      {isSigningIn ? "Signing in..." : "Continue with Google"}
+    </Button>
   );
 };
 
