@@ -26,7 +26,7 @@ export const CALLS_QUERY = {
     if (res.status === 200) {
       return res.data;
     }
-    throw new Error("Failed to fetch calls");
+    throw new Error("Failed to create call");
   },
   getCalls: async () => {
     const res = await apiClient.get("/calls/participated");

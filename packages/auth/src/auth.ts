@@ -57,6 +57,9 @@ export const auth = betterAuth({
       domain: "joincall.co",
     },
   },
+  verification: {
+    disableCleanup: true,
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;

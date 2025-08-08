@@ -135,12 +135,18 @@ callsRoutes.post("/create", async (c) => {
         });
         console.log(`✅ [CALLS DEBUG] Notification created for ${email}`);
         
-        await sendMail({
-          to: email,
-          subject: "Invitation to join Call",
-          text: `Hello,\n\n${user.name || user.email} is inviting you to a call: ${name}\n\nJoin the call: ${process.env.FRONTEND_URL}/calls/${callId}`,
-        });
-        console.log(`✅ [CALLS DEBUG] Email sent to ${email}`);
+        // Try sending email, but do not fail the whole request if it errors
+        try {
+          await sendMail({
+            to: email,
+            subject: "Invitation to join Call",
+            text: `Hello,\n\n${user.name || user.email} is inviting you to a call: ${name}\n\nJoin the call: ${process.env.FRONTEND_URL}/calls/${callId}`,
+          });
+          console.log(`✅ [CALLS DEBUG] Email sent to ${email}`);
+        } catch (emailError) {
+          console.error(`⚠️ [CALLS DEBUG] Failed to send email to ${email}:`, emailError);
+          // Continue without throwing so the call creation succeeds
+        }
       }
     }
     console.log("✅ [CALLS DEBUG] All invitations and notifications created");
