@@ -19,7 +19,7 @@ import { Input } from "@call/ui/components/input";
 import { iconvVariants, UserProfile } from "@call/ui/components/use-profile";
 import { cn } from "@call/ui/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, Phone, Trash, Users, X } from "lucide-react";
+import { MoreVertical, Trash, Users, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 type FilterType = "all" | "my-calls" | "shared-with-me";
