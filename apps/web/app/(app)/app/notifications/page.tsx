@@ -7,6 +7,7 @@ import { cn } from "@call/ui/lib/utils";
 import { motion as m } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
+import { CloseSidebarButton } from "@/components/app/section/_components/close-sidebar-button";
 
 const SECTIONS = [
   { key: "all", label: "All notifications" },
@@ -40,6 +41,7 @@ export default function NotificationsPage() {
     <div className="flex flex-col gap-[22px]">
       <Header className="justify-between">
         <div className="flex items-center gap-2">
+          <CloseSidebarButton className="-ml-8" />
           {SECTIONS.map((s) => (
             <m.button
               key={s.key}
@@ -65,4 +67,4 @@ export default function NotificationsPage() {
       <NotificationSection section={sectionKey} />
     </div>
   );
-} 
+}
