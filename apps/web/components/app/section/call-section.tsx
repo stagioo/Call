@@ -14,7 +14,7 @@ const CallSection = ({ section }: CallSectionProps) => {
   };
 
   return (
-    <div className="px-10">{Sections[section as keyof typeof Sections]}</div>
+    <div className="px-10 h-full w-full flex items-center justify-center">{Sections[section as keyof typeof Sections]}</div>
   );
 };
 
