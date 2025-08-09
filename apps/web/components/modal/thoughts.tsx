@@ -3,6 +3,7 @@ import { THOUGHTS_QUERY } from "@/lib/QUERIES";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@call/ui/components/dialog";
@@ -74,8 +75,12 @@ export const Thoughts = () => {
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Thoughts?</DialogTitle>
+        <DialogHeader className="flex flex-col items-center justify-center gap-2">
+          <DialogTitle className="text-2xl font-bold">Thoughts?</DialogTitle>
+          <DialogDescription className="text-center">
+            We&apos;re always looking for ways to improve. Let us know what you
+            think.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

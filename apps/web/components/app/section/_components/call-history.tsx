@@ -3,24 +3,24 @@
 import { useSession } from "@/components/providers/session";
 import { useModal } from "@/hooks/use-modal";
 
+import { Skeletons } from "@/components/skeletons";
 import { CALLS_QUERY } from "@/lib/QUERIES";
 import type { Call } from "@/lib/types";
 import { formatCallDuration, formatCustomDate } from "@/lib/utils";
 import { Button } from "@call/ui/components/button";
-import { Icons } from "@call/ui/components/icons";
-import { Input } from "@call/ui/components/input";
-import { iconvVariants, UserProfile } from "@call/ui/components/use-profile";
-import { cn } from "@call/ui/lib/utils";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, X, Loader2, Phone, Trash, Users } from "lucide-react";
-import { useMemo, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@call/ui/components/dropdown-menu";
-import { Skeletons } from "@/components/skeletons";
+import { Icons } from "@call/ui/components/icons";
+import { Input } from "@call/ui/components/input";
+import { iconvVariants, UserProfile } from "@call/ui/components/use-profile";
+import { cn } from "@call/ui/lib/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { MoreVertical, Trash, Users, X } from "lucide-react";
+import { useMemo, useState } from "react";
 
 type FilterType = "all" | "my-calls" | "shared-with-me";
 
@@ -38,20 +38,17 @@ export function CallHistory() {
     queryFn: () => CALLS_QUERY.getCalls(),
   });
 
-  // Memoized filtered calls
   const filteredCalls = useMemo(() => {
     if (!calls) return [];
 
     let filtered = [...calls];
 
-    // Apply filter
     if (activeFilter === "my-calls") {
       filtered = filtered.filter((call) => call.creatorId === user.id);
     } else if (activeFilter === "shared-with-me") {
       filtered = filtered.filter((call) => call.creatorId !== user.id);
     }
 
-    // Apply search
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter((call) => {
@@ -75,7 +72,25 @@ export function CallHistory() {
   };
 
   if (isLoading) {
-    return <Skeletons.callHistory />;
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="relative w-full max-w-md">
+          <Input
+            type="text"
+            placeholder="Search by call name or participant..."
+            disabled
+            className="focus:ring-primary/20 h-11 rounded-lg border py-2.5 pl-10 pr-10 text-sm focus:outline-none focus:ring-2"
+          />
+          <Icons.search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50" />
+        </div>
+
+        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 12 }).map((_, index) => (
+            <Skeletons.callHistory key={index} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (isError) {
@@ -84,7 +99,7 @@ export function CallHistory() {
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-center">
             <div className="rounded-full bg-red-50 p-3">
-              <Phone className="h-8 w-8 text-red-500" />
+              <Icons.phoneIcon className="size-8 text-red-500" />
             </div>
             <p className="text-sm text-red-500">Failed to load call history</p>
             <Button
@@ -131,12 +146,11 @@ export function CallHistory() {
           </div>
         ) : null}
 
-        {/* No results message */}
         {hasCallHistory && !hasSearchResults && (
           <div className="flex h-64 flex-col items-center justify-center text-center">
             <div className="flex flex-col items-center gap-4">
               <div className="bg-muted/50 rounded-full p-4">
-                <Phone className="text-muted-foreground h-8 w-8" />
+                <Icons.phoneIcon className="text-muted-foreground size-8" />
               </div>
               <h3 className="text-lg font-medium">No calls found</h3>
               <p className="text-muted-foreground max-w-sm">
