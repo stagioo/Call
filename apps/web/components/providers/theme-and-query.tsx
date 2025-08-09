@@ -14,8 +14,8 @@ export function ThemeAndQueryProviders({
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="system"
-      enableSystem
+      defaultTheme="dark"
+      enableSystem={false}
       disableTransitionOnChange
       enableColorScheme
     >
