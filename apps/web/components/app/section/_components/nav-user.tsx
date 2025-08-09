@@ -45,6 +45,17 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
+
+  function getInitials(name?: string) {
+    if (!name) return "";
+    return name
+      .trim()
+      .split(/\s+/)
+      .map((word) => word[0]?.toUpperCase())
+      .join("")
+      .slice(0, 2);
+  }
+
   const handleSignOut = async () => {
     await authClient.signOut();
     router.push("/login");
@@ -77,7 +88,9 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {getInitials(user.name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -85,16 +98,13 @@ export function NavUser({
                 </div>
               </div>
             </DropdownMenuLabel>
-      
-         
+
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => router.push("/app/profile")}>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-           
-          
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
