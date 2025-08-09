@@ -42,7 +42,7 @@ export function JoinCallBox() {
   return (
     <div className="bg-background mx-auto mt-8 grid max-w-2xl grid-cols-1 overflow-hidden rounded-xl border shadow-lg md:grid-cols-3">
       {/* Left Panel: Information */}
-      <div className="bg-muted/70 col-span-1 hidden flex-col items-center justify-center border-r p-8 text-center md:flex">
+      <div className="bg-sidebar col-span-1 hidden flex-col items-center justify-center border-r p-8 text-center md:flex">
         <div className="bg-secondary/20 rounded-full p-4">
           <LogIn className="text-secondary-foreground h-10 w-10" />
         </div>
