@@ -36,7 +36,7 @@ export default function CallPage() {
   );
 
   return (
-    <div className="flex flex-col gap-[22px]">
+    <div className="flex min-h-screen flex-col">
       <Header className="justify-between">
         <div className="flex items-center gap-2">
           {SECTIONS.map((s) => (
@@ -68,7 +68,9 @@ export default function CallPage() {
           Start Call
         </Button>
       </Header>
-      <CallSection section={sectionKey} />
+      <div className="flex-1 overflow-hidden">
+        <CallSection section={sectionKey} />
+      </div>
     </div>
   );
 }
