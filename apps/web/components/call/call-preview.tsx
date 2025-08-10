@@ -17,6 +17,7 @@ import {
 } from "@call/ui/components/dropdown-menu";
 import { Icons } from "@call/ui/components/icons";
 import { FiVideoOff } from "react-icons/fi";
+import { motion as m } from "motion/react";
 
 export const CallPreview = () => {
   const { state, dispatch, mediasoup } = useCallContext();
@@ -160,7 +161,8 @@ export const CallPreview = () => {
               onClick={handleTogglePreviewCamera}
               className={cn(
                 "hover:bg-muted/90 flex size-7 items-center justify-center rounded-xl bg-transparent transition-all duration-300",
-                !state.isLocalCameraOn && "bg-primary-red/10"
+                !state.isLocalCameraOn &&
+                  "bg-primary-red/10 hover:bg-primary-red/10 hover:text-primary-red"
               )}
               aria-label={
                 state.isLocalCameraOn ? "Turn camera off" : "Turn camera on"
@@ -169,22 +171,28 @@ export const CallPreview = () => {
               {state.isLocalCameraOn ? (
                 <Icons.videoIcon className="text-primary-blue size-5" />
               ) : (
-                <FiVideoOff className="fill-primary-red stroke-primary-red size-5 transition-all duration-300" />
+                <Icons.videoOffIcon
+                  className="size-5"
+                  fill="fill-primary-red stroke-primary-red"
+                />
               )}
             </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2.5">
+              <DropdownMenuTrigger className="flex items-center gap-2.5 outline-none">
                 <span className="text-lg font-medium">Camera</span>
                 <ChevronDown className="fill-primary-icon size-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent
+                align="center"
+                className="bg-inset-accent mt-2 space-y-1 rounded-xl"
+              >
                 {videoDevices.map((device) => (
                   <DropdownMenuItem
                     key={device.deviceId}
                     onClick={() => handleDeviceChange("video", device.deviceId)}
                     className={cn(
-                      "cursor-pointer",
-                      selectedVideo === device.deviceId && "bg-blue-50"
+                      "hover:bg-muted/50! cursor-pointer rounded-lg transition-all duration-300",
+                      selectedVideo === device.deviceId && "bg-muted/50"
                     )}
                   >
                     {device.label ||
@@ -212,18 +220,23 @@ export const CallPreview = () => {
               )}
             </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2.5">
+              <DropdownMenuTrigger className="flex items-center gap-2.5 outline-none">
                 <span className="text-lg font-medium">Microphone</span>
                 <ChevronDown className="size-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent
+                align="center"
+                className="bg-inset-accent mt-2 space-y-1 rounded-xl"
+              >
                 {audioDevices.map((device) => (
                   <DropdownMenuItem
                     key={device.deviceId}
-                    onClick={() => handleDeviceChange("audio", device.deviceId)}
+                    onClick={() => {
+                      handleDeviceChange("audio", device.deviceId);
+                    }}
                     className={cn(
-                      "cursor-pointer",
-                      selectedAudio === device.deviceId && "bg-blue-50"
+                      "hover:bg-muted/50! cursor-pointer rounded-lg transition-all duration-300",
+                      selectedAudio === device.deviceId && "bg-muted/50"
                     )}
                   >
                     {device.label ||

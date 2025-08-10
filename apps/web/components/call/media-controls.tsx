@@ -91,7 +91,8 @@ export const MediaControls = ({
         <div className="flex items-center justify-center gap-2.5">
           <ControlButton
             className={cn(
-              !isCameraOn && "bg-primary-red/10 border-primary-red/10"
+              !isCameraOn &&
+                "bg-primary-red/10 border-primary-red/10 hover:bg-primary-red/10 hover:text-primary-red"
             )}
           >
             <button
@@ -113,28 +114,19 @@ export const MediaControls = ({
                 >
                   <span className="text-lg">Camera</span>
                   <FiChevronDown size={14} />
-                  <span className="text-muted-foreground hidden max-w-[180px] truncate text-xs sm:block">
-                    {currentVideoDevice?.label ||
-                      (selectedVideo
-                        ? `(${selectedVideo.slice(0, 8)}...)`
-                        : videoDevices[0]?.label || "")}
-                  </span>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="mb-2 w-64">
-                <div className="px-2 py-1 text-xs font-semibold text-gray-600">
-                  Camera
-                </div>
-                <div className="text-muted-foreground px-2 pb-1 text-xs">
-                  Currently using: {currentVideoDevice?.label || "Default"}
-                </div>
+              <DropdownMenuContent
+                align="center"
+                className="bg-inset-accent mt-2 space-y-1 rounded-xl"
+              >
                 {videoDevices.map((device) => (
                   <DropdownMenuItem
                     key={device.deviceId}
                     onClick={() => handleDeviceChange("video", device.deviceId)}
                     className={cn(
-                      "cursor-pointer",
-                      selectedVideo === device.deviceId && "bg-blue-50"
+                      "hover:bg-muted/50! cursor-pointer rounded-lg transition-all duration-300",
+                      selectedVideo === device.deviceId && "bg-muted/50"
                     )}
                   >
                     <div className="flex w-full items-center justify-between">
@@ -153,7 +145,8 @@ export const MediaControls = ({
           </ControlButton>
           <ControlButton
             className={cn(
-              !isMicOn && "bg-primary-red/10 border-primary-red/10"
+              !isMicOn &&
+                "bg-primary-red/10 border-primary-red/10 hover:bg-primary-red/10 hover:text-primary-red"
             )}
           >
             <button
@@ -175,28 +168,19 @@ export const MediaControls = ({
                 >
                   <span className="text-lg">Microphone</span>
                   <FiChevronDown size={14} />
-                  <span className="text-muted-foreground hidden max-w-[180px] truncate text-xs sm:block">
-                    {currentAudioDevice?.label ||
-                      (selectedAudio
-                        ? `(${selectedAudio.slice(0, 8)}...)`
-                        : audioDevices[0]?.label || "")}
-                  </span>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="mb-2 w-64">
-                <div className="px-2 py-1 text-xs font-semibold text-gray-600">
-                  Microphone
-                </div>
-                <div className="text-muted-foreground px-2 pb-1 text-xs">
-                  Currently using: {currentAudioDevice?.label || "Default"}
-                </div>
+              <DropdownMenuContent
+                align="center"
+                className="bg-inset-accent mt-2 space-y-1 rounded-xl"
+              >
                 {audioDevices.map((device) => (
                   <DropdownMenuItem
                     key={device.deviceId}
                     onClick={() => handleDeviceChange("audio", device.deviceId)}
                     className={cn(
-                      "cursor-pointer",
-                      selectedAudio === device.deviceId && "bg-blue-50"
+                      "hover:bg-muted/50! cursor-pointer rounded-lg transition-all duration-300",
+                      selectedAudio === device.deviceId && "bg-muted/50"
                     )}
                   >
                     <div className="flex w-full items-center justify-between">
