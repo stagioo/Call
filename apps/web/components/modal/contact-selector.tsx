@@ -1,15 +1,9 @@
-import { useState } from "react";
 import { useContacts } from "@/components/providers/contacts";
 import { Avatar } from "@call/ui/components/avatar";
 import { Checkbox } from "@call/ui/components/checkbox";
-import { Search } from "lucide-react";
 import { Input } from "@call/ui/components/input";
-
-interface Contact {
-  id: string;
-  name: string;
-  email: string;
-}
+import { Search } from "lucide-react";
+import { useState } from "react";
 
 interface ContactSelectorProps {
   selectedContacts: string[];
