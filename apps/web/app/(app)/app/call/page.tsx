@@ -70,7 +70,7 @@ export default function CallPage() {
           Start Call
         </Button>
       </Header>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1">
         <CallSection section={sectionKey} />
       </div>
     </div>
