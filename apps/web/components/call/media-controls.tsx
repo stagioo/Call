@@ -118,7 +118,7 @@ export const MediaControls = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="center"
-                className="bg-inset-accent mt-2 space-y-1 rounded-xl"
+                className="bg-inset-accent mb-2 space-y-1 rounded-xl shadow-none"
               >
                 {videoDevices.map((device) => (
                   <DropdownMenuItem
@@ -172,7 +172,7 @@ export const MediaControls = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="center"
-                className="bg-inset-accent mt-2 space-y-1 rounded-xl"
+                className="bg-inset-accent mb-2 space-y-1 rounded-xl shadow-none"
               >
                 {audioDevices.map((device) => (
                   <DropdownMenuItem
