@@ -23,6 +23,7 @@ interface CallState {
   screenStream: MediaStream | null;
   isScreenSharing: boolean;
   isLocalMicOn: boolean;
+  isLocalCameraOn: boolean;
   isChatOpen: boolean;
   isParticipantsSidebarOpen: boolean;
   remoteAudios: Array<{
@@ -51,6 +52,7 @@ type CallAction =
   | { type: "SET_SCREEN_STREAM"; payload: MediaStream | null }
   | { type: "SET_SCREEN_SHARING"; payload: boolean }
   | { type: "SET_LOCAL_MIC_ON"; payload: boolean }
+  | { type: "SET_LOCAL_CAMERA_ON"; payload: boolean }
   | { type: "SET_CHAT_OPEN"; payload: boolean }
   | { type: "SET_PARTICIPANTS_SIDEBAR_OPEN"; payload: boolean }
   | { type: "SET_REMOTE_AUDIOS"; payload: CallState["remoteAudios"] }
@@ -74,6 +76,7 @@ const initialState: CallState = {
   screenStream: null,
   isScreenSharing: false,
   isLocalMicOn: true,
+  isLocalCameraOn: true,
   isChatOpen: false,
   isParticipantsSidebarOpen: false,
   remoteAudios: [],
@@ -112,6 +115,8 @@ function callReducer(state: CallState, action: CallAction): CallState {
       return { ...state, isScreenSharing: action.payload };
     case "SET_LOCAL_MIC_ON":
       return { ...state, isLocalMicOn: action.payload };
+    case "SET_LOCAL_CAMERA_ON":
+      return { ...state, isLocalCameraOn: action.payload };
     case "SET_CHAT_OPEN":
       return { ...state, isChatOpen: action.payload };
     case "SET_PARTICIPANTS_SIDEBAR_OPEN":

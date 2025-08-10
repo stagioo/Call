@@ -11,6 +11,7 @@ import { ParticipantsSidebar } from "@/components/rooms/participants-sidebar";
 import { useCallMediaControls } from "@/hooks/use-call-media-controls";
 import { useCallProducers } from "@/hooks/use-call-producers";
 import { useNotificationSound } from "@/hooks/use-notification-sound";
+import { useCallDevices } from "@/hooks/use-call-devices";
 
 interface JoinRequest {
   id: string;
@@ -32,6 +33,7 @@ function CallPageContent() {
     isMicOn,
   } = useCallMediaControls();
   const { playNotificationSound } = useNotificationSound();
+  const { videoDevices, audioDevices, handleDeviceChange } = useCallDevices();
 
   useCallProducers();
 
@@ -130,9 +132,9 @@ function CallPageContent() {
                 payload: !state.isParticipantsSidebarOpen,
               })
             }
-            onDeviceChange={() => {}}
-            videoDevices={[]}
-            audioDevices={[]}
+            onDeviceChange={handleDeviceChange}
+            videoDevices={videoDevices}
+            audioDevices={audioDevices}
             selectedVideo={state.selectedVideo || ""}
             selectedAudio={state.selectedAudio || ""}
           />

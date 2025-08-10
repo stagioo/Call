@@ -26,7 +26,6 @@ export const useCallJoin = () => {
 
   const handleJoin = useCallback(async () => {
     if (!state.callId || !mediasoup.connected) {
-     
       return;
     }
 
@@ -38,7 +37,6 @@ export const useCallJoin = () => {
 
       const rtpCapabilities = joinRes.rtpCapabilities;
       if (!rtpCapabilities) {
-   
         return;
       }
       dispatch({ type: "SET_PRODUCERS", payload: joinRes.producers || [] });
@@ -94,12 +92,23 @@ export const useCallJoin = () => {
           }))
         );
 
-        stream.getTracks().forEach((track) => {
-          track.enabled = true;
-          console.log(`[Call] Enabled ${track.kind} track:`, track.id);
-        });
+        const audioTrack = stream.getAudioTracks()[0];
+        if (audioTrack) {
+          audioTrack.enabled = state.isLocalMicOn;
+          console.log(
+            `[Call] Set audio track enabled=${audioTrack.enabled}:`,
+            audioTrack.id
+          );
+        }
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          videoTrack.enabled = state.isLocalCameraOn;
+          console.log(
+            `[Call] Set video track enabled=${videoTrack.enabled}:`,
+            videoTrack.id
+          );
+        }
       } catch (err) {
-        
         console.error("Error getUserMedia:", err);
         return;
       }
@@ -109,7 +118,6 @@ export const useCallJoin = () => {
       console.log("[Call] Production result:", myProducers);
 
       if (!myProducers || !myProducers.length) {
-  
         console.error("Empty producers:", myProducers);
         return;
       }

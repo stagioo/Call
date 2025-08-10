@@ -11,10 +11,12 @@ export const useCallMediaControls = () => {
     if (mediasoup.localStream) {
       const videoTrack = mediasoup.localStream.getVideoTracks()[0];
       if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
+        const next = !videoTrack.enabled;
+        videoTrack.enabled = next;
+        dispatch({ type: "SET_LOCAL_CAMERA_ON", payload: next });
       }
     }
-  }, [mediasoup.localStream]);
+  }, [mediasoup.localStream, dispatch]);
 
   const toggleMic = useCallback(() => {
     if (mediasoup.localStream) {

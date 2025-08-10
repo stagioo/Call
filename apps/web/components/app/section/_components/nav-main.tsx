@@ -1,5 +1,6 @@
 "use client";
 
+import { useModal } from "@/hooks/use-modal";
 import { Collapsible } from "@call/ui/components/collapsible";
 import { Icons, type IconProps } from "@call/ui/components/icons";
 import {
@@ -10,7 +11,6 @@ import {
   useSidebar,
 } from "@call/ui/components/sidebar";
 import type { JSX } from "react";
-import { useModal } from "@/hooks/use-modal";
 
 export function NavMain({
   items,

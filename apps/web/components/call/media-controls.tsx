@@ -72,6 +72,13 @@ export const MediaControls = ({
     onDeviceChange(type, deviceId);
   };
 
+  const currentVideoDevice = videoDevices.find(
+    (d) => d.deviceId === selectedVideo
+  );
+  const currentAudioDevice = audioDevices.find(
+    (d) => d.deviceId === selectedAudio
+  );
+
   return (
     <div className="fixed bottom-0 left-0 flex h-20 w-full items-center justify-center">
       <div
@@ -84,10 +91,14 @@ export const MediaControls = ({
         <div className="flex items-center justify-center gap-2.5">
           <ControlButton
             className={cn(
-              !isCameraOn && "bg-primary-red/10 border-primary-red/10"
+              !isCameraOn &&
+                "bg-primary-red/10 border-primary-red/10 hover:bg-primary-red/10 hover:text-primary-red"
             )}
           >
-            <button onClick={handleToggleCamera}>
+            <button
+              onClick={handleToggleCamera}
+              aria-label={isCameraOn ? "Turn camera off" : "Turn camera on"}
+            >
               {isCameraOn ? (
                 <Icons.videoIcon className="size-5" />
               ) : (
@@ -97,22 +108,26 @@ export const MediaControls = ({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2.5">
+                <button
+                  className="flex items-center gap-2.5"
+                  aria-label="Select camera device"
+                >
                   <span className="text-lg">Camera</span>
                   <FiChevronDown size={14} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="mb-2 w-56">
-                <div className="px-2 py-1 text-xs font-semibold text-gray-600">
-                  Camera
-                </div>
+              <DropdownMenuContent
+                align="center"
+                className="bg-inset-accent mb-2 space-y-1 rounded-xl shadow-none"
+              >
                 {videoDevices.map((device) => (
                   <DropdownMenuItem
                     key={device.deviceId}
                     onClick={() => handleDeviceChange("video", device.deviceId)}
-                    className={`cursor-pointer ${
-                      selectedVideo === device.deviceId ? "bg-blue-50" : ""
-                    }`}
+                    className={cn(
+                      "hover:bg-muted/50! cursor-pointer rounded-lg transition-all duration-300",
+                      selectedVideo === device.deviceId && "bg-muted/50"
+                    )}
                   >
                     <div className="flex w-full items-center justify-between">
                       <span className="truncate">
@@ -120,7 +135,7 @@ export const MediaControls = ({
                           `Camera (${device.deviceId.slice(0, 8)}...)`}
                       </span>
                       {selectedVideo === device.deviceId && (
-                        <div className="ml-2 h-2 w-2 rounded-full bg-blue-600"></div>
+                        <div className="ml-2 h-2 w-2 rounded-full bg-blue-600" />
                       )}
                     </div>
                   </DropdownMenuItem>
@@ -130,10 +145,14 @@ export const MediaControls = ({
           </ControlButton>
           <ControlButton
             className={cn(
-              !isMicOn && "bg-primary-red/10 border-primary-red/10"
+              !isMicOn &&
+                "bg-primary-red/10 border-primary-red/10 hover:bg-primary-red/10 hover:text-primary-red"
             )}
           >
-            <button onClick={onToggleMic}>
+            <button
+              onClick={onToggleMic}
+              aria-label={isMicOn ? "Mute microphone" : "Unmute microphone"}
+            >
               {isMicOn ? (
                 <Icons.micIcon className="size-5" />
               ) : (
@@ -143,22 +162,26 @@ export const MediaControls = ({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2.5">
+                <button
+                  className="flex items-center gap-2.5"
+                  aria-label="Select microphone device"
+                >
                   <span className="text-lg">Microphone</span>
                   <FiChevronDown size={14} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="mb-2 w-56">
-                <div className="px-2 py-1 text-xs font-semibold text-gray-600">
-                  Microphone
-                </div>
+              <DropdownMenuContent
+                align="center"
+                className="bg-inset-accent mb-2 space-y-1 rounded-xl shadow-none"
+              >
                 {audioDevices.map((device) => (
                   <DropdownMenuItem
                     key={device.deviceId}
                     onClick={() => handleDeviceChange("audio", device.deviceId)}
-                    className={`cursor-pointer ${
-                      selectedAudio === device.deviceId ? "bg-blue-50" : ""
-                    }`}
+                    className={cn(
+                      "hover:bg-muted/50! cursor-pointer rounded-lg transition-all duration-300",
+                      selectedAudio === device.deviceId && "bg-muted/50"
+                    )}
                   >
                     <div className="flex w-full items-center justify-between">
                       <span className="truncate">
@@ -166,7 +189,7 @@ export const MediaControls = ({
                           `Microphone (${device.deviceId.slice(0, 8)}...)`}
                       </span>
                       {selectedAudio === device.deviceId && (
-                        <div className="ml-2 h-2 w-2 rounded-full bg-blue-600"></div>
+                        <div className="ml-2 h-2 w-2 rounded-full bg-blue-600" />
                       )}
                     </div>
                   </DropdownMenuItem>
