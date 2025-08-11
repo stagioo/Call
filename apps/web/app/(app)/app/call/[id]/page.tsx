@@ -1,17 +1,17 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
-import { CallProvider, useCallContext } from "@/contexts/call-context";
 import { CallPreview } from "@/components/call/call-preview";
 import { CallVideoGrid } from "@/components/call/call-video-grid";
 import { MediaControls } from "@/components/call/media-controls";
 import { ChatSidebar } from "@/components/rooms/chat-sidebar";
 import { ParticipantsSidebar } from "@/components/rooms/participants-sidebar";
+import { CallProvider, useCallContext } from "@/contexts/call-context";
+import { useCallDevices } from "@/hooks/use-call-devices";
 import { useCallMediaControls } from "@/hooks/use-call-media-controls";
 import { useCallProducers } from "@/hooks/use-call-producers";
 import { useNotificationSound } from "@/hooks/use-notification-sound";
-import { useCallDevices } from "@/hooks/use-call-devices";
+import { useParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 interface JoinRequest {
   id: string;
@@ -66,49 +66,69 @@ function CallPageContent() {
     });
   }, [mediasoup.remoteStreams, dispatch]);
 
-  useEffect(() => {
-    if (!state.isCreator || !state.joined || !state.callId) return;
-
-    const fetchJoinRequests = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${state.callId}/join-requests`,
+  const participants = [
+    ...(state.creatorInfo
+      ? [
           {
-            credentials: "include",
-          }
-        );
+            id: state.creatorInfo.creatorId,
+            displayName:
+              state.creatorInfo.creatorName || state.creatorInfo.creatorEmail,
+            isCreator: true,
+            isMicOn:
+              state.creatorInfo.creatorId === mediasoup.userId
+                ? isMicOn
+                : !mediasoup.remoteStreams.find(
+                    (s) => s.peerId === state.creatorInfo?.creatorId
+                  )?.muted,
+            isCameraOn: (() => {
+              const isLocalCreator =
+                state.creatorInfo.creatorId === mediasoup.userId;
+              if (isLocalCreator) {
+                return (
+                  mediasoup.localStream
+                    ?.getVideoTracks()
+                    .some((track) => track.enabled) ?? false
+                );
+              }
+              return mediasoup.remoteStreams.some(
+                (stream) =>
+                  stream.peerId === state.creatorInfo?.creatorId &&
+                  stream.kind === "video" &&
+                  stream.source === "webcam"
+              );
+            })(),
+          },
+        ]
+      : []),
+    ...mediasoup.peers
+      .filter((peer) => peer.id !== state.creatorInfo?.creatorId)
+      .map((peer) => {
+        const isLocalPeer = peer.id === mediasoup.userId;
+        const cameraEnabled = isLocalPeer
+          ? (mediasoup.localStream
+              ?.getVideoTracks()
+              .some((track) => track.enabled) ?? false)
+          : mediasoup.remoteStreams.some(
+              (stream) =>
+                stream.peerId === peer.id &&
+                stream.kind === "video" &&
+                stream.source === "webcam"
+            );
 
-        if (response.ok) {
-          const data = await response.json();
-          const newJoinRequests = data.requests || [];
-
-          const previousIds = new Set(
-            previousJoinRequestsRef.current.map((req: JoinRequest) => req.id)
-          );
-          const newRequests = newJoinRequests.filter(
-            (req: JoinRequest) => !previousIds.has(req.id)
-          );
-
-          if (newRequests.length > 0) {
-            playNotificationSound();
-          }
-
-          previousJoinRequestsRef.current = newJoinRequests;
-          setJoinRequests(newJoinRequests);
-        }
-      } catch (error) {
-        console.error("Error fetching join requests:", error);
-      }
-    };
-
-    fetchJoinRequests();
-
-    const interval = setInterval(fetchJoinRequests, 5000);
-    return () => clearInterval(interval);
-  }, [state.isCreator, state.joined, state.callId, playNotificationSound]);
+        return {
+          id: peer.id,
+          displayName: peer.displayName,
+          isCreator: false,
+          isMicOn: isLocalPeer
+            ? isMicOn
+            : !mediasoup.remoteStreams.find((s) => s.peerId === peer.id)?.muted,
+          isCameraOn: cameraEnabled,
+        };
+      }),
+  ];
 
   return (
-    <div className="flex min-h-[calc(100vh-5.5rem)] flex-col items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center overflow-x-hidden">
       {!state.joined ? (
         <CallPreview />
       ) : (
@@ -139,16 +159,6 @@ function CallPageContent() {
             selectedAudio={state.selectedAudio || ""}
           />
 
-          <ChatSidebar
-            open={state.isChatOpen}
-            onOpenChange={(open) =>
-              dispatch({ type: "SET_CHAT_OPEN", payload: open })
-            }
-            socket={mediasoup.socket}
-            userId={mediasoup.userId}
-            displayName={mediasoup.displayName}
-          />
-
           <ParticipantsSidebar
             open={state.isParticipantsSidebarOpen}
             onOpenChange={(open) =>
@@ -156,69 +166,18 @@ function CallPageContent() {
             }
             callId={state.callId || ""}
             isCreator={state.isCreator}
-            participants={[
-              ...(state.creatorInfo
-                ? [
-                    {
-                      id: state.creatorInfo.creatorId,
-                      displayName:
-                        state.creatorInfo.creatorName ||
-                        state.creatorInfo.creatorEmail,
-                      isCreator: true,
-                      isMicOn:
-                        state.creatorInfo.creatorId === mediasoup.userId
-                          ? isMicOn
-                          : !mediasoup.remoteStreams.find(
-                              (s) => s.peerId === state.creatorInfo?.creatorId
-                            )?.muted,
-                      isCameraOn: (() => {
-                        const isLocalCreator =
-                          state.creatorInfo.creatorId === mediasoup.userId;
-                        if (isLocalCreator) {
-                          return (
-                            mediasoup.localStream
-                              ?.getVideoTracks()
-                              .some((track) => track.enabled) ?? false
-                          );
-                        }
-                        return mediasoup.remoteStreams.some(
-                          (stream) =>
-                            stream.peerId === state.creatorInfo?.creatorId &&
-                            stream.kind === "video" &&
-                            stream.source === "webcam"
-                        );
-                      })(),
-                    },
-                  ]
-                : []),
-              ...mediasoup.peers
-                .filter((peer) => peer.id !== state.creatorInfo?.creatorId)
-                .map((peer) => {
-                  const isLocalPeer = peer.id === mediasoup.userId;
-                  const cameraEnabled = isLocalPeer
-                    ? (mediasoup.localStream
-                        ?.getVideoTracks()
-                        .some((track) => track.enabled) ?? false)
-                    : mediasoup.remoteStreams.some(
-                        (stream) =>
-                          stream.peerId === peer.id &&
-                          stream.kind === "video" &&
-                          stream.source === "webcam"
-                      );
-
-                  return {
-                    id: peer.id,
-                    displayName: peer.displayName,
-                    isCreator: false,
-                    isMicOn: isLocalPeer
-                      ? isMicOn
-                      : !mediasoup.remoteStreams.find(
-                          (s) => s.peerId === peer.id
-                        )?.muted,
-                    isCameraOn: cameraEnabled,
-                  };
-                }),
-            ]}
+            participants={participants}
+            currentUserId={mediasoup.userId}
+          />
+          <ChatSidebar
+            open={state.isChatOpen}
+            onOpenChange={(open) =>
+              dispatch({ type: "SET_CHAT_OPEN", payload: open })
+            }
+            socket={mediasoup.socket}
+            userId={mediasoup.userId}
+            displayName={state.creatorInfo?.creatorName || ""}
+            participants={participants}
             currentUserId={mediasoup.userId}
           />
         </>

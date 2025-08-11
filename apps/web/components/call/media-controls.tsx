@@ -1,3 +1,4 @@
+import { useCallContext } from "@/contexts/call-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +53,9 @@ export const MediaControls = ({
 }: MediaControlsProps) => {
   const [isCameraOn, setIsCameraOn] = useState(true);
   const { state } = useSidebar();
+  const {
+    state: { isChatOpen },
+  } = useCallContext();
 
   useEffect(() => {
     if (localStream) {
@@ -229,6 +233,12 @@ export const MediaControls = ({
           </ControlButton>
         </div>
       </div>
+      <div
+        className="pointer-events-none h-full w-full transition-all duration-300 ease-in-out"
+        style={{
+          width: isChatOpen ? 500 : 0,
+        }}
+      />
     </div>
   );
 };

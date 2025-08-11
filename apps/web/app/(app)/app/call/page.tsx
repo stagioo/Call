@@ -51,6 +51,7 @@ export default function CallPage() {
                 sectionKey === s.key &&
                   "font-medium text-white hover:text-white"
               )}
+              whileTap={{ scale: 0.98 }}
             >
               {s.label}
 

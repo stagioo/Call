@@ -33,18 +33,6 @@ export const CallPreview = () => {
   const { handleJoin } = useCallJoin();
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const handleVideoDeviceChange: React.ChangeEventHandler<HTMLSelectElement> = (
-    e
-  ) => {
-    handleDeviceChange("video", e.target.value);
-  };
-
-  const handleAudioDeviceChange: React.ChangeEventHandler<HTMLSelectElement> = (
-    e
-  ) => {
-    handleDeviceChange("audio", e.target.value);
-  };
-
   const handleTogglePreviewCamera = () => {
     const stream = state.previewStream;
     if (!stream) {
@@ -88,7 +76,6 @@ export const CallPreview = () => {
         };
         const s = await navigator.mediaDevices.getUserMedia(constraints);
         if (active) {
-          // Respect current pre-join toggles
           const v = s.getVideoTracks()[0];
           if (v) v.enabled = state.isLocalCameraOn;
           const a = s.getAudioTracks()[0];
@@ -115,7 +102,6 @@ export const CallPreview = () => {
     dispatch,
   ]);
 
-  // Assign stream to the preview video
   useEffect(() => {
     if (videoRef.current && state.previewStream) {
       videoRef.current.srcObject = state.previewStream;

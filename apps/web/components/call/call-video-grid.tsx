@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallContext } from "@/contexts/call-context";
+import { Icons } from "@call/ui/components/icons";
 import { cn } from "@call/ui/lib/utils";
 import { MicOff } from "lucide-react";
 
@@ -50,7 +51,11 @@ export const CallVideoGrid = () => {
   );
 
   return (
-    <div className="relative flex size-full flex-wrap items-center justify-center gap-4 p-4">
+    <div
+      className={cn(
+        "relative flex h-full w-full flex-wrap items-center justify-center gap-4 p-4 transition-all duration-300 ease-in-out"
+      )}
+    >
       <div className="flex flex-wrap items-center justify-center gap-4">
         {mediasoup.localStream && (
           <div className="relative aspect-video max-h-[500px] min-h-[240px] w-auto overflow-hidden rounded-lg bg-black shadow-lg">
@@ -126,7 +131,9 @@ export const CallVideoGrid = () => {
               <div className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-white">
                 <div className="flex items-center gap-2">
                   <span className="text-xs">{peerDisplayName || "User"}</span>
-                  {peerAudioStatus[peerId]?.muted && <MicOff size={12} />}
+                  {peerAudioStatus[peerId]?.muted && (
+                    <Icons.micOffIcon className="size-4" />
+                  )}
                 </div>
               </div>
             </div>
