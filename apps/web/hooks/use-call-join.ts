@@ -3,8 +3,10 @@
 import { useCallContext } from "@/contexts/call-context";
 import { useCallback } from "react";
 import { toast } from "sonner";
+import { useSidebar } from "@call/ui/components/sidebar";
 export const useCallJoin = () => {
   const { state, dispatch, mediasoup } = useCallContext();
+  const { open, setOpen } = useSidebar();
 
   const recordCallParticipation = async (callId: string) => {
     try {
@@ -139,7 +141,10 @@ export const useCallJoin = () => {
         error instanceof Error ? error.message : "Unknown error";
       toast.error(`Failed to join call: ${errorMessage}`);
     }
-  }, [state, mediasoup, dispatch]);
+    if (open) {
+      setOpen(false);
+    }
+  }, [state, mediasoup, dispatch, open, setOpen]);
 
   return { handleJoin };
 };

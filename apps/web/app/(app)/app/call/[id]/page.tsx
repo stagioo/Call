@@ -4,7 +4,7 @@ import { CallPreview } from "@/components/call/call-preview";
 import { CallVideoGrid } from "@/components/call/call-video-grid";
 import { MediaControls } from "@/components/call/media-controls";
 import { ChatSidebar } from "@/components/rooms/chat-sidebar";
-import { CallProvider, useCallContext } from "@/contexts/call-context";
+import { useCallContext } from "@/contexts/call-context";
 import { useCallDevices } from "@/hooks/use-call-devices";
 import { useCallMediaControls } from "@/hooks/use-call-media-controls";
 import { useCallProducers } from "@/hooks/use-call-producers";
@@ -172,9 +172,5 @@ function CallPageContent() {
 }
 
 export default function CallPage() {
-  return (
-    <CallProvider>
-      <CallPageContent />
-    </CallProvider>
-  );
+  return <CallPageContent />;
 }
