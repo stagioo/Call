@@ -9,6 +9,7 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion as m } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { shortEnLocale } from "@/lib/utils";
 
 const CHAT_SECTIONS = [
   {
@@ -277,10 +278,50 @@ const Messages = ({
   return (
     <div className="flex h-[calc(100vh-3rem)] flex-col">
       <div className="flex-1 pt-2">
-        <ScrollArea className="h-full max-h-[calc(100vh-9rem)]">
-          <div className="flex flex-col gap-4">
+        <ScrollArea className="h-full max-h-[calc(100vh-8rem)] p-2">
+          <div className="flex flex-col gap-2">
             {messages.map((message) => (
-              <div key={message.id}>{message.text}</div>
+              <div
+                key={message.id}
+                className={cn(
+                  "flex gap-2",
+                  message.senderId === userId && "flex-row-reverse"
+                )}
+              >
+                <div
+                  className={cn(
+                    "flex w-3/4 flex-row-reverse gap-2",
+                    message.senderId === userId && "flex-row"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex flex-1 flex-col gap-1",
+                      message.senderId === userId && ""
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "text-muted-foreground text-xs",
+                        message.senderId === userId && "self-end"
+                      )}
+                    >
+                      {formatDistanceToNow(new Date(message.timestamp), {
+                        addSuffix: true,
+                        locale: shortEnLocale,
+                      })}
+                    </span>
+                    <span className="bg-sidebar rounded-lg p-2">
+                      {message.text}
+                    </span>
+                  </div>
+                  <UserProfile
+                    className="mt-5"
+                    name={message.senderName}
+                    url={message.senderAvatar}
+                  />
+                </div>
+              </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
