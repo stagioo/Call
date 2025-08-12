@@ -131,7 +131,7 @@ export function ChatSidebar({
           transition={{ duration: 0.4, ease: "easeInOut" }}
           className="bg-inset-accent border-sidebar-inset z-50 flex h-screen w-full flex-col"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex h-12 items-center justify-between">
             <div className="border-inset-accent bg-sidebar-inset flex w-fit items-center justify-between gap-2 rounded-br-lg border p-1">
               {CHAT_SECTIONS.map((section) => (
                 <m.button
@@ -176,106 +176,134 @@ export function ChatSidebar({
               <X />
             </Button>
           </div>
-          <div className="h-full flex-1 overflow-hidden">
-            <ScrollArea className="h-full">
-              {activeSection === "chat" ? (
-                <div className="flex flex-col gap-4 p-4">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex gap-3 ${
-                        message.senderId === userId ? "flex-row-reverse" : ""
-                      }`}
-                    >
-                      <UserProfile
-                        name={message.senderName}
-                        url={message.senderAvatar || ""}
-                      />
-                      <div
-                        className={`flex max-w-[80%] flex-col ${
-                          message.senderId === userId ? "items-end" : ""
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">
-                            {message.senderId === userId
-                              ? null
-                              : message.senderName}
-                          </span>
-                          <span className="text-muted-foreground text-xs">
-                            {formatDistanceToNow(message.timestamp, {
-                              addSuffix: true,
-                            })}
-                          </span>
-                        </div>
-                        <div
-                          className={`mt-1 rounded-lg px-3 py-2 ${
-                            message.senderId === userId
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted"
-                          }`}
-                        >
-                          {message.text}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={messagesEndRef} />
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2 p-4">
-                  {participants.length === 0 ? (
-                    <p className="text-muted-foreground text-sm">
-                      No participants
-                    </p>
-                  ) : (
-                    participants.map((p) => (
-                      <div
-                        key={p.id}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg p-2",
-                          p.id === currentUserId ? "bg-muted" : "bg-muted/50"
-                        )}
-                      >
-                        <UserProfile name={p.displayName} url={""} />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {p.id === currentUserId
-                              ? `${p.displayName} (You)`
-                              : p.displayName}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </ScrollArea>
-          </div>
-
           {activeSection === "chat" && (
-            <div className="border-sidebar-inset border-t p-2">
-              <div className="bg-sidebar-inset flex items-center gap-2 rounded-lg border p-2">
-                <Input
-                  placeholder="Type a message..."
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  className="border-none outline-none"
-                />
-                <Button
-                  onClick={sendMessage}
-                  disabled={!inputValue.trim()}
-                  size="icon"
-                  aria-label="Send message"
-                >
-                  <Icons.thoughtsIcon />
-                </Button>
-              </div>
-            </div>
+            <Messages
+              socket={socket}
+              userId={userId}
+              displayName={displayName}
+              userAvatar={userAvatar}
+            />
+          )}
+          {activeSection === "participants" && (
+            <ParticipantsSidebar
+              participants={participants}
+              currentUserId={currentUserId}
+            />
           )}
         </m.div>
       )}
     </AnimatePresence>
   );
 }
+
+const ParticipantsSidebar = ({
+  participants,
+  currentUserId,
+}: {
+  participants: Participant[];
+  currentUserId?: string;
+}) => {
+  return <div>ParticipantsSidebar</div>;
+};
+
+const Messages = ({
+  socket,
+  userId,
+  displayName,
+  userAvatar,
+}: {
+  socket: WebSocket | null;
+  userId: string;
+  displayName: string;
+  userAvatar: string | undefined;
+}) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "chat") {
+          setMessages((prev) => [...prev, data.message]);
+          setTimeout(scrollToBottom, 100);
+        }
+      } catch (err) {
+        console.error("Error processing chat message:", err);
+      }
+    };
+
+    socket.addEventListener("message", handleMessage);
+    return () => socket.removeEventListener("message", handleMessage);
+  }, [socket]);
+
+  const sendMessage = () => {
+    if (!socket || !inputValue.trim() || socket.readyState !== WebSocket.OPEN)
+      return;
+
+    const message: Message = {
+      id: crypto.randomUUID(),
+      text: inputValue.trim(),
+      senderId: userId,
+      senderName: displayName,
+      senderAvatar: userAvatar,
+      timestamp: Date.now(),
+    };
+
+    socket.send(
+      JSON.stringify({
+        type: "chat",
+        message,
+      })
+    );
+
+    setInputValue("");
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  return (
+    <div className="flex h-[calc(100vh-3rem)] flex-col">
+      <div className="flex-1 pt-2">
+        <ScrollArea className="h-full max-h-[calc(100vh-9rem)]">
+          <div className="flex flex-col gap-4">
+            {messages.map((message) => (
+              <div key={message.id}>{message.text}</div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+      </div>
+      <div className="border-sidebar-inset border-t p-2">
+        <div className="bg-sidebar-inset flex items-center gap-2 rounded-lg border p-2">
+          <Input
+            placeholder="Type a message..."
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyPress}
+            className="border-none outline-none"
+          />
+          <Button
+            size="icon"
+            onClick={sendMessage}
+            disabled={!inputValue.trim()}
+          >
+            <Icons.thoughtsIcon className="size-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
