@@ -99,6 +99,7 @@ export default function RootLayout({
       <script
         crossOrigin="anonymous"
         src="//unpkg.com/react-scan/dist/auto.global.js"
+        async
       />
       <body
         className={`${fontSans.variable} ${fontLora.variable} ${fontMono.variable} custom_scrollbar font-sans antialiased transition-all duration-300`}

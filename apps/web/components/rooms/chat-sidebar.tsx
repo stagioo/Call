@@ -125,9 +125,9 @@ export function ChatSidebar({
     <AnimatePresence>
       {open && (
         <m.div
-          initial={{ width: 0, opacity: 0 }}
-          animate={{ width: "500px", opacity: 1 }}
-          exit={{ width: 0, opacity: 0 }}
+          initial={{ width: 0, opacity: 0, minWidth: 0 }}
+          animate={{ width: "500px", opacity: 1, minWidth: "500px" }}
+          exit={{ width: 0, opacity: 0, minWidth: 0 }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
           className="bg-inset-accent border-sidebar-inset z-50 flex h-screen w-full flex-col"
         >

@@ -37,10 +37,6 @@ function CallPageContent() {
 
   useCallProducers();
 
-  // Track previous join requests to detect new ones
-  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
-  const previousJoinRequestsRef = useRef<JoinRequest[]>([]);
-
   useEffect(() => {
     const callId = params?.id as string;
     if (callId) {
