@@ -8,10 +8,10 @@ import { cn } from "@call/ui/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { X } from "lucide-react";
 import { AnimatePresence, motion as m } from "motion/react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ParticipantsSidebar } from "./participants-sidebar";
 import { useCallContext } from "@/contexts/call-context";
+import type { ActiveSection } from "@/lib/types";
 
 const CHAT_SECTIONS = [
   {
@@ -49,7 +49,8 @@ interface ChatSidebarProps {
   displayName: string;
   userAvatar?: string;
   participants?: Participant[];
-  currentUserId?: string;
+  activeSection: ActiveSection;
+  onActiveSectionChange: (section: ActiveSection) => void;
 }
 
 export function ChatSidebar({
@@ -60,16 +61,12 @@ export function ChatSidebar({
   displayName,
   userAvatar,
   participants = [],
-  currentUserId,
+  activeSection,
+  onActiveSectionChange,
 }: ChatSidebarProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const isParticipants = searchParams.get("section") === "participants";
   const {
     state: { isCreator, callId },
   } = useCallContext();
-
-  const activeSection = isParticipants ? "participants" : "chat";
 
   return (
     <AnimatePresence>
@@ -91,11 +88,9 @@ export function ChatSidebar({
                     activeSection === (section.key as typeof activeSection)
                   }
                   aria-label={`Show ${section.label}`}
-                  onClick={() => {
-                    const params = new URLSearchParams(searchParams);
-                    params.set("section", section.key);
-                    router.push(`?${params.toString()}`);
-                  }}
+                  onClick={() =>
+                    onActiveSectionChange(section.key as ActiveSection)
+                  }
                   className={cn(
                     "relative z-0",
                     buttonVariants({ variant: "ghost" }),
@@ -120,7 +115,10 @@ export function ChatSidebar({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onOpenChange(false)}
+              onClick={() => {
+                onOpenChange(false);
+                onActiveSectionChange("none");
+              }}
               aria-label="Close sidebar"
             >
               <X />

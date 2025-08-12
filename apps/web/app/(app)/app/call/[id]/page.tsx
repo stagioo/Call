@@ -16,7 +16,7 @@ function CallPageContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeSection, setActiveSection] = useState<ActiveSection>("chat");
+  const [activeSection, setActiveSection] = useState<ActiveSection>("none");
   const { state, dispatch, mediasoup } = useCallContext();
   const {
     toggleCamera,
@@ -162,7 +162,8 @@ function CallPageContent() {
             userId={mediasoup.userId}
             displayName={state.creatorInfo?.creatorName || ""}
             participants={participants}
-            currentUserId={mediasoup.userId}
+            activeSection={activeSection}
+            onActiveSectionChange={openSidebarWithSection}
           />
         </>
       )}
