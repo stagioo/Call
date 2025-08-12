@@ -74,3 +74,5 @@ export interface Participant {
   joinedAt?: string | undefined;
   leftAt?: string | undefined;
 }
+
+export type ActiveSection = "chat" | "participants";

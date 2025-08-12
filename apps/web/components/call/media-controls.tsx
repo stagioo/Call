@@ -14,6 +14,7 @@ import {
   useSidebar,
 } from "@call/ui/components/sidebar";
 import { copyVariants } from "@/lib/constants";
+import type { ActiveSection } from "@/lib/types";
 import { cn } from "@call/ui/lib/utils";
 import {
   AnimatePresence,
@@ -41,6 +42,7 @@ interface MediaControlsProps {
   videoDevices: MediaDeviceInfo[];
   audioDevices: MediaDeviceInfo[];
   selectedVideo: string;
+  activeSection: ActiveSection;
   selectedAudio: string;
 }
 
@@ -59,14 +61,14 @@ export const MediaControls = ({
   videoDevices,
   audioDevices,
   selectedVideo,
+  activeSection,
   selectedAudio,
 }: MediaControlsProps) => {
   const [isCameraOn, setIsCameraOn] = useState(true);
   const { state } = useSidebar();
   const {
-    state: { isChatOpen, callId },
+    state: { isChatOpen },
   } = useCallContext();
-  const origin = useOrigin();
 
   useEffect(() => {
     if (localStream) {
@@ -222,12 +224,31 @@ export const MediaControls = ({
             />
           </ControlButton>
 
-          <ControlButton onClick={onToggleParticipants}>
-            <Icons.users className="fill-primary-icon size-5 transition-all duration-300" />
+          <ControlButton
+            onClick={onToggleParticipants}
+            className={cn(
+              activeSection === "participants" &&
+                "border-primary-blue bg-primary-blue"
+            )}
+          >
+            <Icons.users
+              className="fill-primary-icon size-5"
+              fill={cn(
+                activeSection === "participants" && "fill-white stroke-white"
+              )}
+            />
           </ControlButton>
 
-          <ControlButton onClick={onToggleChat}>
-            <Icons.messageIcon className="size-5" />
+          <ControlButton
+            onClick={onToggleChat}
+            className={cn(
+              activeSection === "chat" && "border-primary-blue bg-primary-blue"
+            )}
+          >
+            <Icons.messageIcon
+              className="size-5"
+              fill={cn(activeSection === "chat" && "fill-white")}
+            />
           </ControlButton>
 
           <ControlButton

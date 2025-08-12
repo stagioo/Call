@@ -1,3 +1,4 @@
+import { shortEnLocale } from "@/lib/utils";
 import { Button, buttonVariants } from "@call/ui/components/button";
 import { Icons } from "@call/ui/components/icons";
 import { Input } from "@call/ui/components/input";
@@ -7,9 +8,10 @@ import { cn } from "@call/ui/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { X } from "lucide-react";
 import { AnimatePresence, motion as m } from "motion/react";
-import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { shortEnLocale } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
+import { ParticipantsSidebar } from "./participants-sidebar";
+import { useCallContext } from "@/contexts/call-context";
 
 const CHAT_SECTIONS = [
   {
@@ -60,67 +62,14 @@ export function ChatSidebar({
   participants = [],
   currentUserId,
 }: ChatSidebarProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const isParticipants = searchParams.get("section") === "participants";
+  const {
+    state: { isCreator, callId },
+  } = useCallContext();
 
   const activeSection = isParticipants ? "participants" : "chat";
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "chat") {
-          setMessages((prev) => [...prev, data.message]);
-          setTimeout(scrollToBottom, 100);
-        }
-      } catch (err) {
-        console.error("Error processing chat message:", err);
-      }
-    };
-
-    socket.addEventListener("message", handleMessage);
-    return () => socket.removeEventListener("message", handleMessage);
-  }, [socket]);
-
-  const sendMessage = () => {
-    if (!socket || !inputValue.trim() || socket.readyState !== WebSocket.OPEN)
-      return;
-
-    const message: Message = {
-      id: crypto.randomUUID(),
-      text: inputValue.trim(),
-      senderId: userId,
-      senderName: displayName,
-      senderAvatar: userAvatar,
-      timestamp: Date.now(),
-    };
-
-    socket.send(
-      JSON.stringify({
-        type: "chat",
-        message,
-      })
-    );
-
-    setInputValue("");
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
 
   return (
     <AnimatePresence>
@@ -177,35 +126,43 @@ export function ChatSidebar({
               <X />
             </Button>
           </div>
-          {activeSection === "chat" && (
-            <Messages
-              socket={socket}
-              userId={userId}
-              displayName={displayName}
-              userAvatar={userAvatar}
-            />
-          )}
-          {activeSection === "participants" && (
-            <ParticipantsSidebar
-              participants={participants}
-              currentUserId={currentUserId}
-            />
-          )}
+
+          <div className="relative flex-1 overflow-hidden">
+            <div
+              className={cn(
+                "absolute inset-0",
+                activeSection === "chat" ? "block" : "hidden"
+              )}
+              aria-hidden={activeSection !== "chat"}
+            >
+              <Messages
+                socket={socket}
+                userId={userId}
+                displayName={displayName}
+                userAvatar={userAvatar}
+              />
+            </div>
+
+            <div
+              className={cn(
+                "absolute inset-0",
+                activeSection === "participants" ? "block" : "hidden"
+              )}
+              aria-hidden={activeSection !== "participants"}
+            >
+              <ParticipantsSidebar
+                callId={callId || ""}
+                isCreator={isCreator}
+                participants={participants}
+                currentUserId={userId}
+              />
+            </div>
+          </div>
         </m.div>
       )}
     </AnimatePresence>
   );
 }
-
-const ParticipantsSidebar = ({
-  participants,
-  currentUserId,
-}: {
-  participants: Participant[];
-  currentUserId?: string;
-}) => {
-  return <div>ParticipantsSidebar</div>;
-};
 
 const Messages = ({
   socket,

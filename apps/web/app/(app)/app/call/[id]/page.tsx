@@ -4,25 +4,19 @@ import { CallPreview } from "@/components/call/call-preview";
 import { CallVideoGrid } from "@/components/call/call-video-grid";
 import { MediaControls } from "@/components/call/media-controls";
 import { ChatSidebar } from "@/components/rooms/chat-sidebar";
-import { ParticipantsSidebar } from "@/components/rooms/participants-sidebar";
 import { CallProvider, useCallContext } from "@/contexts/call-context";
 import { useCallDevices } from "@/hooks/use-call-devices";
 import { useCallMediaControls } from "@/hooks/use-call-media-controls";
 import { useCallProducers } from "@/hooks/use-call-producers";
-import { useNotificationSound } from "@/hooks/use-notification-sound";
-import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-
-interface JoinRequest {
-  id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  timestamp: Date;
-}
+import type { ActiveSection } from "@/lib/types";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 function CallPageContent() {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [activeSection, setActiveSection] = useState<ActiveSection>("chat");
   const { state, dispatch, mediasoup } = useCallContext();
   const {
     toggleCamera,
@@ -32,7 +26,7 @@ function CallPageContent() {
     isScreenSharing,
     isMicOn,
   } = useCallMediaControls();
-  const { playNotificationSound } = useNotificationSound();
+
   const { videoDevices, audioDevices, handleDeviceChange } = useCallDevices();
 
   useCallProducers();
@@ -123,6 +117,16 @@ function CallPageContent() {
       }),
   ];
 
+  const openSidebarWithSection = (section: ActiveSection) => {
+    if (!state.isChatOpen) {
+      dispatch({ type: "SET_CHAT_OPEN", payload: true });
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("section", section);
+    router.push(`?${params.toString()}`);
+    setActiveSection(section);
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center overflow-x-hidden">
       {!state.joined ? (
@@ -133,21 +137,15 @@ function CallPageContent() {
           <MediaControls
             localStream={mediasoup.localStream}
             joined={state.joined}
+            activeSection={activeSection}
             onHangup={handleHangup}
             isScreenSharing={isScreenSharing}
             onToggleScreenShare={handleToggleScreenShare}
             onToggleCamera={toggleCamera}
             onToggleMic={toggleMic}
             isMicOn={isMicOn}
-            onToggleChat={() =>
-              dispatch({ type: "SET_CHAT_OPEN", payload: !state.isChatOpen })
-            }
-            onToggleParticipants={() =>
-              dispatch({
-                type: "SET_PARTICIPANTS_SIDEBAR_OPEN",
-                payload: !state.isParticipantsSidebarOpen,
-              })
-            }
+            onToggleChat={() => openSidebarWithSection("chat")}
+            onToggleParticipants={() => openSidebarWithSection("participants")}
             onDeviceChange={handleDeviceChange}
             videoDevices={videoDevices}
             audioDevices={audioDevices}
@@ -155,16 +153,6 @@ function CallPageContent() {
             selectedAudio={state.selectedAudio || ""}
           />
 
-          <ParticipantsSidebar
-            open={state.isParticipantsSidebarOpen}
-            onOpenChange={(open) =>
-              dispatch({ type: "SET_PARTICIPANTS_SIDEBAR_OPEN", payload: open })
-            }
-            callId={state.callId || ""}
-            isCreator={state.isCreator}
-            participants={participants}
-            currentUserId={mediasoup.userId}
-          />
           <ChatSidebar
             open={state.isChatOpen}
             onOpenChange={(open) =>
