@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Button } from "@call/ui/components/button";
 import { useCallContext } from "@/contexts/call-context";
-import { useCallDevices } from "@/hooks/use-call-devices";
 import { useCallAccess } from "@/hooks/use-call-access";
+import { useCallDevices } from "@/hooks/use-call-devices";
 import { useCallJoin } from "@/hooks/use-call-join";
-import { LoadingButton } from "@call/ui/components/loading-button";
-import { ArrowRight, ChevronDown } from "lucide-react";
-import { cn } from "@call/ui/lib/utils";
+import { Button } from "@call/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,8 +12,10 @@ import {
   DropdownMenuTrigger,
 } from "@call/ui/components/dropdown-menu";
 import { Icons } from "@call/ui/components/icons";
-import { FiVideoOff } from "react-icons/fi";
-import { motion as m } from "motion/react";
+import { LoadingButton } from "@call/ui/components/loading-button";
+import { cn } from "@call/ui/lib/utils";
+import { ArrowRight, ChevronDown } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 export const CallPreview = () => {
   const { state, dispatch, mediasoup } = useCallContext();
@@ -32,18 +30,6 @@ export const CallPreview = () => {
     useCallAccess();
   const { handleJoin } = useCallJoin();
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  const handleVideoDeviceChange: React.ChangeEventHandler<HTMLSelectElement> = (
-    e
-  ) => {
-    handleDeviceChange("video", e.target.value);
-  };
-
-  const handleAudioDeviceChange: React.ChangeEventHandler<HTMLSelectElement> = (
-    e
-  ) => {
-    handleDeviceChange("audio", e.target.value);
-  };
 
   const handleTogglePreviewCamera = () => {
     const stream = state.previewStream;
@@ -88,7 +74,6 @@ export const CallPreview = () => {
         };
         const s = await navigator.mediaDevices.getUserMedia(constraints);
         if (active) {
-          // Respect current pre-join toggles
           const v = s.getVideoTracks()[0];
           if (v) v.enabled = state.isLocalCameraOn;
           const a = s.getAudioTracks()[0];
@@ -115,7 +100,6 @@ export const CallPreview = () => {
     dispatch,
   ]);
 
-  // Assign stream to the preview video
   useEffect(() => {
     if (videoRef.current && state.previewStream) {
       videoRef.current.srcObject = state.previewStream;

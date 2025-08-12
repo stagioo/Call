@@ -73,7 +73,7 @@ export function CallHistory() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 py-6">
         <div className="relative w-full max-w-md">
           <Input
             type="text"
@@ -95,7 +95,7 @@ export function CallHistory() {
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 py-6">
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-center">
             <div className="rounded-full bg-red-50 p-3">
@@ -119,7 +119,7 @@ export function CallHistory() {
   const hasSearchResults = filteredCalls.length > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 py-6">
       <div className="flex flex-col gap-6">
         {hasCallHistory ? (
           <div className="flex items-center gap-2">

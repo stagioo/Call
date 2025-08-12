@@ -51,6 +51,7 @@ export default function CallPage() {
                 sectionKey === s.key &&
                   "font-medium text-white hover:text-white"
               )}
+              whileTap={{ scale: 0.98 }}
             >
               {s.label}
 
@@ -70,7 +71,7 @@ export default function CallPage() {
           Start Call
         </Button>
       </Header>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1">
         <CallSection section={sectionKey} />
       </div>
     </div>

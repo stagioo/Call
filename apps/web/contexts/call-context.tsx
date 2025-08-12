@@ -2,7 +2,16 @@
 
 import { useMediasoupClient } from "@/hooks/useMediasoupClient";
 import { useSession } from "@/components/providers/session";
-import { createContext, useContext, useReducer, type ReactNode } from "react";
+import {
+  useReducer,
+  type ReactNode,
+  type Dispatch as ReactDispatch,
+} from "react";
+import {
+  createContext,
+  useContextSelector,
+  useContext as useSelectorBaseContext,
+} from "use-context-selector";
 
 interface CallState {
   callId: string | null;
@@ -138,7 +147,7 @@ function callReducer(state: CallState, action: CallAction): CallState {
 
 interface CallContextType {
   state: CallState;
-  dispatch: React.Dispatch<CallAction>;
+  dispatch: ReactDispatch<CallAction>;
   mediasoup: ReturnType<typeof useMediasoupClient>;
   session: ReturnType<typeof useSession>;
 }
@@ -157,10 +166,40 @@ export const CallProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// Backward-compatible full context hook (will re-render broadly)
 export const useCallContext = () => {
-  const context = useContext(CallContext);
+  const context = useSelectorBaseContext(CallContext);
   if (!context) {
     throw new Error("useCallContext must be used within a CallProvider");
   }
   return context;
 };
+
+// Selector hooks to minimize re-renders
+export const useCallSelector = <T,>(selector: (state: CallState) => T): T => {
+  const selected = useContextSelector(CallContext, (ctx) => {
+    if (!ctx) throw new Error("useCallSelector used outside CallProvider");
+    return selector(ctx.state);
+  });
+  return selected;
+};
+
+export const useDispatch = (): ReactDispatch<CallAction> => {
+  const dispatch = useContextSelector(CallContext, (ctx) => {
+    if (!ctx) throw new Error("useDispatch used outside CallProvider");
+    return ctx.dispatch;
+  });
+  return dispatch;
+};
+
+export const useMediasoupSelector = <T,>(
+  selector: (mediasoup: ReturnType<typeof useMediasoupClient>) => T
+): T => {
+  const selected = useContextSelector(CallContext, (ctx) => {
+    if (!ctx) throw new Error("useMediasoupSelector used outside CallProvider");
+    return selector(ctx.mediasoup);
+  });
+  return selected;
+};
+
+export type { CallState, CallAction };
