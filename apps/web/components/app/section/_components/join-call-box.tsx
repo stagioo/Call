@@ -137,7 +137,7 @@ export function JoinCallBox() {
               <Input
                 id="call-link"
                 placeholder="Paste your meeting link"
-                className="h-14 w-full rounded-2xl bg-white/5 text-base text-white placeholder:text-white/60"
+                className="h-14 w-full rounded-2xl bg-white/5 px-5 text-base text-white placeholder:text-white/60"
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
               />
