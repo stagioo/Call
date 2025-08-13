@@ -27,6 +27,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@call/ui/components/dropdown-menu";
+import SocialButton from "@/components/auth/social-button";
+import { useSession } from "@/components/providers/session";
 
 interface Notification {
   id: string;
@@ -61,6 +63,7 @@ interface NotificationSectionProps {
 }
 
 const NotificationSection = ({ section }: NotificationSectionProps) => {
+  const { user } = useSession();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -69,6 +72,11 @@ const NotificationSection = ({ section }: NotificationSectionProps) => {
   const router = useRouter();
 
   useEffect(() => {
+    if (user.id === "guest") {
+      setLoading(false);
+      setNotifications([]);
+      return;
+    }
     const fetchNotifications = async () => {
       setLoading(true);
       setError(null);
@@ -125,7 +133,7 @@ const NotificationSection = ({ section }: NotificationSectionProps) => {
       }
     };
     fetchNotifications();
-  }, []);
+  }, [user.id]);
 
   // Memoized filtered notifications
   const filteredNotifications = useMemo(() => {
@@ -274,6 +282,16 @@ const NotificationSection = ({ section }: NotificationSectionProps) => {
     if (notification.message?.includes("team")) return "team";
     return "call";
   };
+
+  if (user.id === "guest") {
+    return (
+      <div className="px-10 space-y-6">
+        <div className="flex flex-col gap-6">
+          <NoNotificationsFound />
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -558,16 +576,24 @@ const NotificationCard = ({
 };
 
 const NoNotificationsFound = () => {
+  const { user } = useSession();
+  const isGuest = !user?.id || user.id === "guest";
+  
   return (
     <div className="bg-inset-accent border-inset-accent-foreground col-span-full flex h-96 flex-col items-center justify-center gap-4 rounded-xl border p-4 text-center">
       <div className="flex flex-col items-center">
         <h1 className="text-lg font-medium">
-          You don&apos;t have any notifications yet.
+          {isGuest ? "Sign in to view notifications" : "You don\'t have any notifications yet."}
         </h1>
         <p className="text-muted-foreground">
-          Notifications will appear here when you receive calls or contact requests.
+          {isGuest
+            ? "Access your notifications and stay updated."
+            : "Notifications will appear here when you receive calls or contact requests."}
         </p>
       </div>
+      {isGuest ? (
+        <SocialButton />
+      ) : null}
     </div>
   );
 };

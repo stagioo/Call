@@ -25,6 +25,11 @@ export const useCallAccess = () => {
         if (response.ok) {
           const data = await response.json();
           dispatch({ type: "SET_CREATOR_INFO", payload: data.creator });
+        } else if (response.status === 404) {
+          // Not a persisted call: treat as anonymous/open room
+          dispatch({ type: "SET_CREATOR_INFO", payload: null });
+          dispatch({ type: "SET_HAS_ACCESS", payload: true });
+          dispatch({ type: "SET_CREATOR", payload: false });
         }
       } catch (error) {
         console.error("Error fetching creator info:", error);
@@ -35,7 +40,14 @@ export const useCallAccess = () => {
   }, [state.callId, dispatch]);
 
   useEffect(() => {
-    if (state.joined || !user.id || !state.callId) return;
+    if (state.joined || !state.callId) return;
+
+    // Guest users: allow direct join without backend checks
+    if (!user?.id || user.id === "guest") {
+      dispatch({ type: "SET_HAS_ACCESS", payload: true });
+      dispatch({ type: "SET_CREATOR", payload: false });
+      return;
+    }
 
     const checkAccess = async () => {
       try {
@@ -50,6 +62,10 @@ export const useCallAccess = () => {
           const data = await response.json();
           dispatch({ type: "SET_HAS_ACCESS", payload: data.hasAccess });
           dispatch({ type: "SET_CREATOR", payload: data.isCreator });
+        } else if (response.status === 404) {
+          // Call not in DB → anonymous/open room
+          dispatch({ type: "SET_HAS_ACCESS", payload: true });
+          dispatch({ type: "SET_CREATOR", payload: false });
         }
       } catch (error) {
         console.error("Error checking call access:", error);
@@ -59,11 +75,13 @@ export const useCallAccess = () => {
     checkAccess();
     const interval = setInterval(checkAccess, 3000);
     return () => clearInterval(interval);
-  }, [state.callId, user.id, state.joined, dispatch]);
+  }, [state.callId, user?.id, state.joined, dispatch]);
 
   const handleRequestAccess = useCallback(async () => {
-    if (!state.callId || !user.id) {
-      // alert("You must be logged in to request access");
+    if (!state.callId) return;
+    // For anonymous rooms, skip request logic
+    if (!user?.id || user.id === "guest") {
+      toast.info("Joining as guest. No approval required.");
       return;
     }
 
@@ -92,7 +110,7 @@ export const useCallAccess = () => {
     } finally {
       dispatch({ type: "SET_REQUESTING_ACCESS", payload: false });
     }
-  }, [state.callId, user.id, dispatch]);
+  }, [state.callId, user?.id, dispatch]);
 
   return {
     isCreator: state.isCreator,

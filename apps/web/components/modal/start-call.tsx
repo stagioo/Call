@@ -56,9 +56,21 @@ export const StartCall = () => {
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     const userName = user?.name || "User";
+    const finalName = data.name && data.name.trim() !== "" ? data.name : `${userName}-call`;
+
+    // If guest, create a client-side anonymous call code and navigate directly
+    if (!user?.id || user.id === "guest") {
+      const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+      let code = "";
+      for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+      onClose();
+      router.push(`/app/call/${code}`);
+      toast.success("Anonymous call created");
+      return;
+    }
+
     createCall({
-      name:
-        data.name && data.name.trim() !== "" ? data.name : `${userName}-call`,
+      name: finalName,
       members: selectedContacts,
     });
   };

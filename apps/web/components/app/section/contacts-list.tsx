@@ -30,6 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@call/ui/components/dropdown-menu";
+import SocialButton from "@/components/auth/social-button";
 
 interface Contact {
   id: string;
@@ -123,9 +124,20 @@ export default function ContactsList({ onAddContact }: ContactsListProps) {
     setSearchQuery("");
   };
 
+  const { user } = useSession();
+
   useEffect(() => {
+    if (user.id === "guest") return;
     fetchContacts();
-  }, []);
+  }, [user.id]);
+
+  if (user.id === "guest") {
+    return (
+      <div className="px-10 py-6">
+        <NoContactsFound onAddContact={onAddContact} />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -320,24 +332,33 @@ const ContactCard = ({
 };
 
 const NoContactsFound = ({ onAddContact }: { onAddContact?: () => void }) => {
+  const { user } = useSession();
+  const isGuest = !user?.id || user.id === "guest";
+
   return (
     <div className="bg-inset-accent border-inset-accent-foreground col-span-full flex h-96 flex-col items-center justify-center gap-4 rounded-xl border p-4 text-center">
       <div className="flex flex-col items-center">
         <h1 className="text-lg font-medium">
-          You don&apos;t have any contacts yet.
+          {isGuest ? "Sign in to manage contacts" : "You don\'t have any contacts yet."}
         </h1>
         <p className="text-muted-foreground">
-          Add your first contact to start connecting with others.
+          {isGuest
+            ? "Access your contacts and connect with others."
+            : "Add your first contact to start connecting with others."}
         </p>
       </div>
-      {onAddContact && (
-        <Button
-          onClick={onAddContact}
-          className="bg-muted-foreground hover:bg-muted-foreground/80"
-        >
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Contact
-        </Button>
+      {isGuest ? (
+        <SocialButton />
+      ) : (
+        onAddContact && (
+          <Button
+            onClick={onAddContact}
+            className="bg-muted-foreground hover:bg-muted-foreground/80"
+          >
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add Contact
+          </Button>
+        )
       )}
     </div>
   );

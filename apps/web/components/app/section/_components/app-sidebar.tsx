@@ -53,7 +53,7 @@ const data = {
   navFooter: [
     {
       title: "Settings",
-      url: "/app/settings",
+      url: "/app/profile",
       icon: Icons.settings,
       type: "link",
     },
