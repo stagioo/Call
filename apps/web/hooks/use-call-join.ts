@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { useSidebar } from "@call/ui/components/sidebar";
 export const useCallJoin = () => {
-  const { state, dispatch, mediasoup } = useCallContext();
+  const { state, dispatch, mediasoup, session } = useCallContext();
   const { open, setOpen } = useSidebar();
 
   const recordCallParticipation = async (callId: string) => {
@@ -134,7 +134,9 @@ export const useCallJoin = () => {
         myProducers.map((p) => p.id)
       );
 
-      await recordCallParticipation(state.callId);
+      if (session?.user?.id && session.user.id !== "guest") {
+        await recordCallParticipation(state.callId);
+      }
     } catch (error) {
       console.error("Error joining call:", error);
       const errorMessage =
