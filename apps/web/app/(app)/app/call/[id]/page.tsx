@@ -16,7 +16,9 @@ function CallPageContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeSection, setActiveSection] = useState<ActiveSection>("none");
+  const [activeSection, setActiveSection] = useState<ActiveSection | null>(
+    null
+  );
   const { state, dispatch, mediasoup } = useCallContext();
   const {
     toggleCamera,
@@ -117,14 +119,24 @@ function CallPageContent() {
       }),
   ];
 
-  const openSidebarWithSection = (section: ActiveSection) => {
+  const openSidebarWithSection = (section: ActiveSection | null) => {
+    const paramsCopy = new URLSearchParams(searchParams.toString());
+    const isSameSectionActive = state.isChatOpen && activeSection === section;
+
+    if (isSameSectionActive) {
+      paramsCopy.delete("section");
+      router.push(`?${paramsCopy.toString()}`);
+      setActiveSection(null);
+      dispatch({ type: "SET_CHAT_OPEN", payload: false });
+      return;
+    }
+
+    paramsCopy.set("section", section || "");
+    router.push(`?${paramsCopy.toString()}`);
+    setActiveSection(section);
     if (!state.isChatOpen) {
       dispatch({ type: "SET_CHAT_OPEN", payload: true });
     }
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("section", section);
-    router.push(`?${params.toString()}`);
-    setActiveSection(section);
   };
 
   return (
@@ -155,9 +167,15 @@ function CallPageContent() {
 
           <ChatSidebar
             open={state.isChatOpen}
-            onOpenChange={(open) =>
-              dispatch({ type: "SET_CHAT_OPEN", payload: open })
-            }
+            onOpenChange={(open) => {
+              if (!open) {
+                const paramsCopy = new URLSearchParams(searchParams.toString());
+                paramsCopy.delete("section");
+                router.push(`?${paramsCopy.toString()}`);
+                setActiveSection(null);
+              }
+              dispatch({ type: "SET_CHAT_OPEN", payload: open });
+            }}
             socket={mediasoup.socket}
             userId={mediasoup.userId}
             displayName={state.creatorInfo?.creatorName || ""}

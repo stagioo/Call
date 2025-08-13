@@ -75,4 +75,4 @@ export interface Participant {
   leftAt?: string | undefined;
 }
 
-export type ActiveSection = "chat" | "participants" | "none";
+export type ActiveSection = "chat" | "participants";

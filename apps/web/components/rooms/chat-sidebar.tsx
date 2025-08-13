@@ -49,8 +49,8 @@ interface ChatSidebarProps {
   displayName: string;
   userAvatar?: string;
   participants?: Participant[];
-  activeSection: ActiveSection;
-  onActiveSectionChange: (section: ActiveSection) => void;
+  activeSection: ActiveSection | null;
+  onActiveSectionChange: (section: ActiveSection | null) => void;
 }
 
 export function ChatSidebar({
@@ -75,7 +75,7 @@ export function ChatSidebar({
           initial={{ width: 0, opacity: 0, minWidth: 0 }}
           animate={{ width: "500px", opacity: 1, minWidth: "500px" }}
           exit={{ width: 0, opacity: 0, minWidth: 0 }}
-          transition={{ duration: 0.4, ease: "easeInOut" }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
           className="bg-inset-accent border-sidebar-inset z-50 flex h-screen w-full flex-col"
         >
           <div className="flex h-12 items-center justify-between">
@@ -117,7 +117,7 @@ export function ChatSidebar({
               size="icon"
               onClick={() => {
                 onOpenChange(false);
-                onActiveSectionChange("none");
+                onActiveSectionChange(null);
               }}
               aria-label="Close sidebar"
             >
