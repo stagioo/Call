@@ -2,7 +2,7 @@ import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const protectedRoutes = ["/app"];
+const protectedRoutes: string[] = [];
 const publicRoutes = new Set(["/", "/login"]);
 
 export async function middleware(request: NextRequest) {
@@ -20,25 +20,14 @@ export async function middleware(request: NextRequest) {
       sessionCookie,
     });
 
-    if (isProtected && !sessionCookie) {
-      const signInUrl = new URL("/login", request.url);
-      signInUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(signInUrl);
-    }
+    // Anonymous access allowed for all routes; app handles gated UI internally
 
     if (isPublic && sessionCookie && pathname !== "/") {
       return NextResponse.redirect(new URL("/app", request.url));
     }
   } catch (error) {
     console.error("Auth middleware error:", error);
-    if (isProtected) {
-      const signInUrl = new URL("/login", request.url);
-      signInUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(signInUrl);
-    }
-    if (isPublic && pathname !== "/") {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
+    // On errors, allow navigation; gated areas handle their own UI
   }
 
   return NextResponse.next();

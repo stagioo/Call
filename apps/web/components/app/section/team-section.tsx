@@ -28,8 +28,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@call/ui/components/dropdown-menu";
+import SocialButton from "@/components/auth/social-button";
+import { useSession } from "@/components/providers/session";
 
 export const TeamSection = () => {
+  const { user } = useSession();
   const queryClient = useQueryClient();
   const { onOpen } = useModal();
   const router = useRouter();
@@ -42,6 +45,7 @@ export const TeamSection = () => {
   } = useQuery({
     queryKey: ["teams"],
     queryFn: TEAMS_QUERY.getTeams,
+    enabled: user.id !== "guest",
   });
 
   const { mutate: deleteTeam, isPending: deleteTeamPending } = useMutation({
@@ -101,6 +105,16 @@ export const TeamSection = () => {
       members: team.members.map((m) => m.email),
     });
   };
+
+  if (user.id === "guest") {
+    return (
+      <div className="px-10 space-y-6">
+        <div className="flex flex-col gap-6">
+          <NoTeamsFound />
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -297,24 +311,32 @@ const TeamCard = ({ team, onStartMeeting, onDeleteTeam, onAddMembers, isPending 
 
 const NoTeamsFound = () => {
   const { onOpen } = useModal();
+  const { user } = useSession();
+  const isGuest = !user?.id || user.id === "guest";
   
   return (
     <div className="bg-inset-accent border-inset-accent-foreground col-span-full flex h-96 flex-col items-center justify-center gap-4 rounded-xl border p-4 text-center">
       <div className="flex flex-col items-center">
         <h1 className="text-lg font-medium">
-          You don&apos;t have any teams yet.
+          {isGuest ? "Sign in to manage teams" : "You don\'t have any teams yet."}
         </h1>
         <p className="text-muted-foreground">
-          Create your first team to start collaborating with others.
+          {isGuest
+            ? "Create and manage teams for collaboration."
+            : "Create your first team to start collaborating with others."}
         </p>
       </div>
-      <Button
-        onClick={() => onOpen("create-team")}
-        className="bg-muted-foreground hover:bg-muted-foreground/80"
-      >
-        <UserPlus className="h-4 w-4 mr-2" />
-        Create Team
-      </Button>
+      {isGuest ? (
+        <SocialButton />
+      ) : (
+        <Button
+          onClick={() => onOpen("create-team")}
+          className="bg-muted-foreground hover:bg-muted-foreground/80"
+        >
+          <UserPlus className="h-4 w-4 mr-2" />
+          Create Team
+        </Button>
+      )}
     </div>
   );
 };
