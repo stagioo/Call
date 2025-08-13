@@ -21,6 +21,7 @@ import { cn } from "@call/ui/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreVertical, Trash, Users, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import SocialButton from "@/components/auth/social-button";
 
 type FilterType = "all" | "my-calls" | "shared-with-me";
 
@@ -36,6 +37,7 @@ export function CallHistory() {
   } = useQuery({
     queryKey: ["calls"],
     queryFn: () => CALLS_QUERY.getCalls(),
+    enabled: user.id !== "guest",
   });
 
   const filteredCalls = useMemo(() => {
@@ -292,23 +294,37 @@ const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
 const NoCallsFound = () => {
   const { onOpen } = useModal();
   const { user } = useSession();
+
+  const isGuest = !user?.id || user.id === "guest";
+
   return (
     <div className="bg-inset-accent border-inset-accent-foreground col-span-full flex h-96 flex-col items-center justify-center gap-4 rounded-xl border p-4 text-center">
       <div className="flex flex-col items-center">
         <h1 className="text-lg font-medium">
-          Ops <span className="first-letter:uppercase">{user.name}</span>! You
-          don&apos;t have any calls yet.
+          {isGuest
+            ? "Sign in to access your call history"
+            : (
+                <>
+                  Ops <span className="first-letter:uppercase">{user.name}</span>! You don&apos;t have any calls yet.
+                </>
+              )}
         </h1>
         <p className="text-muted-foreground">
-          You can create a call to start a conversation with your friends.
+          {isGuest
+            ? "Create meetings and view your call history."
+            : "You can create a call to start a conversation with your friends."}
         </p>
       </div>
-      <Button
-        onClick={() => onOpen("start-call")}
-        className="bg-muted-foreground hover:bg-muted-foreground/80"
-      >
-        Start a call
-      </Button>
+      {isGuest ? (
+        <SocialButton />
+      ) : (
+        <Button
+          onClick={() => onOpen("start-call")}
+          className="bg-muted-foreground hover:bg-muted-foreground/80"
+        >
+          Start a call
+        </Button>
+      )}
     </div>
   );
 };
