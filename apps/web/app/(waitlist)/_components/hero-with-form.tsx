@@ -33,7 +33,7 @@ const HeroWithForm = () => {
         We are in early development phase, but you can already access the platform and try its features.
       </p>
       <Button asChild size="lg" className="mt-4">
-        <Link href="/login">
+        <Link href="/app">
           Access Platform
         </Link>
       </Button>
