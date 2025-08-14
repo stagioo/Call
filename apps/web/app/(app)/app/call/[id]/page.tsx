@@ -5,6 +5,7 @@ import { CallVideoGrid } from "@/components/call/call-video-grid";
 import { MediaControls } from "@/components/call/media-controls";
 import { ChatSidebar } from "@/components/rooms/chat-sidebar";
 import { useCallContext } from "@/contexts/call-context";
+import { useCallJoin } from "@/hooks/use-call-join";
 import { useCallDevices } from "@/hooks/use-call-devices";
 import { useCallMediaControls } from "@/hooks/use-call-media-controls";
 import { useCallProducers } from "@/hooks/use-call-producers";
@@ -34,6 +35,7 @@ function CallPageContent() {
 
   const { videoDevices, audioDevices, handleDeviceChange } = useCallDevices();
   const { playNotificationSound } = useNotificationSound("request-joined");
+  const { handleJoin } = useCallJoin();
 
   useCallProducers();
 
@@ -53,6 +55,7 @@ function CallPageContent() {
                   reqId={data.reqId}
                   roomId={state.callId as string}
                   peerId={data.peerId}
+                  requesterId={data.requesterId}
                 />
               ),
               {
@@ -80,53 +83,7 @@ function CallPageContent() {
         if (data?.type === "joinApproved" && data.roomId === state.callId) {
           if (state.joined || !state.callId) return;
 
-          try {
-            const joinRes = await mediasoup.joinRoom(state.callId);
-            const rtpCapabilities = joinRes?.rtpCapabilities;
-            if (!rtpCapabilities) return;
-
-            dispatch({
-              type: "SET_PRODUCERS",
-              payload: joinRes.producers || [],
-            });
-
-            await mediasoup.loadDevice(rtpCapabilities);
-            await mediasoup.createSendTransport();
-            await mediasoup.createRecvTransport();
-            dispatch({ type: "SET_RECV_TRANSPORT_READY", payload: true });
-
-            if (state.previewStream) {
-              state.previewStream.getTracks().forEach((t) => t.stop());
-              dispatch({ type: "SET_PREVIEW_STREAM", payload: null });
-            }
-
-            const constraints: MediaStreamConstraints = {
-              video: state.selectedVideo
-                ? { deviceId: { exact: state.selectedVideo } }
-                : true,
-              audio: state.selectedAudio
-                ? { deviceId: { exact: state.selectedAudio } }
-                : { echoCancellation: true, noiseSuppression: true },
-            };
-
-            const stream =
-              await navigator.mediaDevices.getUserMedia(constraints);
-            const audioTrack = stream.getAudioTracks()[0];
-            if (audioTrack) audioTrack.enabled = state.isLocalMicOn;
-            const videoTrack = stream.getVideoTracks()[0];
-            if (videoTrack) videoTrack.enabled = state.isLocalCameraOn;
-
-            const myProducers = await mediasoup.produce(stream);
-            if (!myProducers?.length) return;
-
-            dispatch({
-              type: "SET_MY_PRODUCER_IDS",
-              payload: myProducers.map((p: any) => p.id),
-            });
-            dispatch({ type: "SET_JOINED", payload: true });
-          } catch (err) {
-            console.error("Auto-join failed:", err);
-          }
+          handleJoin();
         }
       } catch {}
     };
@@ -313,16 +270,17 @@ const RequestJoinToast = ({
   roomId,
   peerId,
   socket,
+  requesterId,
 }: {
   name: string;
   reqId: string;
   roomId: string;
   peerId: string;
   socket: WebSocket;
+  requesterId: string;
 }) => {
   const handleAccept = async () => {
     try {
-      // Call backend API to approve the join request
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${roomId}/approve-join`,
         {
@@ -331,12 +289,11 @@ const RequestJoinToast = ({
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ requesterId: peerId }),
+          body: JSON.stringify({ requesterId: requesterId }),
         }
       );
 
       if (response.ok) {
-        // Send WebSocket message to notify the requester
         socket?.send(
           JSON.stringify({
             type: "acceptJoin",
@@ -358,7 +315,6 @@ const RequestJoinToast = ({
 
   const handleReject = async () => {
     try {
-      // Call backend API to reject the join request
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${roomId}/reject-join`,
         {
@@ -372,7 +328,6 @@ const RequestJoinToast = ({
       );
 
       if (response.ok) {
-        // Send WebSocket message to notify the requester
         socket?.send(
           JSON.stringify({
             type: "rejectJoin",

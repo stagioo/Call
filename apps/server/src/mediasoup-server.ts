@@ -486,6 +486,7 @@ wss.on("connection", (ws: WebSocket) => {
           const providedRoomId = data.roomId as string | undefined;
           const providedPeerId = data.peerId as string | undefined;
           const providedDisplayName = data.displayName as string | undefined;
+          const requesterId = data.requesterId as string | undefined;
           if (!peer && !providedRoomId) {
             ws.send(
               JSON.stringify({
@@ -512,12 +513,10 @@ wss.on("connection", (ws: WebSocket) => {
           const requesterDisplayName =
             peer?.displayName || providedDisplayName || "Anonymous";
 
-          // Store requester socket to notify later on accept/reject
           if (roomId && requesterPeerId) {
             pendingJoinRequests.set(`${roomId}:${requesterPeerId}`, ws);
           }
 
-          // Broadcast join request to all other peers; creator UI will react
           Object.values(room.peers).forEach((otherPeer) => {
             if (
               otherPeer.id !== requesterPeerId &&
@@ -530,6 +529,7 @@ wss.on("connection", (ws: WebSocket) => {
                   peerId: requesterPeerId,
                   displayName: requesterDisplayName,
                   roomId: roomId,
+                  requesterId: requesterId,
                 })
               );
             }

@@ -81,35 +81,6 @@ export const useCallAccess = () => {
   useEffect(() => {
     if (!mediasoup.socket) return;
 
-    const handleJoinRequest = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data?.type === "requestJoinResponse") {
-          // Notify only the creator client
-          if (state.isCreator) {
-            toast.info(
-              `${data.displayName || "Someone"} is requesting to join`,
-              {
-                description: `User ID: ${data.peerId}`,
-              }
-            );
-          }
-        }
-      } catch (e) {
-        // noop
-      }
-    };
-
-    mediasoup.socket.addEventListener("message", handleJoinRequest);
-    return () => {
-      mediasoup.socket?.removeEventListener("message", handleJoinRequest);
-    };
-  }, [mediasoup.socket, state.isCreator]);
-
-  // Listen for join approval/rejection responses
-  useEffect(() => {
-    if (!mediasoup.socket) return;
-
     const handleJoinResponse = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
@@ -141,7 +112,7 @@ export const useCallAccess = () => {
   const handleRequestAccess = useCallback(async () => {
     if (!state.callId || !mediasoup.socket) return;
     // For anonymous rooms, skip request logic
-    if (!user?.id || user.id === "guest") {
+    if (!user.id || user.id === "guest") {
       toast.info("Joining as guest. No approval required.");
       return;
     }
@@ -155,6 +126,7 @@ export const useCallAccess = () => {
         roomId: state.callId,
         peerId: mediasoup.userId,
         displayName: mediasoup.displayName,
+        requesterId: user.id,
       })
     );
 
