@@ -7,6 +7,7 @@ export const useCallAccess = () => {
   const {
     state,
     dispatch,
+    mediasoup,
     session: { user },
   } = useCallContext();
 
@@ -37,7 +38,7 @@ export const useCallAccess = () => {
     };
 
     fetchCreatorInfo();
-  }, [state.callId, dispatch]);
+  }, [state.callId, dispatch, mediasoup.socket]);
 
   useEffect(() => {
     if (state.joined || !state.callId) return;
@@ -78,12 +79,24 @@ export const useCallAccess = () => {
   }, [state.callId, user?.id, state.joined, dispatch]);
 
   const handleRequestAccess = useCallback(async () => {
-    if (!state.callId) return;
+    if (!state.callId || !mediasoup.socket) return;
     // For anonymous rooms, skip request logic
     if (!user?.id || user.id === "guest") {
       toast.info("Joining as guest. No approval required.");
       return;
     }
+
+    console.log("requesting access");
+
+    mediasoup.socket.send(
+      JSON.stringify({
+        type: "requestJoin",
+        reqId: state.callId,
+        roomId: state.callId,
+        peerId: mediasoup.userId,
+        displayName: mediasoup.displayName,
+      })
+    );
 
     dispatch({ type: "SET_REQUESTING_ACCESS", payload: true });
     try {
@@ -110,7 +123,7 @@ export const useCallAccess = () => {
     } finally {
       dispatch({ type: "SET_REQUESTING_ACCESS", payload: false });
     }
-  }, [state.callId, user?.id, dispatch]);
+  }, [state.callId, user?.id, dispatch, mediasoup.socket]);
 
   return {
     isCreator: state.isCreator,

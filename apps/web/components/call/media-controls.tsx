@@ -261,7 +261,7 @@ export const MediaControls = ({
         <div></div>
       </div>
       <div
-        className="pointer-events-none h-full w-full bg-red-500 duration-500 ease-in-out"
+        className="pointer-events-none h-full w-full duration-500 ease-in-out"
         style={{
           width: isChatOpen ? 500 : 0,
         }}

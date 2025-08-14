@@ -309,6 +309,7 @@ export function useMediasoupClient() {
           },
         ];
       });
+      toast.success(`${data.displayName} joined the call`);
     };
 
     const handlePeerLeft = (data: any) => {

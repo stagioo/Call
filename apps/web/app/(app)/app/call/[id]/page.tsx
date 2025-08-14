@@ -8,9 +8,12 @@ import { useCallContext } from "@/contexts/call-context";
 import { useCallDevices } from "@/hooks/use-call-devices";
 import { useCallMediaControls } from "@/hooks/use-call-media-controls";
 import { useCallProducers } from "@/hooks/use-call-producers";
+import { useNotificationSound } from "@/hooks/use-notification-sound";
 import type { ActiveSection } from "@/lib/types";
+import { Button } from "@call/ui/components/button";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 function CallPageContent() {
   const params = useParams();
@@ -30,8 +33,119 @@ function CallPageContent() {
   } = useCallMediaControls();
 
   const { videoDevices, audioDevices, handleDeviceChange } = useCallDevices();
+  const { playNotificationSound } = useNotificationSound("request-joined");
 
   useCallProducers();
+
+  useEffect(() => {
+    if (!mediasoup.socket) return;
+
+    const handleJoinRequest = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.type === "requestJoinResponse") {
+          if (state.isCreator) {
+            toast.custom(
+              (t) => (
+                <RequestJoinToast
+                  socket={mediasoup.socket as WebSocket}
+                  name={data.displayName || "Someone"}
+                  reqId={data.reqId}
+                  roomId={state.callId as string}
+                  peerId={data.peerId}
+                />
+              ),
+              {
+                duration: 10000,
+              }
+            );
+            playNotificationSound();
+          }
+        }
+      } catch (e) {}
+    };
+
+    mediasoup.socket.addEventListener("message", handleJoinRequest);
+    return () => {
+      mediasoup.socket?.removeEventListener("message", handleJoinRequest);
+    };
+  }, [mediasoup.socket, state.isCreator, state.callId, playNotificationSound]);
+
+  useEffect(() => {
+    if (!mediasoup.socket) return;
+
+    const handleApproval = async (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.type === "joinApproved" && data.roomId === state.callId) {
+          if (state.joined || !state.callId) return;
+
+          try {
+            const joinRes = await mediasoup.joinRoom(state.callId);
+            const rtpCapabilities = joinRes?.rtpCapabilities;
+            if (!rtpCapabilities) return;
+
+            dispatch({
+              type: "SET_PRODUCERS",
+              payload: joinRes.producers || [],
+            });
+
+            await mediasoup.loadDevice(rtpCapabilities);
+            await mediasoup.createSendTransport();
+            await mediasoup.createRecvTransport();
+            dispatch({ type: "SET_RECV_TRANSPORT_READY", payload: true });
+
+            if (state.previewStream) {
+              state.previewStream.getTracks().forEach((t) => t.stop());
+              dispatch({ type: "SET_PREVIEW_STREAM", payload: null });
+            }
+
+            const constraints: MediaStreamConstraints = {
+              video: state.selectedVideo
+                ? { deviceId: { exact: state.selectedVideo } }
+                : true,
+              audio: state.selectedAudio
+                ? { deviceId: { exact: state.selectedAudio } }
+                : { echoCancellation: true, noiseSuppression: true },
+            };
+
+            const stream =
+              await navigator.mediaDevices.getUserMedia(constraints);
+            const audioTrack = stream.getAudioTracks()[0];
+            if (audioTrack) audioTrack.enabled = state.isLocalMicOn;
+            const videoTrack = stream.getVideoTracks()[0];
+            if (videoTrack) videoTrack.enabled = state.isLocalCameraOn;
+
+            const myProducers = await mediasoup.produce(stream);
+            if (!myProducers?.length) return;
+
+            dispatch({
+              type: "SET_MY_PRODUCER_IDS",
+              payload: myProducers.map((p: any) => p.id),
+            });
+            dispatch({ type: "SET_JOINED", payload: true });
+          } catch (err) {
+            console.error("Auto-join failed:", err);
+          }
+        }
+      } catch {}
+    };
+
+    mediasoup.socket.addEventListener("message", handleApproval);
+    return () => {
+      mediasoup.socket?.removeEventListener("message", handleApproval);
+    };
+  }, [
+    mediasoup,
+    state.callId,
+    state.joined,
+    state.previewStream,
+    state.selectedVideo,
+    state.selectedAudio,
+    state.isLocalMicOn,
+    state.isLocalCameraOn,
+    dispatch,
+  ]);
 
   useEffect(() => {
     const callId = params?.id as string;
@@ -192,3 +306,60 @@ function CallPageContent() {
 export default function CallPage() {
   return <CallPageContent />;
 }
+
+const RequestJoinToast = ({
+  name,
+  reqId,
+  roomId,
+  peerId,
+  socket,
+}: {
+  name: string;
+  reqId: string;
+  roomId: string;
+  peerId: string;
+  socket: WebSocket;
+}) => {
+  const handleAccept = () => {
+    socket?.send(
+      JSON.stringify({
+        type: "acceptJoin",
+        reqId,
+        roomId,
+        peerId,
+      })
+    );
+  };
+
+  const handleReject = () => {
+    socket?.send(
+      JSON.stringify({
+        type: "rejectJoin",
+        reqId,
+        roomId,
+        peerId,
+      })
+    );
+  };
+
+  return (
+    <div className="bg-sidebar flex size-full flex-col gap-2 rounded-lg border p-4">
+      <p className="text-sm font-medium">
+        <span className="font-bold">{name}</span> is requesting to join
+      </p>
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={handleAccept}>
+          Accept
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleReject}
+          className="bg-primary-red hover:bg-primary-red/80"
+        >
+          Reject
+        </Button>
+      </div>
+    </div>
+  );
+};
