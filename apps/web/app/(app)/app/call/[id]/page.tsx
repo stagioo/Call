@@ -320,26 +320,76 @@ const RequestJoinToast = ({
   peerId: string;
   socket: WebSocket;
 }) => {
-  const handleAccept = () => {
-    socket?.send(
-      JSON.stringify({
-        type: "acceptJoin",
-        reqId,
-        roomId,
-        peerId,
-      })
-    );
+  const handleAccept = async () => {
+    try {
+      // Call backend API to approve the join request
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${roomId}/approve-join`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ requesterId: peerId }),
+        }
+      );
+
+      if (response.ok) {
+        // Send WebSocket message to notify the requester
+        socket?.send(
+          JSON.stringify({
+            type: "acceptJoin",
+            reqId,
+            roomId,
+            peerId,
+          })
+        );
+        toast.success(`${name} has been approved to join the call`);
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to approve request");
+      }
+    } catch (error) {
+      console.error("Error approving join request:", error);
+      toast.error("Failed to approve request");
+    }
   };
 
-  const handleReject = () => {
-    socket?.send(
-      JSON.stringify({
-        type: "rejectJoin",
-        reqId,
-        roomId,
-        peerId,
-      })
-    );
+  const handleReject = async () => {
+    try {
+      // Call backend API to reject the join request
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${roomId}/reject-join`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ requesterId: peerId }),
+        }
+      );
+
+      if (response.ok) {
+        // Send WebSocket message to notify the requester
+        socket?.send(
+          JSON.stringify({
+            type: "rejectJoin",
+            reqId,
+            roomId,
+            peerId,
+          })
+        );
+        toast.success(`${name} has been rejected from joining the call`);
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to reject request");
+      }
+    } catch (error) {
+      console.error("Error rejecting join request:", error);
+      toast.error("Failed to reject request");
+    }
   };
 
   return (

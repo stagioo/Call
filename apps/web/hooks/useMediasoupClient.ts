@@ -290,7 +290,6 @@ export function useMediasoupClient() {
     }
   }, [connected, cleanupAll, currentRoomId]);
 
-  // Handle peer and producer events
   useEffect(() => {
     if (!socket) return;
 

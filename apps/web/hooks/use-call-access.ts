@@ -78,6 +78,66 @@ export const useCallAccess = () => {
     return () => clearInterval(interval);
   }, [state.callId, user?.id, state.joined, dispatch]);
 
+  useEffect(() => {
+    if (!mediasoup.socket) return;
+
+    const handleJoinRequest = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.type === "requestJoinResponse") {
+          // Notify only the creator client
+          if (state.isCreator) {
+            toast.info(
+              `${data.displayName || "Someone"} is requesting to join`,
+              {
+                description: `User ID: ${data.peerId}`,
+              }
+            );
+          }
+        }
+      } catch (e) {
+        // noop
+      }
+    };
+
+    mediasoup.socket.addEventListener("message", handleJoinRequest);
+    return () => {
+      mediasoup.socket?.removeEventListener("message", handleJoinRequest);
+    };
+  }, [mediasoup.socket, state.isCreator]);
+
+  // Listen for join approval/rejection responses
+  useEffect(() => {
+    if (!mediasoup.socket) return;
+
+    const handleJoinResponse = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.type === "joinApproved" && data.roomId === state.callId) {
+          // User has been approved to join
+          dispatch({ type: "SET_HAS_ACCESS", payload: true });
+          toast.success(
+            "Your join request has been approved! You can now join the call."
+          );
+        } else if (
+          data?.type === "joinRejected" &&
+          data.roomId === state.callId
+        ) {
+          // User has been rejected from joining
+          dispatch({ type: "SET_HAS_ACCESS", payload: false });
+          toast.error("Your join request has been rejected.");
+        }
+      } catch (e) {
+        // noop
+      }
+    };
+
+    mediasoup.socket.addEventListener("message", handleJoinResponse);
+    return () => {
+      mediasoup.socket?.removeEventListener("message", handleJoinResponse);
+    };
+  }, [mediasoup.socket, state.callId, dispatch]);
+
   const handleRequestAccess = useCallback(async () => {
     if (!state.callId || !mediasoup.socket) return;
     // For anonymous rooms, skip request logic
