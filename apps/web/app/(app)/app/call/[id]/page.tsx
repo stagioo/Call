@@ -11,7 +11,6 @@ import { useCallProducers } from "@/hooks/use-call-producers";
 import type { ActiveSection } from "@/lib/types";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { cn } from "@call/ui/lib/utils";
 
 function CallPageContent() {
   const params = useParams();
@@ -39,28 +38,6 @@ function CallPageContent() {
     if (callId) {
       dispatch({ type: "SET_CALL_ID", payload: callId });
     }
-  }, [params?.id, dispatch]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const loadCallName = async () => {
-      const callId = params?.id as string;
-      if (!callId) return;
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${callId}`,
-          { credentials: "include", signal: controller.signal }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          dispatch({ type: "SET_CALL_NAME", payload: data.call?.name ?? null });
-        }
-      } catch (_) {
-        // ignore
-      }
-    };
-    loadCallName();
-    return () => controller.abort();
   }, [params?.id, dispatch]);
 
   useEffect(() => {
@@ -164,23 +141,6 @@ function CallPageContent() {
 
   return (
     <div className="flex min-h-screen items-center justify-center overflow-x-hidden">
-      {/* Top call name aligned with CopyButton area */}
-      {state.callName && (
-        <div className="pointer-events-none fixed left-0 top-0 z-50 flex w-full justify-between px-10 py-4">
-          <div className="flex-1">
-            <span
-              className={cn(
-                "font-[400] text-[20px] leading-none tracking-[-0.4px]",
-                "text-[var(--Icon-color,#929292)]"
-              )}
-              style={{ fontFamily: "Geist" }}
-            >
-              {state.callName}
-            </span>
-          </div>
-          <div className="flex-1" />
-        </div>
-      )}
       {!state.joined ? (
         <CallPreview />
       ) : (
