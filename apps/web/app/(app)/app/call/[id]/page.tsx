@@ -56,6 +56,7 @@ function CallPageContent() {
                   roomId={state.callId as string}
                   peerId={data.peerId}
                   requesterId={data.requesterId}
+                  toastId={t}
                 />
               ),
               {
@@ -264,6 +265,16 @@ export default function CallPage() {
   return <CallPageContent />;
 }
 
+interface RequestJoinToastProps {
+  name: string;
+  reqId: string;
+  roomId: string;
+  peerId: string;
+  socket: WebSocket;
+  requesterId: string;
+  toastId: string | number;
+}
+
 const RequestJoinToast = ({
   name,
   reqId,
@@ -271,14 +282,8 @@ const RequestJoinToast = ({
   peerId,
   socket,
   requesterId,
-}: {
-  name: string;
-  reqId: string;
-  roomId: string;
-  peerId: string;
-  socket: WebSocket;
-  requesterId: string;
-}) => {
+  toastId,
+}: RequestJoinToastProps) => {
   const handleAccept = async () => {
     try {
       const response = await fetch(
@@ -302,7 +307,7 @@ const RequestJoinToast = ({
             peerId,
           })
         );
-        toast.success(`${name} has been approved to join the call`);
+        toast.dismiss(toastId);
       } else {
         const data = await response.json();
         toast.error(data.error || "Failed to approve request");
@@ -337,6 +342,7 @@ const RequestJoinToast = ({
           })
         );
         toast.success(`${name} has been rejected from joining the call`);
+        toast.dismiss(toastId);
       } else {
         const data = await response.json();
         toast.error(data.error || "Failed to reject request");
