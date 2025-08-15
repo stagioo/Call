@@ -261,6 +261,28 @@ callsRoutes.get("/participated", async (c) => {
   }
 });
 
+// GET /api/calls/:id
+callsRoutes.get("/:id", async (c) => {
+  try {
+    const callId = c.req.param("id");
+
+    const result = await db
+      .select({ id: calls.id, name: calls.name, creatorId: calls.creatorId })
+      .from(calls)
+      .where(eq(calls.id, callId))
+      .limit(1);
+
+    if (!result || result.length === 0) {
+      return c.json({ error: "Call not found" }, 404);
+    }
+
+    return c.json({ call: result[0] });
+  } catch (error) {
+    console.error("Error getting call info:", error);
+    return c.json({ error: "Failed to get call info" }, 500);
+  }
+});
+
 // POST /api/calls/record-participation
 callsRoutes.post("/record-participation", async (c) => {
   try {

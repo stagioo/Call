@@ -15,6 +15,7 @@ import {
 
 interface CallState {
   callId: string | null;
+  callName: string | null;
   joined: boolean;
   isCreator: boolean;
   hasAccess: boolean;
@@ -48,6 +49,7 @@ interface CallState {
 
 type CallAction =
   | { type: "SET_CALL_ID"; payload: string }
+  | { type: "SET_CALL_NAME"; payload: string | null }
   | { type: "SET_JOINED"; payload: boolean }
   | { type: "SET_CREATOR"; payload: boolean }
   | { type: "SET_HAS_ACCESS"; payload: boolean }
@@ -72,6 +74,7 @@ type CallAction =
 
 const initialState: CallState = {
   callId: null,
+  callName: null,
   joined: false,
   isCreator: false,
   hasAccess: false,
@@ -98,6 +101,8 @@ function callReducer(state: CallState, action: CallAction): CallState {
   switch (action.type) {
     case "SET_CALL_ID":
       return { ...state, callId: action.payload };
+    case "SET_CALL_NAME":
+      return { ...state, callName: action.payload };
     case "SET_JOINED":
       return { ...state, joined: action.payload };
     case "SET_CREATOR":
