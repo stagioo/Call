@@ -7,6 +7,7 @@ export const useCallAccess = () => {
   const {
     state,
     dispatch,
+    mediasoup,
     session: { user },
   } = useCallContext();
 
@@ -37,7 +38,7 @@ export const useCallAccess = () => {
     };
 
     fetchCreatorInfo();
-  }, [state.callId, dispatch]);
+  }, [state.callId, dispatch, mediasoup.socket]);
 
   useEffect(() => {
     if (state.joined || !state.callId) return;
@@ -77,13 +78,57 @@ export const useCallAccess = () => {
     return () => clearInterval(interval);
   }, [state.callId, user?.id, state.joined, dispatch]);
 
+  useEffect(() => {
+    if (!mediasoup.socket) return;
+
+    const handleJoinResponse = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.type === "joinApproved" && data.roomId === state.callId) {
+          // User has been approved to join
+          dispatch({ type: "SET_HAS_ACCESS", payload: true });
+          toast.success(
+            "Your join request has been approved! You can now join the call."
+          );
+        } else if (
+          data?.type === "joinRejected" &&
+          data.roomId === state.callId
+        ) {
+          // User has been rejected from joining
+          dispatch({ type: "SET_HAS_ACCESS", payload: false });
+          toast.error("Your join request has been rejected.");
+        }
+      } catch (e) {
+        // noop
+      }
+    };
+
+    mediasoup.socket.addEventListener("message", handleJoinResponse);
+    return () => {
+      mediasoup.socket?.removeEventListener("message", handleJoinResponse);
+    };
+  }, [mediasoup.socket, state.callId, dispatch]);
+
   const handleRequestAccess = useCallback(async () => {
-    if (!state.callId) return;
+    if (!state.callId || !mediasoup.socket) return;
     // For anonymous rooms, skip request logic
-    if (!user?.id || user.id === "guest") {
+    if (!user.id || user.id === "guest") {
       toast.info("Joining as guest. No approval required.");
       return;
     }
+
+    console.log("requesting access");
+
+    mediasoup.socket.send(
+      JSON.stringify({
+        type: "requestJoin",
+        reqId: state.callId,
+        roomId: state.callId,
+        peerId: mediasoup.userId,
+        displayName: mediasoup.displayName,
+        requesterId: user.id,
+      })
+    );
 
     dispatch({ type: "SET_REQUESTING_ACCESS", payload: true });
     try {
@@ -110,7 +155,7 @@ export const useCallAccess = () => {
     } finally {
       dispatch({ type: "SET_REQUESTING_ACCESS", payload: false });
     }
-  }, [state.callId, user?.id, dispatch]);
+  }, [state.callId, user?.id, dispatch, mediasoup.socket]);
 
   return {
     isCreator: state.isCreator,

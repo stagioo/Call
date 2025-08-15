@@ -5,12 +5,16 @@ import { CallVideoGrid } from "@/components/call/call-video-grid";
 import { MediaControls } from "@/components/call/media-controls";
 import { ChatSidebar } from "@/components/rooms/chat-sidebar";
 import { useCallContext } from "@/contexts/call-context";
+import { useCallJoin } from "@/hooks/use-call-join";
 import { useCallDevices } from "@/hooks/use-call-devices";
 import { useCallMediaControls } from "@/hooks/use-call-media-controls";
 import { useCallProducers } from "@/hooks/use-call-producers";
+import { useNotificationSound } from "@/hooks/use-notification-sound";
 import type { ActiveSection } from "@/lib/types";
+import { Button } from "@call/ui/components/button";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 function CallPageContent() {
   const params = useParams();
@@ -30,8 +34,75 @@ function CallPageContent() {
   } = useCallMediaControls();
 
   const { videoDevices, audioDevices, handleDeviceChange } = useCallDevices();
+  const { playNotificationSound } = useNotificationSound("request-joined");
+  const { handleJoin } = useCallJoin();
 
   useCallProducers();
+
+  useEffect(() => {
+    if (!mediasoup.socket) return;
+
+    const handleJoinRequest = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.type === "requestJoinResponse") {
+          if (state.isCreator) {
+            toast.custom(
+              (t) => (
+                <RequestJoinToast
+                  socket={mediasoup.socket as WebSocket}
+                  name={data.displayName || "Someone"}
+                  reqId={data.reqId}
+                  roomId={state.callId as string}
+                  peerId={data.peerId}
+                  requesterId={data.requesterId}
+                />
+              ),
+              {
+                duration: 10000,
+              }
+            );
+            playNotificationSound();
+          }
+        }
+      } catch (e) {}
+    };
+
+    mediasoup.socket.addEventListener("message", handleJoinRequest);
+    return () => {
+      mediasoup.socket?.removeEventListener("message", handleJoinRequest);
+    };
+  }, [mediasoup.socket, state.isCreator, state.callId, playNotificationSound]);
+
+  useEffect(() => {
+    if (!mediasoup.socket) return;
+
+    const handleApproval = async (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.type === "joinApproved" && data.roomId === state.callId) {
+          if (state.joined || !state.callId) return;
+
+          handleJoin();
+        }
+      } catch {}
+    };
+
+    mediasoup.socket.addEventListener("message", handleApproval);
+    return () => {
+      mediasoup.socket?.removeEventListener("message", handleApproval);
+    };
+  }, [
+    mediasoup,
+    state.callId,
+    state.joined,
+    state.previewStream,
+    state.selectedVideo,
+    state.selectedAudio,
+    state.isLocalMicOn,
+    state.isLocalCameraOn,
+    dispatch,
+  ]);
 
   useEffect(() => {
     const callId = params?.id as string;
@@ -192,3 +263,108 @@ function CallPageContent() {
 export default function CallPage() {
   return <CallPageContent />;
 }
+
+const RequestJoinToast = ({
+  name,
+  reqId,
+  roomId,
+  peerId,
+  socket,
+  requesterId,
+}: {
+  name: string;
+  reqId: string;
+  roomId: string;
+  peerId: string;
+  socket: WebSocket;
+  requesterId: string;
+}) => {
+  const handleAccept = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${roomId}/approve-join`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ requesterId: requesterId }),
+        }
+      );
+
+      if (response.ok) {
+        socket?.send(
+          JSON.stringify({
+            type: "acceptJoin",
+            reqId,
+            roomId,
+            peerId,
+          })
+        );
+        toast.success(`${name} has been approved to join the call`);
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to approve request");
+      }
+    } catch (error) {
+      console.error("Error approving join request:", error);
+      toast.error("Failed to approve request");
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/calls/${roomId}/reject-join`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ requesterId: peerId }),
+        }
+      );
+
+      if (response.ok) {
+        socket?.send(
+          JSON.stringify({
+            type: "rejectJoin",
+            reqId,
+            roomId,
+            peerId,
+          })
+        );
+        toast.success(`${name} has been rejected from joining the call`);
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to reject request");
+      }
+    } catch (error) {
+      console.error("Error rejecting join request:", error);
+      toast.error("Failed to reject request");
+    }
+  };
+
+  return (
+    <div className="bg-sidebar flex size-full flex-col gap-2 rounded-lg border p-4">
+      <p className="text-sm font-medium">
+        <span className="font-bold">{name}</span> is requesting to join
+      </p>
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={handleAccept}>
+          Accept
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleReject}
+          className="bg-primary-red hover:bg-primary-red/80"
+        >
+          Reject
+        </Button>
+      </div>
+    </div>
+  );
+};

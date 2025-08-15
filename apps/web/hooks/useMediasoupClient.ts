@@ -11,6 +11,7 @@ import type {
 } from "mediasoup-client/types";
 import { useSocketContext } from "@/components/providers/socket";
 import { useSession } from "@/hooks/useSession";
+import { toast } from "sonner";
 
 interface Peer {
   id: string;
@@ -130,7 +131,7 @@ export function useMediasoupClient() {
   const [peers, setPeers] = useState<Peer[]>([]);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
   // Remove active speaker states and refs
-  
+
   // Generate or get user ID
   const [userId] = useState(() => {
     if (typeof window !== "undefined") {
@@ -289,7 +290,6 @@ export function useMediasoupClient() {
     }
   }, [connected, cleanupAll, currentRoomId]);
 
-  // Handle peer and producer events
   useEffect(() => {
     if (!socket) return;
 
@@ -308,12 +308,13 @@ export function useMediasoupClient() {
           },
         ];
       });
+      toast.success(`${data.displayName} joined the call`);
     };
 
     const handlePeerLeft = (data: any) => {
       console.log("[mediasoup] Peer left:", data);
       setPeers((prev) => prev.filter((p) => p.id !== data.peerId));
-
+      toast.success(`${data.displayName} left the call`);
       // Clean up streams from this peer
       setRemoteStreams((prev) => {
         const streamsToRemove = prev.filter((s) => s.peerId === data.peerId);
