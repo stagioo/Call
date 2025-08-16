@@ -23,7 +23,7 @@ function CallPageContent() {
   const [activeSection, setActiveSection] = useState<ActiveSection | null>(
     null
   );
-  const { state, dispatch, mediasoup } = useCallContext();
+  const { state, dispatch, mediasoup, session } = useCallContext();
   const {
     toggleCamera,
     toggleMic,
@@ -250,7 +250,8 @@ function CallPageContent() {
             }}
             socket={mediasoup.socket}
             userId={mediasoup.userId}
-            displayName={state.creatorInfo?.creatorName || ""}
+            displayName={mediasoup.displayName}
+            userAvatar={session.user.image || "/avatars/default.jpg"}
             participants={participants}
             activeSection={activeSection}
             onActiveSectionChange={openSidebarWithSection}
