@@ -49,6 +49,9 @@ export const auth = betterAuth({
       prompt: "consent",
     },
   },
+
+ 
+
   advanced: {
     crossSubDomainCookies: {
       enabled: process.env.NODE_ENV === "production",

@@ -48,7 +48,6 @@ export const LoginCard = ({
           onClick={handleGoogleLogin}
           className="w-full w-lg"
           disabled={isLoading}
-        
         >
           <Icons.google className="mr-2 h-4 w-4" />
           Continue with Google

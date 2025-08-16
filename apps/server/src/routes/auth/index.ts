@@ -37,6 +37,17 @@ authRouter.post(
   }
 );
 
+// Redirect specific Better Auth error to app
+authRouter.get("/error", async (c) => {
+  const url = new URL(c.req.url);
+  const error = url.searchParams.get("error");
+
+  if (error === "please_restart_the_process") {
+    return c.redirect("https://joincall.co/app", 302);
+  }
+  return auth.handler(c.req.raw);
+});
+
 authRouter.on(["POST", "GET"], "/*", async (c: Context) => {
   try {
     return await auth.handler(c.req.raw);
