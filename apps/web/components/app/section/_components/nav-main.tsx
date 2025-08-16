@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
   useSidebar,
 } from "@call/ui/components/sidebar";
 import type { JSX } from "react";
@@ -35,17 +36,18 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarMenu className="flex flex-col">
-        <SidebarMenuItem className="mb-2">
+        <SidebarMenuItem className="mb-5">
           <SidebarMenuButton
             tooltip="Start Call"
             isActive={true}
             onClick={() => onOpen("start-call")}
-            className="flex items-center justify-center gap-2"
+            className="flex items-center text-sm !font-semibold !bg-primary-blue rounded-lg justify-center gap-3"
           >
-            <Icons.plus className="size-4" />
+            <Icons.plus style={{ width: 14, height: 14 }} />
             {isExpanded && <span>Start Call</span>}
           </SidebarMenuButton>
         </SidebarMenuItem>
+      
         {items.map((item) => (
           <Collapsible
             key={item.title}
