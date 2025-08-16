@@ -1,14 +1,13 @@
-import { zValidator } from "@hono/zod-validator";
 import { emailSchema } from "@/validators";
-import { user as userTable } from "@call/db/schema";
 import { auth } from "@call/auth/auth";
-import type { Context } from "hono";
-import { eq } from "drizzle-orm";
 import { db } from "@call/db";
+import { user as userTable } from "@call/db/schema";
+import { zValidator } from "@hono/zod-validator";
+import { eq } from "drizzle-orm";
+import type { Context } from "hono";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { ReqVariables } from "../../index.js";
-import { createId } from "@paralleldrive/cuid2";
 
 const authRouter = new Hono<{ Variables: ReqVariables }>();
 

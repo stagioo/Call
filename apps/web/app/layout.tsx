@@ -1,7 +1,6 @@
 import { Geist, Geist_Mono, Lora } from "next/font/google";
 
 import "@call/ui/globals.css";
-import "@livekit/components-styles";
 import { ThemeAndQueryProviders } from "@/components/providers/theme-and-query";
 import { siteConfig } from "@/lib/site";
 import type { Metadata } from "next";
@@ -91,16 +90,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <script
-        src="https://cdn.peasy.so/peasy.js"
-        data-website-id="01jybpzkjn3xgyfj6x4dq51ftt"
-        async
-      />
-      <script
-        crossOrigin="anonymous"
-        src="//unpkg.com/react-scan/dist/auto.global.js"
-        async
-      />
       <body
         className={`${fontSans.variable} ${fontLora.variable} ${fontMono.variable} custom_scrollbar font-sans antialiased transition-all duration-300`}
       >
