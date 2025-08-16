@@ -7,7 +7,7 @@ import { UserProfile } from "@call/ui/components/use-profile";
 import { cn } from "@call/ui/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { X } from "lucide-react";
-import { AnimatePresence, motion as m } from "motion/react";
+import { motion as m } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { ParticipantsSidebar } from "./participants-sidebar";
 import { useCallContext } from "@/contexts/call-context";
@@ -69,96 +69,97 @@ export function ChatSidebar({
   } = useCallContext();
 
   return (
-    <AnimatePresence>
-      {open && (
-        <m.div
-          initial={{ width: 0, opacity: 0, minWidth: 0 }}
-          animate={{ width: "500px", opacity: 1, minWidth: "500px" }}
-          exit={{ width: 0, opacity: 0, minWidth: 0 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="bg-inset-accent border-sidebar-inset z-50 flex h-screen w-full flex-col"
-        >
-          <div className="flex h-12 items-center justify-between">
-            <div className="border-inset-accent bg-sidebar-inset flex w-fit items-center justify-between gap-2 rounded-br-lg border p-1">
-              {CHAT_SECTIONS.map((section) => (
-                <m.button
-                  whileTap={{ scale: 0.98 }}
-                  key={section.key}
-                  aria-pressed={
-                    activeSection === (section.key as typeof activeSection)
-                  }
-                  aria-label={`Show ${section.label}`}
-                  onClick={() =>
-                    onActiveSectionChange(section.key as ActiveSection)
-                  }
-                  className={cn(
-                    "relative z-0",
-                    buttonVariants({ variant: "ghost" }),
-                    activeSection === section.key && "font-semibold",
-                    "hover:bg-transparent! rounded-tr-none"
-                  )}
-                >
-                  {section.label}
-                  {activeSection === section.key && (
-                    <m.div
-                      className={cn(
-                        "bg-sidebar-accent absolute inset-0 -z-10 rounded-md",
-                        activeSection === "participants" && "rounded-tr-none",
-                        activeSection === "chat" && "rounded-l-none"
-                      )}
-                      layoutId="active-call-section-indicator"
-                    />
-                  )}
-                </m.button>
-              ))}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                onOpenChange(false);
-                onActiveSectionChange(null);
-              }}
-              aria-label="Close sidebar"
-            >
-              <X />
-            </Button>
-          </div>
-
-          <div className="relative flex-1 overflow-hidden">
-            <div
-              className={cn(
-                "absolute inset-0",
-                activeSection === "chat" ? "block" : "hidden"
-              )}
-              aria-hidden={activeSection !== "chat"}
-            >
-              <Messages
-                socket={socket}
-                userId={userId}
-                displayName={displayName}
-                userAvatar={userAvatar}
-              />
-            </div>
-
-            <div
-              className={cn(
-                "absolute inset-0",
-                activeSection === "participants" ? "block" : "hidden"
-              )}
-              aria-hidden={activeSection !== "participants"}
-            >
-              <ParticipantsSidebar
-                callId={callId || ""}
-                isCreator={isCreator}
-                participants={participants}
-                currentUserId={userId}
-              />
-            </div>
-          </div>
-        </m.div>
+    <m.div
+      initial={{ width: 0, opacity: 0, minWidth: 0 }}
+      animate={{
+        width: open ? "500px" : 0,
+        opacity: open ? 1 : 0,
+        minWidth: open ? "500px" : 0,
+      }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className={cn(
+        "bg-inset-accent border-sidebar-inset z-50 flex h-screen w-full flex-col",
+        !open && "pointer-events-none"
       )}
-    </AnimatePresence>
+      aria-hidden={!open}
+    >
+      <div className="flex h-12 items-center justify-between">
+        <div className="border-inset-accent bg-sidebar-inset flex w-fit items-center justify-between gap-2 rounded-br-lg border p-1">
+          {CHAT_SECTIONS.map((section) => (
+            <m.button
+              whileTap={{ scale: 0.98 }}
+              key={section.key}
+              aria-pressed={
+                activeSection === (section.key as typeof activeSection)
+              }
+              aria-label={`Show ${section.label}`}
+              onClick={() => onActiveSectionChange(section.key as ActiveSection)}
+              className={cn(
+                "relative z-0",
+                buttonVariants({ variant: "ghost" }),
+                activeSection === section.key && "font-semibold",
+                "hover:bg-transparent! rounded-tr-none"
+              )}
+            >
+              {section.label}
+              {activeSection === section.key && (
+                <m.div
+                  className={cn(
+                    "bg-sidebar-accent absolute inset-0 -z-10 rounded-md",
+                    activeSection === "participants" && "rounded-tr-none",
+                    activeSection === "chat" && "rounded-l-none"
+                  )}
+                  layoutId="active-call-section-indicator"
+                />
+              )}
+            </m.button>
+          ))}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            onOpenChange(false);
+            onActiveSectionChange(null);
+          }}
+          aria-label="Close sidebar"
+        >
+          <X />
+        </Button>
+      </div>
+
+      <div className="relative flex-1 overflow-hidden">
+        <div
+          className={cn(
+            "absolute inset-0",
+            activeSection === "chat" ? "block" : "hidden"
+          )}
+          aria-hidden={activeSection !== "chat"}
+        >
+          <Messages
+            socket={socket}
+            userId={userId}
+            displayName={displayName}
+            userAvatar={userAvatar}
+          />
+        </div>
+
+        <div
+          className={cn(
+            "absolute inset-0",
+            activeSection === "participants" ? "block" : "hidden"
+          )}
+          aria-hidden={activeSection !== "participants"}
+        >
+          <ParticipantsSidebar
+            callId={callId || ""}
+            isCreator={isCreator}
+            participants={participants}
+            currentUserId={userId}
+          />
+        </div>
+      </div>
+    </m.div>
   );
 }
 
