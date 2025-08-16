@@ -484,6 +484,84 @@ export const Icons = {
     </svg>
   ),
 
+  gotMessageIcon: (props: IconProps) => (
+    <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="size-5"
+    aria-label="Unread messages"
+    {...props}
+  >
+    <path
+      d="M12.0004 2.40002C6.70719 2.40002 2.40039 6.70683 2.40039 12C2.40039 13.728 2.86599 15.3468 3.66879 16.7496L2.44719 20.4156C2.33919 20.7396 2.42319 21.096 2.66439 21.3372C2.83599 21.5088 3.06519 21.6012 3.30039 21.6012C3.39639 21.6012 3.49239 21.5856 3.58479 21.5544L7.25079 20.3328C8.65359 21.1356 10.2724 21.6012 12.0004 21.6012C17.2936 21.6012 21.6004 17.2944 21.6004 12.0012C21.6004 6.70803 17.2936 2.40002 12.0004 2.40002Z"
+      fill="#929292"
+    />
+    <g filter="url(#filter0_di_14_47)">
+      <circle cx="17.5" cy="3.5" r="2.5" fill="#FF3E3E" />
+    </g>
+    <defs>
+      <filter
+        id="filter0_di_14_47"
+        x="14"
+        y="0"
+        width="7"
+        height="7"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="0.5" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"
+        />
+        <feBlend
+          mode="normal"
+          in2="BackgroundImageFix"
+          result="effect1_dropShadow_14_47"
+        />
+        <feBlend
+          mode="normal"
+          in="SourceGraphic"
+          in2="effect1_dropShadow_14_47"
+          result="shape"
+        />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feMorphology
+          radius="1"
+          operator="erode"
+          in="SourceAlpha"
+          result="effect2_innerShadow_14_47"
+        />
+        <feOffset />
+        <feGaussianBlur stdDeviation="0.15" />
+        <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+        <feColorMatrix
+          type="matrix"
+          values="0 0 0 0 1 0 0 0 0 0.00673089 0 0 0 0 0.00673089 0 0 0 0.25 0"
+        />
+        <feBlend mode="normal" in2="shape" result="effect2_innerShadow_14_47" />
+      </filter>
+    </defs>
+  </svg>
+  ),
+
   emojiIcon: (props: IconProps) => (
     <svg
       xmlns="http://www.w3.org/2000/svg"

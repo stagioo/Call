@@ -67,7 +67,7 @@ export const MediaControls = ({
   const [isCameraOn, setIsCameraOn] = useState(true);
   const { state } = useSidebar();
   const {
-    state: { isChatOpen },
+    state: { isChatOpen, unreadChatCount },
   } = useCallContext();
 
   useEffect(() => {
@@ -242,13 +242,19 @@ export const MediaControls = ({
           <ControlButton
             onClick={onToggleChat}
             className={cn(
+              "relative",
               activeSection === "chat" && "border-primary-blue bg-primary-blue"
             )}
           >
-            <Icons.messageIcon
-              className="size-5"
-              fill={cn(activeSection === "chat" && "fill-white")}
-            />
+            {(!isChatOpen && unreadChatCount > 0) ? (
+              <Icons.gotMessageIcon className="size-5" />
+           
+            ) : (
+              <Icons.messageIcon
+                className="size-5"
+                fill={cn(activeSection === "chat" && "fill-white")}
+              />
+            )}
           </ControlButton>
 
           <ControlButton
