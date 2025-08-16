@@ -74,7 +74,7 @@ export function ChatSidebar({
       animate={{
         width: open ? "500px" : 0,
         opacity: open ? 1 : 0,
-        minWidth: open ? "500px" : 0,
+        minWidth: open ? "300px" : 0,
       }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
