@@ -209,6 +209,9 @@ function CallPageContent() {
     if (!state.isChatOpen) {
       dispatch({ type: "SET_CHAT_OPEN", payload: true });
     }
+    if (section === "chat") {
+      dispatch({ type: "RESET_UNREAD_CHAT" });
+    }
   };
 
   return (
@@ -247,6 +250,9 @@ function CallPageContent() {
                 setActiveSection(null);
               }
               dispatch({ type: "SET_CHAT_OPEN", payload: open });
+              if (open) {
+                dispatch({ type: "RESET_UNREAD_CHAT" });
+              }
             }}
             socket={mediasoup.socket}
             userId={mediasoup.userId}

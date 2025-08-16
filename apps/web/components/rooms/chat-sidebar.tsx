@@ -72,9 +72,9 @@ export function ChatSidebar({
     <m.div
       initial={{ width: 0, opacity: 0, minWidth: 0 }}
       animate={{
-        width: open ? "500px" : 0,
+        width: open ? "400px" : 0,
         opacity: open ? 1 : 0,
-        minWidth: open ? "300px" : 0,
+        minWidth: open ? "400px" : 0,
       }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
@@ -177,6 +177,10 @@ const Messages = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const {
+    state: { isChatOpen },
+    dispatch,
+  } = useCallContext();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -191,6 +195,9 @@ const Messages = ({
         if (data.type === "chat") {
           setMessages((prev) => [...prev, data.message]);
           setTimeout(scrollToBottom, 100);
+          if (data.message?.senderId !== userId && !isChatOpen) {
+            dispatch({ type: "INCREMENT_UNREAD_CHAT" });
+          }
         }
       } catch (err) {
         console.error("Error processing chat message:", err);

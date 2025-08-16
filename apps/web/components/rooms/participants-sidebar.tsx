@@ -164,18 +164,7 @@ export function ParticipantsSidebar({
                       : creator.displayName}
                   </p>
                 </div>
-                <div className="mt-1 flex items-center gap-1">
-                  {creator.isMicOn ? (
-                    <FiMic className="h-3 w-3 text-green-600 dark:text-green-500" />
-                  ) : (
-                    <FiMicOff className="h-3 w-3 text-red-500" />
-                  )}
-                  {creator.isCameraOn ? (
-                    <FiVideo className="h-3 w-3 text-green-600 dark:text-green-500" />
-                  ) : (
-                    <FiVideoOff className="h-3 w-3 text-red-500" />
-                  )}
-                </div>
+             
               </div>
             </div>
           </div>
@@ -214,18 +203,7 @@ export function ParticipantsSidebar({
                         : participant.displayName}
                     </p>
                   </div>
-                  <div className="mt-1 flex items-center gap-1">
-                    {participant.isMicOn ? (
-                      <FiMic className="h-3 w-3 text-green-600" />
-                    ) : (
-                      <FiMicOff className="h-3 w-3 text-red-500" />
-                    )}
-                    {participant.isCameraOn ? (
-                      <FiVideo className="h-3 w-3 text-green-600" />
-                    ) : (
-                      <FiVideoOff className="h-3 w-3 text-red-500" />
-                    )}
-                  </div>
+              
                 </div>
               </div>
             ))}

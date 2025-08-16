@@ -44,6 +44,7 @@ interface CallState {
   producers: any[];
   myProducerIds: string[];
   recvTransportReady: boolean;
+  unreadChatCount: number;
 }
 
 type CallAction =
@@ -68,6 +69,8 @@ type CallAction =
   | { type: "SET_PRODUCERS"; payload: any[] }
   | { type: "SET_MY_PRODUCER_IDS"; payload: string[] }
   | { type: "SET_RECV_TRANSPORT_READY"; payload: boolean }
+  | { type: "INCREMENT_UNREAD_CHAT" }
+  | { type: "RESET_UNREAD_CHAT" }
   | { type: "RESET_CALL_STATE" };
 
 const initialState: CallState = {
@@ -92,6 +95,7 @@ const initialState: CallState = {
   producers: [],
   myProducerIds: [],
   recvTransportReady: false,
+  unreadChatCount: 0,
 };
 
 function callReducer(state: CallState, action: CallAction): CallState {
@@ -138,6 +142,10 @@ function callReducer(state: CallState, action: CallAction): CallState {
       return { ...state, myProducerIds: action.payload };
     case "SET_RECV_TRANSPORT_READY":
       return { ...state, recvTransportReady: action.payload };
+    case "INCREMENT_UNREAD_CHAT":
+      return { ...state, unreadChatCount: state.unreadChatCount + 1 };
+    case "RESET_UNREAD_CHAT":
+      return { ...state, unreadChatCount: 0 };
     case "RESET_CALL_STATE":
       return initialState;
     default:
