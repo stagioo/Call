@@ -2,7 +2,7 @@
 
 import { useSidebar } from "@call/ui/components/sidebar";
 import { Button } from "@call/ui/components/button";
-import { PanelRight } from "lucide-react";
+import { Icons } from "@call/ui/components/icons";
 
 export function CloseSidebarButton({ className }: { className?: string }) {
   const { toggleSidebar } = useSidebar();
@@ -14,7 +14,7 @@ export function CloseSidebarButton({ className }: { className?: string }) {
       onClick={toggleSidebar}
       className={className}
     >
-      <PanelRight className="h-4 w-4" />
+      <Icons.sidebarClose className="h-4 w-4" />
     </Button>
   );
 }

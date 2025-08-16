@@ -43,7 +43,7 @@ export function NavUser({
     avatar: string;
   };
 }) {
-  const { isMobile } = useSidebar();
+  const { isMobile, state } = useSidebar();
   const router = useRouter();
 
   function getInitials(name?: string) {
@@ -66,16 +66,21 @@ export function NavUser({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
-              size="xl"
+              size="lg"
               className="data-[state=open]:text-sidebar-accent-foreground data-[state=collapsed]:p-0"
             >
-              <UserProfile name={user.name} url={user.avatar} />
+              <UserProfile
+                className="rounded-lg"
+                name={user.name}
+                url={user.avatar}
+                size={state === "collapsed" ? "lg" : "sm"}
+              />
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate text-lg font-medium capitalize">
+                <span className="truncate text-sm font-medium capitalize">
                   {user.name}
                 </span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              <ChevronsUpDown className="ml-auto" size="sm" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
