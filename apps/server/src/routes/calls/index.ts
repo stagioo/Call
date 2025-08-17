@@ -123,7 +123,7 @@ callsRoutes.post("/create", async (c) => {
       if (inviteeId) {
         const notificationMessage = body.teamId
           ? `${user.name || user.email} started a meeting in team: ${name}`
-          : `${user.name || user.email} has invited you to join the call ${name}.`;
+          : `${user.name || user.email} is inviting you to a call: ${name}`;
 
         await db.insert(notifications).values({
           id: crypto.randomUUID(),
@@ -461,7 +461,6 @@ callsRoutes.post("/:id/request-join", async (c) => {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    // Check if call exists
     const callResult = await db
       .select({ creatorId: calls.creatorId })
       .from(calls)
@@ -472,7 +471,6 @@ callsRoutes.post("/:id/request-join", async (c) => {
       return c.json({ error: "Call not found" }, 404);
     }
 
-    // Check if user already has a pending request
     const existingRequest = await db
       .select()
       .from(callJoinRequests)
@@ -489,7 +487,6 @@ callsRoutes.post("/:id/request-join", async (c) => {
       return c.json({ error: "You already have a pending request" }, 400);
     }
 
-    // Create join request
     await db.insert(callJoinRequests).values({
       callId,
       requesterId: user.id,
@@ -514,7 +511,6 @@ callsRoutes.get("/:id/join-requests", async (c) => {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    // Check if user is the creator
     const callResult = await db
       .select({ creatorId: calls.creatorId })
       .from(calls)
@@ -530,7 +526,6 @@ callsRoutes.get("/:id/join-requests", async (c) => {
       return c.json({ error: "Only call creator can view join requests" }, 403);
     }
 
-    // Get join requests with user information
     const requests = await db
       .select({
         id: callJoinRequests.id,
@@ -564,11 +559,14 @@ callsRoutes.post("/:id/approve-join", async (c) => {
     const body = await c.req.json();
     const { requesterId } = body;
 
+    console.log(
+      `[APPROVE-JOIN] Approving join request for user ${requesterId} in call ${callId}`
+    );
+
     if (!user || !user.id) {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    // Check if user is the creator
     const callResult = await db
       .select({ creatorId: calls.creatorId })
       .from(calls)
