@@ -1,7 +1,7 @@
 import { useContacts } from "@/components/providers/contacts";
-import { Avatar } from "@call/ui/components/avatar";
 import { Checkbox } from "@call/ui/components/checkbox";
 import { Input } from "@call/ui/components/input";
+import { UserProfile } from "@call/ui/components/use-profile";
 import { Search } from "lucide-react";
 import { useState } from "react";
 
@@ -85,14 +85,12 @@ export function ContactSelector({
                 }
                 disabled={disabled}
               />
-              <Avatar className="h-8 w-8">
-                <div
-                  key={`avatar-${contact.id}`}
-                  className="bg-primary/10 text-primary flex h-full w-full items-center justify-center rounded-full text-sm font-medium"
-                >
-                  {contact.name.charAt(0).toUpperCase()}
-                </div>
-              </Avatar>
+              <UserProfile
+                name={contact.name}
+                url={contact.image}
+                size="sm"
+                className="border-inset-accent border"
+              />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{contact.name}</div>
                 <div className="text-muted-foreground truncate text-xs">

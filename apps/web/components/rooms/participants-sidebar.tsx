@@ -1,6 +1,5 @@
 "use client";
 
-import { Avatar } from "@call/ui/components/avatar";
 import { Badge } from "@call/ui/components/badge";
 import { Button } from "@call/ui/components/button";
 import { Separator } from "@call/ui/components/separator";
@@ -21,6 +20,7 @@ import { toast } from "sonner";
 interface Participant {
   id: string;
   displayName: string;
+  image?: string;
   isCreator?: boolean;
   isMicOn?: boolean;
   isCameraOn?: boolean;
@@ -155,7 +155,12 @@ export function ParticipantsSidebar({
         {creator && (
           <div className="mb-4">
             <div className="flex items-center gap-2">
-              <UserProfile name={creator.displayName} />
+              <UserProfile
+                name={creator.displayName}
+                url={creator.image}
+                size="sm"
+                className="border-inset-accent border"
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -164,7 +169,6 @@ export function ParticipantsSidebar({
                       : creator.displayName}
                   </p>
                 </div>
-             
               </div>
             </div>
           </div>
@@ -189,11 +193,12 @@ export function ParticipantsSidebar({
                     : "bg-muted/50"
                 }`}
               >
-                <Avatar className="h-8 w-8">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-medium text-white">
-                    {participant.displayName.charAt(0).toUpperCase()}
-                  </div>
-                </Avatar>
+                <UserProfile
+                  name={participant.displayName}
+                  url={participant.image}
+                  size="sm"
+                  className="border-inset-accent border"
+                />
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -203,7 +208,6 @@ export function ParticipantsSidebar({
                         : participant.displayName}
                     </p>
                   </div>
-              
                 </div>
               </div>
             ))}
@@ -236,11 +240,12 @@ export function ParticipantsSidebar({
                     className="bg-background rounded-lg border p-3"
                   >
                     <div className="flex items-start gap-3">
-                      <Avatar className="h-8 w-8">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-600 text-sm font-medium text-white">
-                          {request.userName.charAt(0).toUpperCase()}
-                        </div>
-                      </Avatar>
+                      <UserProfile
+                        name={request.userName}
+                        url={undefined}
+                        size="sm"
+                        className="border-inset-accent border"
+                      />
 
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium">
