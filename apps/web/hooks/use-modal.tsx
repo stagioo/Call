@@ -8,8 +8,7 @@ type ModalType =
   | "create-contact"
   | "thoughts"
   | "add-member-to-team"
-  | "view-participants"
-  | "call-contact";
+  | "view-participants";
 
 interface CallInfo {
   id: string;
@@ -20,8 +19,6 @@ interface ModalData {
   team?: Team;
   participants?: Participant[];
   callInfo?: CallInfo;
-  contactEmail?: string;
-  contactName?: string;
 }
 
 interface ModalStore {
