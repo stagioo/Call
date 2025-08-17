@@ -87,7 +87,7 @@ Ready to escape complex, data-hungry meeting apps? Join the future of video call
 ./setup-dev.sh
 ```
 
-2.2 2. **Start the development environment (Winodws)**
+2.2 **Start the development environment (Windows)**
 
 ```bash
 ./setup_dev_windows.sh
