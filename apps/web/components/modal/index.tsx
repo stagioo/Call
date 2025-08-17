@@ -4,7 +4,6 @@ import { CreateTeam } from "./create-team";
 import { StartCall } from "./start-call";
 import { Thoughts } from "./thoughts";
 import { ViewParticipants } from "./view-participants";
-import { CallContactModal } from "./call-contact";
 const Modals = () => {
   return (
     <>
@@ -14,7 +13,6 @@ const Modals = () => {
       <Thoughts />
       <AddMemberToTeam />
       <ViewParticipants />
-      <CallContactModal />
     </>
   );
 };
