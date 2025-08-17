@@ -133,7 +133,7 @@ export default function ContactsList({ onAddContact }: ContactsListProps) {
 
   if (user.id === "guest") {
     return (
-      <div className="px-10 py-6">
+      <div className="px-10 space-y-6">
         <NoContactsFound onAddContact={onAddContact} />
       </div>
     );
