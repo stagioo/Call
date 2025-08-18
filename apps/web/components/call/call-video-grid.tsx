@@ -3,15 +3,22 @@
 import { useCallSelector, useMediasoupSelector } from "@/contexts/call-context";
 import { Icons } from "@call/ui/components/icons";
 import { cn } from "@call/ui/lib/utils";
-import { memo, useMemo } from "react";
+import { type JSX, memo, useMemo } from "react";
 
 const LocalVideo = memo(function LocalVideo({
   stream,
+  isScreenShare,
 }: {
   stream: MediaStream;
+  isScreenShare?: boolean;
 }) {
   return (
-    <div className="relative aspect-video max-h-[500px] min-h-[240px] w-auto overflow-hidden rounded-lg bg-black shadow-lg">
+    <div
+      className={cn(
+        "relative aspect-video max-h-[500px] min-h-[240px] w-auto overflow-hidden rounded-lg bg-black shadow-lg",
+        isScreenShare && "aspect-video max-h-[200px] min-h-[200px] w-auto"
+      )}
+    >
       <video
         autoPlay
         playsInline
@@ -36,16 +43,21 @@ const RemoteVideoTile = memo(function RemoteVideoTile({
   peerDisplayName,
   muted,
   keyId,
+  isScreenShare,
 }: {
   stream: MediaStream;
   peerId: string;
   peerDisplayName?: string;
   muted?: boolean;
   keyId: string;
+  isScreenShare?: boolean;
 }) {
   return (
     <div
-      className="relative aspect-video max-h-[500px] min-h-[240px] w-auto overflow-hidden rounded-lg bg-black shadow-lg"
+      className={cn(
+        "relative aspect-video max-h-[500px] min-h-[240px] w-auto overflow-hidden rounded-lg bg-black shadow-lg",
+        isScreenShare && "aspect-video max-h-[200px] min-h-[200px] w-auto"
+      )}
       key={keyId}
     >
       <video
@@ -90,7 +102,7 @@ const ScreenShareTile = memo(function ScreenShareTile({
       <video
         autoPlay
         playsInline
-        className="h-[240px] w-[320px] rounded-lg bg-black shadow-lg"
+        className="aspect-video w-auto rounded-lg bg-black shadow-lg"
         ref={(el) => {
           if (el) {
             el.srcObject = stream;
@@ -116,122 +128,137 @@ export const CallVideoGrid = () => {
   const localStream = useMediasoupSelector((m) => m.localStream);
   const remoteStreams = useMediasoupSelector((m) => m.remoteStreams);
 
-  const remoteVideoStreams = useMemo(() => {
-    return remoteStreams.filter((stream) => {
-      if (!stream?.stream) return false;
-      const videoTracks = stream.stream.getVideoTracks();
-      if (!videoTracks.length) return false;
-      const hasValidTrack = videoTracks.some(
-        (track) => track.readyState === "live" && track.enabled
-      );
-      const isVideoKind = stream.kind === "video";
-      const isVideoSource = stream.source === "webcam";
-      const isNotScreenShare = stream.source !== "screen";
-      return isVideoSource && isVideoKind && hasValidTrack && isNotScreenShare;
-    });
-  }, [remoteStreams]);
+  const screenShares = useMemo(() => {
+    const screens: JSX.Element[] = [];
 
-  const remoteScreenStreams = useMemo(() => {
-    return remoteStreams.filter((stream) => {
-      if (!stream?.stream) return false;
-      const videoTracks = stream.stream.getVideoTracks();
-      if (!videoTracks.length) return false;
-      const hasValidTrack = videoTracks.some(
-        (track) => track.readyState === "live" && track.enabled
+    if (
+      screenStream &&
+      screenStream
+        .getVideoTracks()
+        .some((track) => track.readyState === "live" && track.enabled)
+    ) {
+      screens.push(
+        <ScreenShareTile
+          keyId="local-screen"
+          stream={screenStream}
+          label="Your screen"
+        />
       );
-      return (
-        stream.source === "screen" && stream.kind === "video" && hasValidTrack
-      );
-    });
-  }, [remoteStreams]);
+    }
 
-  const peerAudioStatus = useMemo(() => {
-    return remoteStreams.reduce(
-      (acc, stream) => {
-        if (stream.kind === "audio") {
-          acc[stream.peerId] = { muted: stream.muted };
-        }
-        return acc;
-      },
-      {} as Record<string, { muted: boolean }>
+    remoteStreams.forEach(
+      ({
+        stream,
+        peerId,
+        displayName: peerDisplayName,
+        producerId,
+        kind,
+        source,
+      }) => {
+        if (!stream) return;
+        if (kind !== "video" || source !== "screen") return;
+
+        const hasValidTrack = stream
+          .getVideoTracks()
+          .some((track) => track.readyState === "live" && track.enabled);
+        if (!hasValidTrack) return;
+
+        screens.push(
+          <ScreenShareTile
+            key={producerId || peerId}
+            keyId={producerId || peerId}
+            stream={stream}
+            label={`${peerDisplayName || "User"}'s screen`}
+          />
+        );
+      }
     );
-  }, [remoteStreams]);
+
+    return screens;
+  }, [screenStream, remoteStreams]);
+
+  const videoStreams = useMemo(() => {
+    const videos: JSX.Element[] = [];
+
+    if (localStream) {
+      videos.push(
+        <LocalVideo
+          key="local-video"
+          stream={localStream}
+          isScreenShare={screenShares.length > 0}
+        />
+      );
+    }
+
+    remoteStreams.forEach(
+      ({
+        stream,
+        peerId,
+        displayName: peerDisplayName,
+        producerId,
+        kind,
+        source,
+      }) => {
+        if (!stream) return;
+        if (kind !== "video" || source !== "webcam") return;
+
+        const hasValidTrack = stream
+          .getVideoTracks()
+          .some((track) => track.readyState === "live" && track.enabled);
+        if (!hasValidTrack) return;
+
+        videos.push(
+          <RemoteVideoTile
+            key={producerId || peerId}
+            keyId={producerId || peerId}
+            stream={stream}
+            peerId={peerId}
+            isScreenShare={screenShares.length > 0}
+            peerDisplayName={peerDisplayName}
+            muted={remoteStreams
+              .filter((s) => s.kind === "audio" && s.peerId === peerId)
+              .some((s) => s.muted)}
+          />
+        );
+      }
+    );
+
+    return videos;
+  }, [localStream, remoteStreams, screenShares]);
 
   return (
-    <div
-      className={cn(
-        "relative flex h-full w-full flex-wrap items-center justify-center gap-4 p-4 transition-all duration-300 ease-in-out"
+    <div className="relative flex h-[calc(100vh-100px)] w-full flex-col items-center justify-center gap-6 p-4">
+      {screenShares.length > 0 && (
+        <div className="flex flex-1 flex-wrap items-center justify-center gap-4">
+          {screenShares}
+        </div>
       )}
-    >
-      <div className="flex flex-wrap items-center justify-center gap-4">
-        {localStream && <LocalVideo stream={localStream} />}
+      {videoStreams.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          {videoStreams}
+        </div>
+      )}
 
-        {screenStream &&
-          screenStream.getVideoTracks().length > 0 &&
-          screenStream
-            .getVideoTracks()
-            .some((track) => track.readyState === "live" && track.enabled) && (
-            <ScreenShareTile
-              keyId="local-screen"
-              stream={screenStream}
-              label="Your screen"
-            />
-          )}
-
-        {remoteVideoStreams.map(
-          ({ stream, peerId, displayName: peerDisplayName, producerId }) => (
-            <RemoteVideoTile
-              key={producerId || peerId}
-              keyId={producerId || peerId}
-              stream={stream}
-              peerId={peerId}
-              peerDisplayName={peerDisplayName}
-              muted={peerAudioStatus[peerId]?.muted}
-            />
-          )
-        )}
-
-        {remoteScreenStreams.map(
-          ({ stream, peerId, displayName: peerDisplayName, producerId }) => {
-            if (
-              !stream
-                ?.getVideoTracks()
-                .some((track) => track.readyState === "live" && track.enabled)
-            ) {
-              return null;
+      {remoteAudios.map(({ stream, id, peerId, displayName }) => (
+        <audio
+          key={id}
+          autoPlay
+          playsInline
+          ref={(el) => {
+            if (el) {
+              el.srcObject = stream;
+              el.onloadedmetadata = () => {
+                el.play().catch((e) =>
+                  console.warn(
+                    `Error playing audio for ${displayName || peerId}:`,
+                    e
+                  )
+                );
+              };
             }
-            return (
-              <ScreenShareTile
-                key={producerId || peerId}
-                keyId={producerId || peerId}
-                stream={stream}
-                label={`${peerDisplayName || "User"}'s screen`}
-              />
-            );
-          }
-        )}
-
-        {remoteAudios.map(({ stream, id, peerId, displayName }) => (
-          <audio
-            key={id}
-            autoPlay
-            playsInline
-            ref={(el) => {
-              if (el) {
-                el.srcObject = stream;
-                el.onloadedmetadata = () => {
-                  el.play().catch((e) =>
-                    console.warn(
-                      `Error playing audio for ${displayName || peerId}:`,
-                      e
-                    )
-                  );
-                };
-              }
-            }}
-          />
-        ))}
-      </div>
+          }}
+        />
+      ))}
     </div>
   );
 };

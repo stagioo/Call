@@ -53,7 +53,6 @@ export default function GoogleMeetLayout() {
   };
 
   const getParticipantColSpan = (count: number, index: number) => {
-    console.log(count, index);
     if (count <= 4) {
       if (count === 3) {
         if (index === 0 || index === 1) return "col-span-2";
@@ -71,13 +70,10 @@ export default function GoogleMeetLayout() {
       return "col-span-2";
     }
 
-    // Special cases for 5 and 8 participants (6-column grid)
     if (count === 5) {
-      // First 3 participants get col-span-2
       if (index < 3) {
         return "col-span-2";
       }
-      // Last 2 participants are centered
       if (index === 3) {
         return "col-span-2 col-start-2";
       }
@@ -100,12 +96,10 @@ export default function GoogleMeetLayout() {
 
     if (count <= 9) {
       const remainder = count % 3;
-
       if (remainder > 0) {
         const lastRowStartIndex = count - remainder;
         if (index >= lastRowStartIndex) {
           const positionInLastRow = index - lastRowStartIndex;
-
           if (remainder === 1) {
             return "col-span-1 col-start-2";
           }
@@ -115,7 +109,6 @@ export default function GoogleMeetLayout() {
           }
         }
       }
-
       return "col-span-1";
     }
 
@@ -124,6 +117,7 @@ export default function GoogleMeetLayout() {
 
   return (
     <div className="bg-background flex min-h-screen flex-col">
+      {/* Controls */}
       <div className="mb-6 flex h-16 justify-center gap-4 border-b">
         <div className="flex items-center gap-2">
           <Button
@@ -161,15 +155,17 @@ export default function GoogleMeetLayout() {
       </div>
 
       <div className="flex flex-1 gap-4">
+        {/* Main area */}
         <div
           className={cn(
-            "container mx-auto flex w-full flex-1 items-center justify-center p-8"
+            "container mx-auto flex w-full flex-1 flex-col items-center justify-start p-8"
           )}
         >
+          {/* Screen Share */}
           <AnimatePresence mode="wait">
             {isScreenSharing && (
               <motion.div
-                className="mb-6"
+                className="mb-6 w-full"
                 variants={screenShareVariants as Variants}
                 initial="hidden"
                 animate="visible"
@@ -229,13 +225,14 @@ export default function GoogleMeetLayout() {
             )}
           </AnimatePresence>
 
+          {/* Participants */}
           <LayoutGroup>
             <motion.div
               className={cn(
-                "grid w-full justify-center gap-4",
-                getGridLayout(participants.length)
-                // getGridRows(participants.length)
-                // "auto-rows-fr"
+                "w-full justify-center gap-4",
+                isScreenSharing
+                  ? "flex flex-wrap items-center"
+                  : `grid ${getGridLayout(participants.length)}`
               )}
               variants={containerVariants}
               initial="hidden"
@@ -251,52 +248,53 @@ export default function GoogleMeetLayout() {
               }}
             >
               <AnimatePresence mode="popLayout">
-                {visibleParticipants
-                  .map((participant, index) => (
-                    <motion.div
-                      key={participant.id}
-                      layoutId={`participant-${participant.id}`}
-                      variants={participantVariants as Variants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="exit"
-                      layout
-                      className={cn(
-                        "bg-inset-accent border-inset-accent-foreground relative flex min-h-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-4",
-                        getParticipantColSpan(
-                          visibleParticipants.length,
-                          index
-                        ),
-                        {
-                          "w-auto": visibleParticipants.length > 9,
-                          "aspect-video": visibleParticipants.length <= 9,
-                        }
-                      )}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => removeParticipant(participant.id)}
-                    >
+                {isScreenSharing
+                  ? visibleParticipants.slice(0, 4).map((participant) => (
                       <motion.div
-                        className="sls pointer-events-none absolute bottom-4 left-4 rounded bg-black/70 px-3 py-1 text-sm font-medium text-white"
-                        layoutId={`participant-name-${participant.id}`}
+                        key={participant.id}
+                        layoutId={`participant-${participant.id}`}
+                        variants={participantVariants as Variants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        layout
+                        className="relative flex h-[100px] w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-gray-500 bg-gray-700"
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => removeParticipant(participant.id)}
                       >
-                        {participant.name}
+                        <span className="text-sm text-white">
+                          {participant.name}
+                        </span>
                       </motion.div>
+                    ))
+                  : visibleParticipants.map((participant, index) => (
+                      <motion.div
+                        key={participant.id}
+                        layoutId={`participant-${participant.id}`}
+                        variants={participantVariants as Variants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        layout
+                        className={cn(
+                          "bg-inset-accent border-inset-accent-foreground relative flex min-h-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-4",
+                          getParticipantColSpan(
+                            visibleParticipants.length,
+                            index
+                          ),
+                          {
+                            "w-auto": visibleParticipants.length > 9,
+                            "aspect-video": visibleParticipants.length <= 9,
+                          }
+                        )}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => removeParticipant(participant.id)}
+                      >
+                        <span className="text-white">{participant.name}</span>
+                      </motion.div>
+                    ))}
 
-                      {participants.length > 1 && (
-                        <motion.div
-                          className="absolute inset-0 flex items-center justify-center bg-red-600/20 opacity-0 transition-opacity duration-200 hover:opacity-100"
-                          initial={{ opacity: 0 }}
-                          whileHover={{ opacity: 1 }}
-                        >
-                          <span className="font-medium text-white">
-                            Click to remove
-                          </span>
-                        </motion.div>
-                      )}
-                    </motion.div>
-                  ))
-                  .slice(0, 8)}
-                {(remainingParticipants.length || participants.length >= 9) && (
+                {isScreenSharing && remainingParticipants.length > 0 && (
                   <motion.div
                     layoutId={`participant-${participants.length + 1}`}
                     variants={participantVariants as Variants}
@@ -304,12 +302,10 @@ export default function GoogleMeetLayout() {
                     animate="visible"
                     exit="exit"
                     layout
-                    className="bg-inset-accent border-inset-accent-foreground relative flex min-h-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-4"
+                    className="flex h-[100px] w-[140px] items-center justify-center rounded-lg border-2 border-gray-500 bg-gray-700"
                   >
-                    <span className="text-2xl font-bold text-white">
-                      <span className="text-sm"> + </span>
-                      <NumberFlow value={remainingParticipants.length + 1} />
-                      <span className="text-sm"> more</span>
+                    <span className="font-semibold text-white">
+                      +{remainingParticipants.length} more
                     </span>
                   </motion.div>
                 )}
@@ -317,6 +313,8 @@ export default function GoogleMeetLayout() {
             </motion.div>
           </LayoutGroup>
         </div>
+
+        {/* Sidebar */}
         <AnimatePresence>
           {isSidebarOpen && (
             <motion.div
