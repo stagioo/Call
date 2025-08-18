@@ -15,7 +15,7 @@ const CallSection = ({ section }: CallSectionProps) => {
       </div>
     ),
     history: (
-      <div className="h-full w-full">
+      <div className="h-full w-full pb-6">
         <CallHistory />
       </div>
     ),

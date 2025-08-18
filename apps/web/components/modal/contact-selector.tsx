@@ -61,7 +61,7 @@ export function ContactSelector({
           placeholder="Search contacts..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="h-12 pl-10"
+          className="h-12 text-2xl !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white pl-10"
           disabled={disabled}
         />
       </div>
@@ -80,6 +80,7 @@ export function ContactSelector({
               <Checkbox
                 id={contact.id}
                 checked={selectedContacts.includes(contact.email)}
+                className="border-inset-accent border-1 border-[#636363] bg-[#4B4B4B] rounded-sm"
                 onCheckedChange={(checked) =>
                   handleContactToggle(contact.email, checked as boolean)
                 }
@@ -89,13 +90,13 @@ export function ContactSelector({
                 name={contact.name}
                 url={contact.image}
                 size="sm"
-                className="border-inset-accent border"
+                className="rounded-lg text-md"
               />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{contact.name}</div>
-                <div className="text-muted-foreground truncate text-xs">
+                {/* <div className="text-muted-foreground truncate text-xs">
                   {contact.email}
-                </div>
+                </div> */}
               </div>
             </div>
           ))

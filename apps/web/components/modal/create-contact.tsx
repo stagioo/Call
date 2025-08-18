@@ -63,22 +63,26 @@ export const CreateContact = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader className="flex flex-col items-center">
+      <DialogContent className="!max-w-sm p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
+        <DialogHeader className="flex flex-col  ">
           <DialogTitle>Create Contact</DialogTitle>
           <DialogDescription>
             Add a new contact to your contacts list.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input {...field} placeholder="hello@joincall.co" />
+                    <Input
+                      {...field}
+                      placeholder="hello@joincall.co"
+                      className="h-12 text-2xl !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -86,7 +90,7 @@ export const CreateContact = () => {
             />
             <LoadingButton
               type="submit"
-              className="w-full"
+              className="h-10 w-full rounded-lg text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
               loading={isPending}
               disabled={isPending || !form.formState.isValid}
             >
