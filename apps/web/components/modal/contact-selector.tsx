@@ -76,14 +76,16 @@ export function ContactSelector({
           </div>
         ) : (
           filteredContacts.map((contact) => {
-            const isChecked = selectedContacts.includes(contact.email);
-            const isDisabled = disabled || disabledEmails.includes(contact.email);
+            const isAlreadyMember = disabledEmails.includes(contact.email);
+            const isChecked = isAlreadyMember || selectedContacts.includes(contact.email);
+            const isDisabled = disabled || isAlreadyMember;
             return (
               <div
                 key={contact.id}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-muted/50",
-                  isChecked && "bg-[#3B3B3B]"
+                  "flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-muted/50",
+                  isChecked && "bg-[#3B3B3B]",
+                  isAlreadyMember && "opacity-70 cursor-not-allowed"
                 )}
               >
                 <Checkbox
