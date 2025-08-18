@@ -74,16 +74,16 @@ export const Thoughts = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader className="flex flex-col items-center justify-center gap-2">
-          <DialogTitle className="text-2xl font-bold">Thoughts?</DialogTitle>
-          <DialogDescription className="text-center">
+      <DialogContent className="!max-w-md p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
+        <DialogHeader className="flex flex-col  ">
+          <DialogTitle>Thoughts?</DialogTitle>
+          <DialogDescription>
             We&apos;re always looking for ways to improve. Let us know what you
             think.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="type"
@@ -94,7 +94,7 @@ export const Thoughts = () => {
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full h-12 !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white">
                         <SelectValue placeholder="Select a type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -119,7 +119,7 @@ export const Thoughts = () => {
                     <Textarea
                       {...field}
                       placeholder="What can we do better?"
-                      className="h-40 resize-none"
+                      className="h-40 resize-none text-base !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white"
                     />
                   </FormControl>
                   <FormMessage />
@@ -128,7 +128,7 @@ export const Thoughts = () => {
             />
             <LoadingButton
               type="submit"
-              className="w-full"
+              className="h-10 w-full rounded-lg text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
               loading={isPending}
               disabled={isPending || !form.formState.isValid}
             >

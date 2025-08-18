@@ -151,7 +151,7 @@ export const TeamSection = () => {
   const hasSearchResults = filteredTeams.length > 0;
 
   return (
-    <div className="px-10 space-y-6">
+    <div className="px-10 ">
       <div className="flex flex-col gap-6">
         {hasTeams ? (
           <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export const TeamSection = () => {
                 placeholder="Search by team name or member..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10 py-2.5 h-11 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="focus:ring-primary/20 h-11 rounded-md border py-2.5 pl-10 pr-10 text-sm focus:outline-none focus:ring-2"
               />
               <Icons.search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
               {searchQuery && (
@@ -235,40 +235,31 @@ const TeamCard = ({ team, onStartMeeting, onDeleteTeam, onAddMembers, isPending 
   const remainingMembers = team.members.length - membersToShow;
 
   return (
-    <div className="bg-inset-accent flex flex-col gap-3 rounded-xl border p-4">
+    <div className="bg-[#232323]  rounded-2xl p-4 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-medium first-letter:uppercase">
+        <h1 className="text-base font-medium first-letter:uppercase">
           {team.name}
         </h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="rounded-lg hover:bg-white/5">
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onAddMembers}>
+          <DropdownMenuContent align="end" className="w-44 rounded-lg border-1 border-[#434343] bg-[#2F2F2F] p-1 shadow-xl">
+            <DropdownMenuItem onClick={onAddMembers} className="text-sm rounded-md hover:bg-white/5">
               <UserPlus className="mr-2 h-4 w-4" />
               Add Members
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDeleteTeam(team.id)} variant="destructive">
+            <DropdownMenuItem onClick={() => onDeleteTeam(team.id)}  className="text-sm text-[#ff6347] rounded-md hover:bg-[#ff6347]">
               <LogOut className="mr-2 h-4 w-4" />
               Leave Team
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Icons.users className="size-4" />
-          <span className="text-muted-foreground">
-            {team.members.length} member{team.members.length !== 1 ? "s" : ""}
-          </span>
-        </div>
-      </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex  items-center gap-2">
         <Icons.users className="size-4" />
         <div className="flex items-center">
           {team.members
@@ -279,7 +270,7 @@ const TeamCard = ({ team, onStartMeeting, onDeleteTeam, onAddMembers, isPending 
                 name={member.name}
                 url={member.image}
                 size="sm"
-                className={cn("border-inset-accent -ml-2 border", {
+                className={cn("-ml-2 border border-[#434343]", {
                   "-ml-0": index === 0,
                 })}
               />
@@ -288,7 +279,7 @@ const TeamCard = ({ team, onStartMeeting, onDeleteTeam, onAddMembers, isPending 
             <div
               className={cn(
                 iconvVariants({ size: "sm" }),
-                "bg-muted z-10 -ml-2 border"
+                "bg-[#2F2F2F] z-10 -ml-2 border-1 border-[#434343]"
               )}
             >
               <span className="text-xs">+{remainingMembers}</span>
@@ -300,9 +291,9 @@ const TeamCard = ({ team, onStartMeeting, onDeleteTeam, onAddMembers, isPending 
       <LoadingButton
         onClick={() => onStartMeeting(team)}
         loading={isPending}
-        className="w-full"
+        className="h-10 w-full rounded-lg text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
       >
-        <Video className="h-4 w-4 mr-2" />
+
         Start Meeting
       </LoadingButton>
     </div>

@@ -4,17 +4,20 @@ import { Input } from "@call/ui/components/input";
 import { UserProfile } from "@call/ui/components/use-profile";
 import { Search } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@call/ui/lib/utils";
 
 interface ContactSelectorProps {
   selectedContacts: string[];
   onContactsChange: (emails: string[]) => void;
   disabled?: boolean;
+  disabledEmails?: string[];
 }
 
 export function ContactSelector({
   selectedContacts,
   onContactsChange,
   disabled = false,
+  disabledEmails = [],
 }: ContactSelectorProps) {
   const { contacts, isLoading, error } = useContacts();
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,34 +75,38 @@ export function ContactSelector({
             No contacts found
           </div>
         ) : (
-          filteredContacts.map((contact) => (
-            <div
-              key={contact.id}
-              className="hover:bg-muted/50 flex items-center gap-3 rounded-lg p-3 transition-colors"
-            >
-              <Checkbox
-                id={contact.id}
-                checked={selectedContacts.includes(contact.email)}
-                className="border-inset-accent border-1 border-[#636363] bg-[#4B4B4B] rounded-sm"
-                onCheckedChange={(checked) =>
-                  handleContactToggle(contact.email, checked as boolean)
-                }
-                disabled={disabled}
-              />
-              <UserProfile
-                name={contact.name}
-                url={contact.image}
-                size="sm"
-                className="rounded-lg text-md"
-              />
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">{contact.name}</div>
-                {/* <div className="text-muted-foreground truncate text-xs">
-                  {contact.email}
-                </div> */}
+          filteredContacts.map((contact) => {
+            const isChecked = selectedContacts.includes(contact.email);
+            const isDisabled = disabled || disabledEmails.includes(contact.email);
+            return (
+              <div
+                key={contact.id}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-muted/50",
+                  isChecked && "bg-[#3B3B3B]"
+                )}
+              >
+                <Checkbox
+                  id={contact.id}
+                  checked={isChecked}
+                  className="border-inset-accent border-1 border-[#636363] bg-[#4B4B4B] rounded-sm"
+                  onCheckedChange={(checked) =>
+                    handleContactToggle(contact.email, checked as boolean)
+                  }
+                  disabled={isDisabled}
+                />
+                <UserProfile
+                  name={contact.name}
+                  url={contact.image}
+                  size="sm"
+                  className="rounded-lg text-md"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium">{contact.name}</div>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
