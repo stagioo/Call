@@ -9,7 +9,7 @@ import { CloseSidebarButton } from "@/components/app/section/_components/close-s
 export default function ContactPage() {
   const { onOpen } = useModal();
   return (
-    <div className="flex flex-col gap-[22px]">
+    <div className="flex flex-col">
       <Header className="justify-between">
         <div>
           <CloseSidebarButton className="-ml-8" />
