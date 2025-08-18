@@ -67,7 +67,7 @@ export function NavUser({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:text-sidebar-accent-foreground data-[state=collapsed]:p-0"
+              className="data-[state=open]:text-sidebar-accent-foreground data-[state=collapsed]:p-0 hover:bg-white/5"
             >
               <UserProfile
                 className="rounded-lg"
@@ -84,8 +84,8 @@ export function NavUser({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg border-1 border-[#434343] bg-[#2F2F2F] p-1 shadow-xl"
+            side="bottom"
             align="end"
             sideOffset={4}
           >
@@ -106,7 +106,7 @@ export function NavUser({
 
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push("/app/profile")}>
+              <DropdownMenuItem className="rounded-md hover:bg-white/5" onClick={() => router.push("/app/profile")}>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
@@ -114,7 +114,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={handleSignOut}
-              className="cursor pointer"
+              className="cursor pointer rounded-md text-[#ff6347] hover:text-[#ff6347]/80 hover:bg-white/5"
             >
               <LogOut />
               Log out
