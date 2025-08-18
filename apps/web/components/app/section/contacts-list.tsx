@@ -8,7 +8,7 @@ import { cn } from "@call/ui/lib/utils";
 import { useSession } from "@/components/providers/session";
 
 import {
-  Trash2,
+  Trash,
   User,
   Mail,
   Phone,
@@ -16,7 +16,7 @@ import {
   Users,
   Loader2,
   UserPlus,
-  MoreVertical,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useModal } from "@/hooks/use-modal";
@@ -24,12 +24,7 @@ import { CALLS_QUERY } from "@/lib/QUERIES";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@call/ui/components/dropdown-menu";
+// Dropdown removed for minimalist row UI
 import SocialButton from "@/components/auth/social-button";
 
 interface Contact {
@@ -49,6 +44,17 @@ export default function ContactsList({ onAddContact }: ContactsListProps) {
   const [error, setError] = useState<string | null>(null);
   const [deletingContact, setDeletingContact] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const router = useRouter();
+  const { mutate: createCall, isPending: isCalling } = useMutation({
+    mutationFn: CALLS_QUERY.createCall,
+    onSuccess: (data, variables) => {
+      const member = variables.members?.[0];
+      toast.success(`Call invitation sent to ${member || "contact"}`);
+      router.push(`/app/call/${data.callId}`);
+    },
+    onError: () => toast.error("Failed to create call"),
+  });
 
   const fetchContacts = async () => {
     setLoading(true);
@@ -174,7 +180,7 @@ export default function ContactsList({ onAddContact }: ContactsListProps) {
   const hasSearchResults = filteredContacts.length > 0;
 
   return (
-    <div className="px-10 py-6">
+    <div className="px-10 ">
       <div className="flex flex-col gap-6">
         {hasContacts ? (
           <div className="flex items-center gap-2">
@@ -222,15 +228,22 @@ export default function ContactsList({ onAddContact }: ContactsListProps) {
           </div>
         )}
 
-        {/* Contacts grid */}
+        {/* Contacts list (row style) */}
         {hasSearchResults && (
-          <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="flex flex-col gap-2">
             {filteredContacts.map((contact) => (
               <ContactCard
                 key={contact.id}
                 contact={contact}
                 onDeleteContact={handleDeleteContact}
                 isDeleting={deletingContact === contact.id}
+                onCallContact={() =>
+                  createCall({
+                    name: `Call with ${contact.name || contact.email}`,
+                    members: [contact.email],
+                  })
+                }
+                isCalling={isCalling}
               />
             ))}
           </div>
@@ -247,85 +260,63 @@ interface ContactCardProps {
   contact: Contact;
   onDeleteContact: (contactId: string, contactEmail: string) => void;
   isDeleting: boolean;
+  onCallContact: () => void;
+  isCalling: boolean;
 }
 
 const ContactCard = ({
   contact,
   onDeleteContact,
   isDeleting,
+  onCallContact,
+  isCalling,
 }: ContactCardProps) => {
-  const { user } = useSession();
-  const router = useRouter();
-  const { mutate: createCall, isPending: isInitiatingCall } = useMutation({
-    mutationFn: CALLS_QUERY.createCall,
-    onSuccess: (data) => {
-      toast.success(`Call invitation sent to ${contact.name || contact.email}`);
-      router.push(`/app/call/${data.callId}`);
-    },
-    onError: () => {
-      toast.error("Failed to create call");
-    },
-  });
-
-  const handleCallContact = () => {
-    const userName = user?.name || "User";
-
-    createCall({
-      name: `Call with ${contact.name || contact.email}`,
-      members: [contact.email],
-    });
-  };
-
   return (
-    <div className="bg-inset-accent flex flex-col gap-3 rounded-xl border p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-medium first-letter:uppercase">
-          {contact.name || "No name"}
-        </h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={isInitiatingCall}>
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={handleCallContact}
-              disabled={isInitiatingCall}
-            >
-              {isInitiatingCall ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Phone className="mr-2 h-4 w-4" />
-              )}
-              {isInitiatingCall ? "Calling..." : "Call Contact"}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDeleteContact(contact.id, contact.email)}
-              variant="destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Contact
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Mail className="size-4" />
-        <span className="text-muted-foreground truncate text-sm">
-          {contact.email}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <User className="size-4" />
+    <div
+      className={cn(
+        "flex w-full items-center justify-between rounded-xl p-3 transition-colors",
+        "hover:bg-white/5"
+      )}
+    >
+      <div className="flex items-center gap-3">
         <UserProfile
           name={contact.name || contact.email}
           url={contact.image}
           size="sm"
-          className="border-inset-accent border"
+          className="rounded-lg"
         />
+        <div className="text-left">
+          <div className="font-medium leading-none">
+            {contact.name || "No name"}
+          </div>
+          <div className="text-muted-foreground text-sm">{contact.email}</div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button
+          onClick={onCallContact}
+          disabled={isCalling}
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8  text-white hover:bg-white/5 hover:text-white/80"
+          aria-label="Call contact"
+        >
+          {isCalling ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Icons.phoneIcon className="h-4 w-4" />
+          )}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onDeleteContact(contact.id, contact.email)}
+          className="h-8 w-8 rounded-lg text-[#ff6347] hover:text-[#ff6347]/80 hover:bg-white/5"
+          aria-label="Delete contact"
+        >
+          <Trash className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

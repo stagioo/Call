@@ -106,22 +106,26 @@ export const CreateTeam = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
-      <DialogContent>
-        <DialogHeader className="flex flex-col items-center">
+      <DialogContent className="!max-w-sm p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
+        <DialogHeader className="flex flex-col  ">
           <DialogTitle>Create Team</DialogTitle>
           <DialogDescription>
             Create a new team with your contacts.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input {...field} placeholder="Enter team name" />
+                    <Input
+                      {...field}
+                      placeholder="Team name"
+                      className="h-12 text-2xl !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -136,7 +140,7 @@ export const CreateTeam = () => {
 
             <LoadingButton
               type="submit"
-              className="w-full"
+              className="h-10 w-full rounded-lg text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
               loading={isPending}
               disabled={isPending || !form.formState.isValid}
             >

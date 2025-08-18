@@ -4,21 +4,10 @@ import { useSession } from "@/components/providers/session";
 import { authClient } from "@call/auth/auth-client";
 import { Button } from "@call/ui/components/button";
 import { Input } from "@call/ui/components/input";
-import { Label } from "@call/ui/components/label";
 import { UserProfile } from "@call/ui/components/use-profile";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  FiCamera,
-  FiMail,
-  FiCalendar,
-  FiEdit2,
-  FiCheck,
-  FiX,
-} from "react-icons/fi";
-import { Badge } from "@call/ui/components/badge";
-import { Separator } from "@call/ui/components/separator";
-import { CloseSidebarButton } from "@/components/app/section/_components/close-sidebar-button";
+import { FiCamera, FiEdit2, FiCheck, FiX } from "react-icons/fi";
 
 export default function ProfilePage() {
   const { user } = useSession();
@@ -110,23 +99,14 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="from-primary/5 to-background min-h-[calc(100vh-4rem)] p-8">
-      <div className="mx-auto max-w-4xl space-y-8">
-        {/* Header Section */}
-        <div className="flex flex-col items-center space-y-4 text-center">
-          <div
-            className="group relative cursor-pointer"
-            onClick={handleImageClick}
-          >
-            <div className="relative h-32 w-32">
-              <UserProfile
-                name={user.name}
-                url={user.image}
-                className="h-full w-full"
-                size="lg"
-              />
+    <div className="px-10 ">
+      <div className="mx-auto max-w-md py-10">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="group relative cursor-pointer" onClick={handleImageClick}>
+            <div className="relative h-28 w-28">
+              <UserProfile name={user.name} url={user.image} className="h-full w-full" size="lg" />
               <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/0 transition-colors group-hover:bg-black/40">
-                <FiCamera className="hidden h-8 w-8 text-white group-hover:block" />
+                <FiCamera className="hidden h-7 w-7 text-white group-hover:block" />
               </div>
               {imageLoading && (
                 <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
@@ -150,19 +130,15 @@ export default function ProfilePage() {
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="h-10 text-xl font-semibold"
+                  className="h-10 rounded-md text-xl"
                   disabled={loading}
                 />
-                <Button
-                  size="icon"
-                  onClick={handleUpdateProfile}
-                  disabled={loading}
-                >
+                <Button size="icon" onClick={handleUpdateProfile} disabled={loading}>
                   <FiCheck className="h-4 w-4" />
                 </Button>
                 <Button
                   size="icon"
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => {
                     setIsEditing(false);
                     setName(user.name);
@@ -175,52 +151,12 @@ export default function ProfilePage() {
             ) : (
               <div className="flex items-center justify-center gap-2">
                 <h1 className="text-2xl font-semibold">{user.name}</h1>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setIsEditing(true)}
-                >
+                <Button size="icon" variant="ghost" onClick={() => setIsEditing(true)}>
                   <FiEdit2 className="h-4 w-4" />
                 </Button>
               </div>
             )}
             <p className="text-muted-foreground">{user.email}</p>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <div className="bg-card text-card-foreground rounded-lg border p-6 shadow-sm">
-            <div className="flex items-center gap-2">
-              <FiMail className="text-muted-foreground h-5 w-5" />
-              <h3 className="font-medium">Email Status</h3>
-            </div>
-            <p className="mt-2 text-2xl font-semibold">
-              {user.emailVerified ? "Verified" : "Pending"}
-            </p>
-          </div>
-
-          <div className="bg-card text-card-foreground rounded-lg border p-6 shadow-sm">
-            <div className="flex items-center gap-2">
-              <FiCalendar className="text-muted-foreground h-5 w-5" />
-              <h3 className="font-medium">Member Since</h3>
-            </div>
-            <p className="mt-2 text-2xl font-semibold">
-              {new Date(user.createdAt).toLocaleDateString(undefined, {
-                month: "short",
-                year: "numeric",
-              })}
-            </p>
-          </div>
-
-          <div className="bg-card text-card-foreground rounded-lg border p-6 shadow-sm">
-            <div className="flex items-center gap-2">
-              <FiMail className="text-muted-foreground h-5 w-5" />
-              <h3 className="font-medium">Total Calls</h3>
-            </div>
-            <p className="mt-2 text-2xl font-semibold">0</p>
           </div>
         </div>
       </div>

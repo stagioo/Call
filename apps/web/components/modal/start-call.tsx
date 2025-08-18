@@ -87,8 +87,8 @@ export const StartCall = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
-      <DialogContent className="max-w-md p-6">
-        <DialogHeader className="flex flex-col items-center">
+      <DialogContent className="!max-w-sm p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
+        <DialogHeader className="flex flex-col  ">
           <DialogTitle>Start Call</DialogTitle>
           <DialogDescription>
             Start a call with your contacts.
@@ -98,7 +98,7 @@ export const StartCall = () => {
           <Input
             {...form.register("name")}
             placeholder="Call name (optional)"
-            className="h-12 text-lg"
+            className="h-12 text-2xl !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white"
             disabled={isPending}
           />
 
@@ -110,7 +110,7 @@ export const StartCall = () => {
 
           <LoadingButton
             type="submit"
-            className="h-12 w-full text-lg font-medium"
+            className="h-10 w-full rounded-lg text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
             loading={isPending}
             disabled={isPending}
           >

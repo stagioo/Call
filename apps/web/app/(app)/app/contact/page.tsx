@@ -9,14 +9,14 @@ import { CloseSidebarButton } from "@/components/app/section/_components/close-s
 export default function ContactPage() {
   const { onOpen } = useModal();
   return (
-    <div className="flex flex-col gap-[22px]">
+    <div className="flex flex-col">
       <Header className="justify-between">
         <div>
           <CloseSidebarButton className="-ml-8" />
         </div>
         <Button
           onClick={() => onOpen("create-contact")}
-          className="bg-inset-accent-foreground hover:bg-inset-accent-foreground/80 text-white"
+          className="bg-primary-blue hover:bg-primary-blue/80 font-medium text-white px-4 py-2 rounded-md text-sm"
         >
           Create Contact
         </Button>

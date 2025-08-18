@@ -9,6 +9,7 @@ import { motion as m } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { CloseSidebarButton } from "@/components/app/section/_components/close-sidebar-button";
+import { Icons } from "@call/ui/components/icons";
 
 const SECTIONS = [
   { key: "joincall", label: "Join Call" },
@@ -47,11 +48,11 @@ export default function CallPage() {
               onClick={() => handleSectionChange(s.key)}
               className={cn(
                 buttonVariants({ variant: "ghost" }),
-                "relative z-0 transition-all hover:bg-transparent",
+                "relative z-0 transition-all  text-sm hover:bg-transparent text-[#4C4C4C]",
                 sectionKey === s.key &&
-                  "font-medium text-white hover:text-white"
+                  "font-medium text-white cursor-pointer hover:text-white px-4 py-2 rounded-md"
               )}
-              whileTap={{ scale: 0.98 }}
+            
             >
               {s.label}
 
@@ -59,6 +60,7 @@ export default function CallPage() {
                 <m.div
                   className="bg-inset-accent-foreground absolute inset-0 -z-10 rounded-md"
                   layoutId="active-call-section"
+                  transition={{ layout: { duration: 0.15, ease: "easeOut" } }}
                 />
               )}
             </m.button>
@@ -66,8 +68,9 @@ export default function CallPage() {
         </div>
         <Button
           onClick={() => onOpen("start-call")}
-          className="bg-inset-accent-foreground hover:bg-inset-accent-foreground/80 text-white"
+          className="bg-primary-blue hover:bg-primary-blue/80 font-medium text-white px-4 py-2 rounded-md text-sm"
         >
+          <Icons.plus style={{ width: 14, height: 14 }} />
           Start Call
         </Button>
       </Header>

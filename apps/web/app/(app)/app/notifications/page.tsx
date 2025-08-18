@@ -38,7 +38,7 @@ export default function NotificationsPage() {
   );
 
   return (
-    <div className="flex flex-col gap-[22px]">
+    <div className="flex flex-col ">
       <Header className="justify-between">
         <div className="flex items-center gap-2">
           <CloseSidebarButton className="-ml-8" />
@@ -48,8 +48,9 @@ export default function NotificationsPage() {
               onClick={() => handleSectionChange(s.key)}
               className={cn(
                 buttonVariants({ variant: "ghost" }),
-                "relative z-0 transition-all hover:bg-transparent",
-                sectionKey === s.key && "font-medium text-white"
+                "relative z-0 transition-all  text-sm hover:bg-transparent text-[#4C4C4C]",
+                sectionKey === s.key &&
+                  "font-medium text-white cursor-pointer hover:text-white px-4 py-2 rounded-md"
               )}
             >
               {s.label}
@@ -58,6 +59,7 @@ export default function NotificationsPage() {
                 <m.div
                   className="bg-inset-accent-foreground absolute inset-0 -z-10 rounded-md"
                   layoutId="active-notification-section"
+                  transition={{ layout: { duration: 0.15, ease: "easeOut" } }}
                 />
               )}
             </m.button>

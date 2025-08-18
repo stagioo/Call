@@ -2,7 +2,6 @@
 
 import { useSession } from "@/components/providers/session";
 import { useModal } from "@/hooks/use-modal";
-
 import { Skeletons } from "@/components/skeletons";
 import { CALLS_QUERY } from "@/lib/QUERIES";
 import type { Call } from "@/lib/types";
@@ -75,19 +74,19 @@ export function CallHistory() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6 py-6">
+      <div className="flex flex-col gap-6 ">
         <div className="relative w-full max-w-md">
           <Input
             type="text"
             placeholder="Search by call name or participant..."
             disabled
-            className="focus:ring-primary/20 h-11 rounded-lg border py-2.5 pl-10 pr-10 text-sm focus:outline-none focus:ring-2"
+            className="focus:ring-primary/20 h-11 !rounded-md border py-2.5 pl-10 pr-10 text-sm focus:outline-none focus:ring-2"
           />
           <Icons.search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50" />
         </div>
 
-        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {Array.from({ length: 12 }).map((_, index) => (
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: 3 }).map((_, index) => (
             <Skeletons.callHistory key={index} />
           ))}
         </div>
@@ -121,8 +120,8 @@ export function CallHistory() {
   const hasSearchResults = filteredCalls.length > 0;
 
   return (
-    <div className="space-y-6 py-6">
-      <div className="flex flex-col gap-6">
+    <div className="space-y-6 ">
+      <div className="flex flex-col gap-6 ">
         {hasCallHistory ? (
           <div className="flex items-center gap-2">
             <div className="relative w-full max-w-md">
@@ -131,7 +130,7 @@ export function CallHistory() {
                 placeholder="Search by call name or participant..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="focus:ring-primary/20 h-11 rounded-lg border py-2.5 pl-10 pr-10 text-sm focus:outline-none focus:ring-2"
+                className="focus:ring-primary/20 h-11 rounded-md border py-2.5 pl-10 pr-10 text-sm focus:outline-none focus:ring-2"
               />
               <Icons.search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
               {searchQuery && (
@@ -170,7 +169,7 @@ export function CallHistory() {
 
         {/* Call grid */}
         {hasSearchResults && (
-          <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="flex flex-col gap-3">
             {filteredCalls.map((call) => (
               <CallHistoryCard key={call.id} call={call} />
             ))}
@@ -220,40 +219,32 @@ const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
   };
 
   return (
-    <div className="bg-inset-accent flex flex-col gap-3 rounded-xl border p-4">
+    <div className="bg-inset-accent flex  flex-col gap-3 rounded-md border p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-medium first-letter:uppercase">
+        <h1 className=" font-medium first-letter:uppercase">
           {call.name}
         </h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleViewUsers}>
-              <Users className="mr-2 h-4 w-4" />
-              View Users
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleHideCall} variant="destructive">
-              <Trash className="mr-2 h-4 w-4" />
-              Hide Call
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      
+        <div className="flex ">
+          <Button className="flex items-center justify-center " variant="ghost" size="icon" onClick={handleViewUsers}>
+            <Users className=" h-4 w-4" />
+          </Button>
+          <Button className="flex items-center justify-center text-[#ff6347] hover:text-[#ff6347]/80" variant="ghost" size="icon"  onClick={handleHideCall}>
+            <Trash className=" h-4 w-4" />
+          </Button>
+        </div>
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Icons.scheduleIcon className="size-4" />
-            <span className="text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               {formatCustomDate(call.joinedAt)}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Icons.timer className="size-4" />
-            <span className="text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               {formatCallDuration(call.joinedAt, call.leftAt)}
             </span>
           </div>

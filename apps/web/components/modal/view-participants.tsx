@@ -2,11 +2,11 @@ import { useModal } from "@/hooks/use-modal";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@call/ui/components/dialog";
 import { UserProfile } from "@call/ui/components/use-profile";
-import { Separator } from "@call/ui/components/separator";
 import { ScrollArea } from "@call/ui/components/scroll-area";
 import { Badge } from "@call/ui/components/badge";
 import { FiUsers, FiCalendar, FiClock } from "react-icons/fi";
@@ -22,18 +22,13 @@ export const ViewParticipants = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[80vh] max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FiUsers className="h-5 w-5" />
-            {callInfo?.name || "Call"} Participants
-          </DialogTitle>
-          <p className="text-muted-foreground text-sm">
+      <DialogContent className="!max-w-md p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
+        <DialogHeader className="flex flex-col  ">
+          <DialogTitle>{callInfo?.name || "Call"} Participants</DialogTitle>
+          <DialogDescription>
             {participants.length} participant(s) in this call
-          </p>
+          </DialogDescription>
         </DialogHeader>
-
-        <Separator />
 
         <ScrollArea className="max-h-[500px] pr-4">
           <div className="space-y-4">
@@ -41,7 +36,7 @@ export const ViewParticipants = () => {
               participants.map((participant, index: number) => (
                 <div
                   key={participant.id || index}
-                  className="hover:bg-muted/50 flex items-center gap-4 rounded-lg border p-3 transition-colors"
+                  className="flex items-center gap-4 rounded-lg border-1 border-[#434343] bg-[#2F2F2F] p-3 transition-colors hover:bg-white/5"
                 >
                   <UserProfile
                     name={participant.name || "Unknown"}
@@ -64,20 +59,7 @@ export const ViewParticipants = () => {
                     </p>
 
                     <div className="text-muted-foreground flex items-center gap-4 text-xs">
-                      {participant.joinedAt && (
-                        <div className="flex items-center gap-1">
-                          <FiCalendar className="h-3 w-3" />
-                          <span>
-                            Joined{" "}
-                            {formatDistanceToNow(
-                              new Date(participant.joinedAt),
-                              {
-                                addSuffix: true,
-                              }
-                            )}
-                          </span>
-                        </div>
-                      )}
+                    
 
                       {participant.leftAt && (
                         <div className="flex items-center gap-1">

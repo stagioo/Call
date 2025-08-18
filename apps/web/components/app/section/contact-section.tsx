@@ -3,7 +3,7 @@ import { UserPlus } from "lucide-react";
 
 export const ContactSection = ({ onAddContact }: { onAddContact?: () => void }) => {
   return (
-    <div className="px-10 space-y-6">
+    <div className="px-10 ">
       <ContactsList onAddContact={onAddContact} />
     </div>
   );
