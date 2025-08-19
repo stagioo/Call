@@ -177,6 +177,71 @@ export const CallVideoGrid = () => {
     return screens;
   }, [screenStream, remoteStreams]);
 
+  const allStreams = useMemo(() => {
+    const streams: {
+      id: string;
+      stream: MediaStream;
+      type: "webcam" | "screen";
+      peerId: string;
+      displayName?: string;
+      muted?: boolean;
+      isLocal?: boolean;
+    }[] = [];
+
+    if (localStream) {
+      streams.push({
+        id: "local-video",
+        stream: localStream,
+        type: "webcam",
+        peerId: "local",
+        displayName: "You",
+        isLocal: true,
+      });
+    }
+
+    if (
+      screenStream &&
+      screenStream
+        .getVideoTracks()
+        .some((track) => track.readyState === "live" && track.enabled)
+    ) {
+      streams.push({
+        id: "local-screen",
+        stream: screenStream,
+        type: "screen",
+        peerId: "local",
+        displayName: "Your screen",
+        isLocal: true,
+      });
+    }
+
+    remoteStreams.forEach(
+      ({ stream, peerId, displayName, producerId, kind, source, muted }) => {
+        if (!stream) return;
+        if (kind !== "video") return;
+
+        const hasValidTrack = stream
+          .getVideoTracks()
+          .some((t) => t.readyState === "live" && t.enabled);
+        if (!hasValidTrack) return;
+
+        streams.push({
+          id: producerId || peerId,
+          stream,
+          type: source === "screen" ? "screen" : "webcam",
+          peerId,
+          displayName,
+          muted,
+        });
+      }
+    );
+
+    return streams;
+  }, [localStream, screenStream, remoteStreams]);
+
+  const allNormalStreams = allStreams.filter((s) => s.type === "webcam");
+  const allScreenStreams = allStreams.filter((s) => s.type === "screen");
+
   const videoStreams = useMemo(() => {
     const videos: JSX.Element[] = [];
 
@@ -226,10 +291,12 @@ export const CallVideoGrid = () => {
     return videos;
   }, [localStream, remoteStreams, screenShares]);
 
+  if (allNormalStreams.length <= 2 && allScreenStreams.length === 0)
+    return <OneOrTwo streams={allNormalStreams} />;
   return (
     <div className="relative flex h-[calc(100vh-100px)] w-full flex-col items-center justify-center gap-6 p-4">
       {screenShares.length > 0 && (
-        <div className="flex flex-1 flex-wrap items-center justify-center gap-4">
+        <div className="flex flex-1 items-center justify-center gap-4 bg-red-400">
           {screenShares}
         </div>
       )}
@@ -258,6 +325,51 @@ export const CallVideoGrid = () => {
             }
           }}
         />
+      ))}
+    </div>
+  );
+};
+
+interface OneOrTwoProps {
+  streams: {
+    id: string;
+    stream: MediaStream;
+    type: "webcam" | "screen";
+    peerId: string;
+    displayName?: string;
+  }[];
+}
+
+const OneOrTwo = ({ streams }: OneOrTwoProps) => {
+  return (
+    <div className="relative mb-20 flex h-[calc(100vh-100px)] flex-1 items-center justify-center gap-4 p-4">
+      {streams.map(({ id, stream, type, peerId, displayName }) => (
+        <div
+          key={id}
+          className={cn("relative size-full overflow-hidden rounded-2xl", {
+            "absolute bottom-8 right-8 z-10 max-h-[200px] max-w-[300px] rounded-lg":
+              displayName === "You" && streams.length > 1,
+          })}
+        >
+          <video
+            autoPlay
+            playsInline
+            className="size-full object-cover"
+            ref={(el) => {
+              if (el) {
+                el.srcObject = stream;
+                el.onloadedmetadata = () => {
+                  el.play().catch((e) =>
+                    console.warn(`Error playing video for ${displayName}:`, e)
+                  );
+                };
+              }
+            }}
+          />
+          <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+            {displayName}
+          </span>
+        </div>
       ))}
     </div>
   );
