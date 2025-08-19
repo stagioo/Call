@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { useState } from "react";
 import { Button } from "@call/ui/components/button";
 import { Monitor, UserPlus } from "lucide-react";
 import {
@@ -16,76 +16,6 @@ import {
   screenShareVariants,
 } from "@/lib/constants";
 import NumberFlow from "@number-flow/react";
-
-const getGridLayout = (count: number) => {
-  if (count <= 1) return "grid-cols-4";
-  if (count <= 4) return "grid-cols-4";
-  if (count === 5 || count === 8) return "grid-cols-6";
-  return "grid-cols-3";
-};
-
-const getParticipantColSpan = (count: number, index: number) => {
-  if (count <= 4) {
-    if (count === 3) {
-      if (index === 0 || index === 1) return "col-span-2";
-      if (index === 2) return "col-span-2 col-start-2";
-    }
-    if (count === 4) {
-      return "col-span-2";
-    }
-    if (count === 1) {
-      return "col-span-2 col-start-2";
-    }
-    if (count === 2) {
-      return "col-span-2";
-    }
-    return "col-span-2";
-  }
-
-  if (count === 5) {
-    if (index < 3) {
-      return "col-span-2";
-    }
-    if (index === 3) {
-      return "col-span-2 col-start-2";
-    }
-    if (index === 4) {
-      return "col-span-2";
-    }
-  }
-
-  if (count === 8) {
-    if (index < 6) {
-      return "col-span-2";
-    }
-    if (index === 6) {
-      return "col-span-2 col-start-2";
-    }
-    if (index === 7) {
-      return "col-span-2";
-    }
-  }
-
-  if (count <= 9) {
-    const remainder = count % 3;
-    if (remainder > 0) {
-      const lastRowStartIndex = count - remainder;
-      if (index >= lastRowStartIndex) {
-        const positionInLastRow = index - lastRowStartIndex;
-        if (remainder === 1) {
-          return "col-span-1 col-start-2";
-        }
-        if (remainder === 2) {
-          if (positionInLastRow === 0) return "col-span-1 col-start-2";
-          if (positionInLastRow === 1) return "col-span-1 col-start-3";
-        }
-      }
-    }
-    return "col-span-1";
-  }
-
-  return "col-span-2";
-};
 
 export default function GoogleMeetLayout() {
   const [participants, setParticipants] = useState([{ id: 1, name: "You" }]);
@@ -115,9 +45,85 @@ export default function GoogleMeetLayout() {
     setIsScreenSharing(!isScreenSharing);
   };
 
+  const getGridLayout = (count: number) => {
+    if (count <= 1) return "grid-cols-4";
+    if (count <= 4) return "grid-cols-4";
+    if (count === 5 || count === 8) return "grid-cols-6";
+    return "grid-cols-3";
+  };
+
+  const getParticipantColSpan = (count: number, index: number) => {
+    console.log(count, index);
+    if (count <= 4) {
+      if (count === 3) {
+        if (index === 0 || index === 1) return "col-span-2";
+        if (index === 2) return "col-span-2 col-start-2";
+      }
+      if (count === 4) {
+        return "col-span-2";
+      }
+      if (count === 1) {
+        return "col-span-2 col-start-2";
+      }
+      if (count === 2) {
+        return "col-span-2";
+      }
+      return "col-span-2";
+    }
+
+    // Special cases for 5 and 8 participants (6-column grid)
+    if (count === 5) {
+      // First 3 participants get col-span-2
+      if (index < 3) {
+        return "col-span-2";
+      }
+      // Last 2 participants are centered
+      if (index === 3) {
+        return "col-span-2 col-start-2";
+      }
+      if (index === 4) {
+        return "col-span-2";
+      }
+    }
+
+    if (count === 8) {
+      if (index < 6) {
+        return "col-span-2";
+      }
+      if (index === 6) {
+        return "col-span-2 col-start-2";
+      }
+      if (index === 7) {
+        return "col-span-2";
+      }
+    }
+
+    if (count <= 9) {
+      const remainder = count % 3;
+
+      if (remainder > 0) {
+        const lastRowStartIndex = count - remainder;
+        if (index >= lastRowStartIndex) {
+          const positionInLastRow = index - lastRowStartIndex;
+
+          if (remainder === 1) {
+            return "col-span-1 col-start-2";
+          }
+          if (remainder === 2) {
+            if (positionInLastRow === 0) return "col-span-1 col-start-2";
+            if (positionInLastRow === 1) return "col-span-1 col-start-3";
+          }
+        }
+      }
+
+      return "col-span-1";
+    }
+
+    return "col-span-2";
+  };
+
   return (
     <div className="bg-background flex min-h-screen flex-col">
-      {/* Controls */}
       <div className="mb-6 flex h-16 justify-center gap-4 border-b">
         <div className="flex items-center gap-2">
           <Button
@@ -157,13 +163,13 @@ export default function GoogleMeetLayout() {
       <div className="flex flex-1 gap-4">
         <div
           className={cn(
-            "container mx-auto flex w-full flex-1 flex-col items-center justify-center p-8"
+            "container mx-auto flex w-full flex-1 items-center justify-center p-8"
           )}
         >
-          <AnimatePresence mode="sync">
+          <AnimatePresence mode="wait">
             {isScreenSharing && (
               <motion.div
-                className="mb-6 w-full"
+                className="mb-6"
                 variants={screenShareVariants as Variants}
                 initial="hidden"
                 animate="visible"
@@ -226,10 +232,10 @@ export default function GoogleMeetLayout() {
           <LayoutGroup>
             <motion.div
               className={cn(
-                "w-full justify-center gap-4",
-                isScreenSharing
-                  ? "flex flex-wrap items-center"
-                  : `grid ${getGridLayout(participants.length)}`
+                "grid w-full justify-center gap-4",
+                getGridLayout(participants.length)
+                // getGridRows(participants.length)
+                // "auto-rows-fr"
               )}
               variants={containerVariants}
               initial="hidden"
@@ -245,36 +251,52 @@ export default function GoogleMeetLayout() {
               }}
             >
               <AnimatePresence mode="popLayout">
-                {isScreenSharing
-                  ? visibleParticipants.slice(0, 4).map((participant) => (
+                {visibleParticipants
+                  .map((participant, index) => (
+                    <motion.div
+                      key={participant.id}
+                      layoutId={`participant-${participant.id}`}
+                      variants={participantVariants as Variants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      layout
+                      className={cn(
+                        "bg-inset-accent border-inset-accent-foreground relative flex min-h-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-4",
+                        getParticipantColSpan(
+                          visibleParticipants.length,
+                          index
+                        ),
+                        {
+                          "w-auto": visibleParticipants.length > 9,
+                          "aspect-video": visibleParticipants.length <= 9,
+                        }
+                      )}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => removeParticipant(participant.id)}
+                    >
                       <motion.div
-                        key={participant.id}
-                        layoutId={`participant-${participant.id}`}
-                        variants={participantVariants as Variants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                        layout
-                        className="relative flex h-[100px] w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-gray-500 bg-gray-700"
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => removeParticipant(participant.id)}
+                        className="sls pointer-events-none absolute bottom-4 left-4 rounded bg-black/70 px-3 py-1 text-sm font-medium text-white"
+                        layoutId={`participant-name-${participant.id}`}
                       >
-                        <span className="text-sm text-white">
-                          {participant.name}
-                        </span>
+                        {participant.name}
                       </motion.div>
-                    ))
-                  : visibleParticipants.map((participant, index) => (
-                      <Participant
-                        key={participant.id}
-                        participant={participant}
-                        index={index}
-                        visibleParticipants={visibleParticipants}
-                        removeParticipant={removeParticipant}
-                      />
-                    ))}
 
-                {isScreenSharing && remainingParticipants.length > 0 && (
+                      {participants.length > 1 && (
+                        <motion.div
+                          className="absolute inset-0 flex items-center justify-center bg-red-600/20 opacity-0 transition-opacity duration-200 hover:opacity-100"
+                          initial={{ opacity: 0 }}
+                          whileHover={{ opacity: 1 }}
+                        >
+                          <span className="font-medium text-white">
+                            Click to remove
+                          </span>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  ))
+                  .slice(0, 8)}
+                {(remainingParticipants.length || participants.length >= 9) && (
                   <motion.div
                     layoutId={`participant-${participants.length + 1}`}
                     variants={participantVariants as Variants}
@@ -282,10 +304,12 @@ export default function GoogleMeetLayout() {
                     animate="visible"
                     exit="exit"
                     layout
-                    className="flex h-[100px] w-[140px] items-center justify-center rounded-lg border-2 border-gray-500 bg-gray-700"
+                    className="bg-inset-accent border-inset-accent-foreground relative flex min-h-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-4"
                   >
-                    <span className="font-semibold text-white">
-                      +{remainingParticipants.length} more
+                    <span className="text-2xl font-bold text-white">
+                      <span className="text-sm"> + </span>
+                      <NumberFlow value={remainingParticipants.length + 1} />
+                      <span className="text-sm"> more</span>
                     </span>
                   </motion.div>
                 )}
@@ -293,8 +317,6 @@ export default function GoogleMeetLayout() {
             </motion.div>
           </LayoutGroup>
         </div>
-
-        {/* Sidebar */}
         <AnimatePresence>
           {isSidebarOpen && (
             <motion.div
@@ -352,40 +374,3 @@ export default function GoogleMeetLayout() {
     </div>
   );
 }
-
-const Participant = memo(
-  ({
-    participant,
-    index,
-    visibleParticipants,
-    removeParticipant,
-  }: {
-    participant: { id: number; name: string };
-    index: number;
-    visibleParticipants: { id: number; name: string }[];
-    removeParticipant: (id: number) => void;
-  }) => {
-    return (
-      <motion.div
-        layoutId={`participant-${participant.id}`}
-        variants={participantVariants as Variants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-        // layout
-        className={cn(
-          "bg-inset-accent border-inset-accent-foreground relative flex min-h-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-4",
-          getParticipantColSpan(visibleParticipants.length, index),
-          {
-            "w-auto": visibleParticipants.length > 9,
-            "aspect-video": visibleParticipants.length <= 9,
-          }
-        )}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => removeParticipant(participant.id)}
-      >
-        <span className="text-white">{participant.name}</span>
-      </motion.div>
-    );
-  }
-);
