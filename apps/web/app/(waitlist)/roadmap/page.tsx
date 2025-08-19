@@ -75,7 +75,7 @@ export default function Page() {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-semibold tracking-tight">Video calls (experimental with mediasoup)</h2>
-            <StatusBadge status="in-progress" />
+            <StatusBadge status="completed" />
           </div>
           <p className="mt-2 text-lg text-muted-foreground">
             The goal is to have full control of the conference with no intermediaries. Minimum features inside a call:
@@ -93,7 +93,7 @@ export default function Page() {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-semibold tracking-tight">History & Meetings</h2>
-            <StatusBadge status="in-progress" />
+            <StatusBadge status="completed" />
           </div>
           <p className="mt-2 text-lg text-muted-foreground">
             Every call should leave a record: who joined, date, duration, etc. Users should also be able to delete history. It’ll also be possible to
@@ -106,7 +106,7 @@ export default function Page() {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-semibold tracking-tight">Teams (basic)</h2>
-            <StatusBadge status="in-progress" />
+            <StatusBadge status="completed" />
           </div>
           <p className="mt-2 text-lg text-muted-foreground">
             The idea is that the team can join a meeting with one single click, no need to generate links or repeat setup every time.
@@ -117,7 +117,7 @@ export default function Page() {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-semibold tracking-tight">Contacts</h2>
-            <StatusBadge status="in-progress" />
+            <StatusBadge status="completed" />
           </div>
           <p className="mt-2 text-lg text-muted-foreground">
             Have contacts inside the app to start instant calls without leaving the app or sharing links.
@@ -128,10 +128,10 @@ export default function Page() {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-semibold tracking-tight">Notifications</h2>
-            <StatusBadge status="in-progress" />
+            <StatusBadge status="completed" />
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">Everything comes here:</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+          <p className="mt-2 text-lg text-muted-foreground">Everything comes here:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-lg">
             <li>If someone schedules a call with you (via cal.com)</li>
             <li>Direct call invitations</li>
             <li>When your team starts a meeting</li>
@@ -144,7 +144,11 @@ export default function Page() {
             <h2 className="text-2xl font-semibold tracking-tight">What’s next?</h2>
             <StatusBadge status="not-started" />
           </div>
+          <div className="flex items-center gap-3">
           <p className="mt-2 text-lg text-muted-foreground">After all of the above is stable and performance is solid:</p>
+          <StatusBadge status="in-progress" />
+          </div>
+        
           <ol className="mt-2 list-decimal space-y-3 pl-5 text-sm">
             <li className="text-lg">
               <span className="font-medium text-lg">UI/UX</span>: make the experience exceptional.
