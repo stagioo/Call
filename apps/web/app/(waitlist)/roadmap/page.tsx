@@ -1,0 +1,171 @@
+import Link from "next/link";
+import { Badge } from "@call/ui/components/badge";
+import { siteConfig } from "@/lib/site";
+import { Icons } from "@call/ui/components/icons";
+
+type Status = "completed" | "in-progress" | "not-started";
+
+function StatusBadge({ status }: { status: Status }) {
+  const labelMap: Record<Status, string> = {
+    "completed": "Completed",
+    "in-progress": "In progress",
+    "not-started": "Not started",
+  };
+
+  const colorMap: Record<Status, string> = {
+    "completed": "bg-emerald-500 text-white border-emerald-500",
+    "in-progress": "bg-blue-500 text-white border-blue-500",
+    "not-started": "bg-zinc-600 text-white border-zinc-600",
+  };
+
+  return <Badge className={colorMap[status]}>{labelMap[status]}</Badge>;
+}
+
+export default function Page() {
+  return (
+    <section className="relative mx-auto w-full max-w-5xl px-6 pt-30 pb-16">
+      <header className="mb-8 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Roadmap</h1>
+        <Badge asChild  className="gap-1 bg-[#202020] cursor-pointer text-white  hover:bg-[#202020]/80">
+        <a
+          href="https://github.com/joincalldotco"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open Source"
+        >
+         <Icons.github className="h-3 w-3" /> Open Source
+        </a>
+      </Badge>
+      </header>
+
+      <div className="mb-10 flex items-center gap-4">
+        <img
+          src="https://pbs.twimg.com/profile_images/1920915385798283264/v267Rbux_400x400.jpg"
+          alt="@yassratti avatar"
+          width={56}
+          height={56}
+          className="h-14 w-14 rounded-full object-cover"
+        />
+        <div className="flex flex-col">
+          <span className="text-sm text-muted-foreground">19/08/2025</span>
+          <Link
+            href="https://x.com/yassratti"
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium hover:underline"
+          >
+            @yassratti
+          </Link>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-5xl space-y-8">
+        {/* First things first */}
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">First things first</h2>
+            <StatusBadge status="completed" />
+          </div>
+          <p className="mt-2 text-lg text-muted-foreground">
+            Create the repo, set up the stack, and launch the waitlist with a Twitter announcement. That’s where we start.
+          </p>
+        </div>
+
+        {/* Video calls */}
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">Video calls (experimental with mediasoup)</h2>
+            <StatusBadge status="in-progress" />
+          </div>
+          <p className="mt-2 text-lg text-muted-foreground">
+            The goal is to have full control of the conference with no intermediaries. Minimum features inside a call:
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-lg">
+            <li>Chat between members</li>
+            <li>Screen sharing</li>
+            <li>Media controls (mute/unmute, turn camera off, hang up)</li>
+            <li>See participant list</li>
+            <li>Join via link or code</li>
+          </ul>
+        </div>
+
+        {/* History & Meetings */}
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">History & Meetings</h2>
+            <StatusBadge status="in-progress" />
+          </div>
+          <p className="mt-2 text-lg text-muted-foreground">
+            Every call should leave a record: who joined, date, duration, etc. Users should also be able to delete history. It’ll also be possible to
+            schedule meetings (incomplete for now, but planned to integrate with <span className="font-medium">cal.com</span>, who already
+            showed interest in having us in their app store).
+          </p>
+        </div>
+
+        {/* Teams */}
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">Teams (basic)</h2>
+            <StatusBadge status="in-progress" />
+          </div>
+          <p className="mt-2 text-lg text-muted-foreground">
+            The idea is that the team can join a meeting with one single click, no need to generate links or repeat setup every time.
+          </p>
+        </div>
+
+        {/* Contacts */}
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">Contacts</h2>
+            <StatusBadge status="in-progress" />
+          </div>
+          <p className="mt-2 text-lg text-muted-foreground">
+            Have contacts inside the app to start instant calls without leaving the app or sharing links.
+          </p>
+        </div>
+
+        {/* Notifications */}
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">Notifications</h2>
+            <StatusBadge status="in-progress" />
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">Everything comes here:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+            <li>If someone schedules a call with you (via cal.com)</li>
+            <li>Direct call invitations</li>
+            <li>When your team starts a meeting</li>
+          </ul>
+        </div>
+
+        {/* What’s next */}
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">What’s next?</h2>
+            <StatusBadge status="not-started" />
+          </div>
+          <p className="mt-2 text-lg text-muted-foreground">After all of the above is stable and performance is solid:</p>
+          <ol className="mt-2 list-decimal space-y-3 pl-5 text-sm">
+            <li className="text-lg">
+              <span className="font-medium text-lg">UI/UX</span>: make the experience exceptional.
+            </li>
+            <li className="text-lg">
+              <span className="font-medium text-lg">AI features</span>
+              <ul className="mt-2 text-lg list-disc space-y-1 pl-5">
+                <li>Automatic meeting summaries</li>
+                <li>Chat with the meeting content</li>
+              </ul>
+            </li>
+            <li className="text-lg">
+              <span className="font-medium text-lg">Record meetings</span>
+            </li>
+            <li className="text-lg">
+              <span className="font-medium text-lg">For fun</span> a “no-show fine” option: if people don’t show up, the held money goes to the ones who were waiting lol
+            </li>
+          </ol>
+        </div>
+      </div>
+      <p className="mt-8 text-xs text-muted-foreground">Updated regularly.</p>
+    </section>
+  );
+}

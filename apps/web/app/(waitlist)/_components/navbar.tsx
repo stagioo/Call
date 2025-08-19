@@ -41,8 +41,8 @@ const Navbar = () => {
   }, []);
 
   return (
-    <header className="border-border bg-background/50 sticky top-0 z-50 border-b backdrop-blur-sm dark:border-white/5">
-      <div className="relative mx-auto flex w-full max-w-5xl items-center justify-between border-x px-6 py-2 dark:border-white/5">
+    <header className="fixed inset-x-0 top-4 z-50">
+      <div className="relative mx-auto flex w-full max-w-3xl !bg-[#151515] items-center justify-between rounded-xl border border-border  px-4 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/50 dark:border-white/5">
         {/* Left: Logo */}
         <Link href="/" className="z-50">
           <h1 className="flex items-center gap-2 text-2xl font-bold">
