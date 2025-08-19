@@ -16,7 +16,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-function CallPageContent() {
+const CallPageContent = () => {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -266,7 +266,7 @@ function CallPageContent() {
       )}
     </div>
   );
-}
+};
 
 export default function CallPage() {
   return <CallPageContent />;

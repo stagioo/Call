@@ -4,16 +4,23 @@ import { useCallSelector, useMediasoupSelector } from "@/contexts/call-context";
 import { Icons } from "@call/ui/components/icons";
 import { cn } from "@call/ui/lib/utils";
 import { type JSX, memo, useMemo } from "react";
+import { motion as m } from "motion/react";
 
 const LocalVideo = memo(function LocalVideo({
   stream,
   isScreenShare,
+  peerId,
+  keyId,
 }: {
   stream: MediaStream;
   isScreenShare?: boolean;
+  peerId: string;
+  keyId: string;
 }) {
+  console.log("tileId local", keyId);
   return (
-    <div
+    <m.div
+      layoutId={keyId}
       className={cn(
         "relative aspect-video max-h-[500px] min-h-[240px] w-auto overflow-hidden rounded-lg bg-black shadow-lg",
         isScreenShare && "aspect-video max-h-[200px] min-h-[200px] w-auto"
@@ -33,7 +40,7 @@ const LocalVideo = memo(function LocalVideo({
       <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
         You
       </span>
-    </div>
+    </m.div>
   );
 });
 
@@ -52,13 +59,14 @@ const RemoteVideoTile = memo(function RemoteVideoTile({
   keyId: string;
   isScreenShare?: boolean;
 }) {
+  console.log("tileId remote", keyId);
   return (
-    <div
+    <m.div
+      layoutId={keyId}
       className={cn(
         "relative aspect-video max-h-[500px] min-h-[240px] w-auto overflow-hidden rounded-lg bg-black shadow-lg",
         isScreenShare && "aspect-video max-h-[200px] min-h-[200px] w-auto"
       )}
-      key={keyId}
     >
       <video
         autoPlay
@@ -84,7 +92,7 @@ const RemoteVideoTile = memo(function RemoteVideoTile({
           {muted && <Icons.micOffIcon className="size-4" />}
         </div>
       </div>
-    </div>
+    </m.div>
   );
 });
 
@@ -97,12 +105,13 @@ const ScreenShareTile = memo(function ScreenShareTile({
   label: string;
   keyId: string;
 }) {
+  console.log("tileId screen", keyId, label);
   return (
-    <div className="relative" key={keyId}>
+    <m.div layoutId={keyId} className="relative size-full">
       <video
         autoPlay
         playsInline
-        className="aspect-video w-auto rounded-lg bg-black shadow-lg"
+        className="size-full rounded-lg bg-black shadow-lg"
         ref={(el) => {
           if (el) {
             el.srcObject = stream;
@@ -117,11 +126,11 @@ const ScreenShareTile = memo(function ScreenShareTile({
       <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
         {label}
       </span>
-    </div>
+    </m.div>
   );
 });
 
-export const CallVideoGrid = () => {
+export const CallVideoGrid = memo(() => {
   const screenStream = useCallSelector((s) => s.screenStream);
   const remoteAudios = useCallSelector((s) => s.remoteAudios);
 
@@ -248,6 +257,8 @@ export const CallVideoGrid = () => {
     if (localStream) {
       videos.push(
         <LocalVideo
+          keyId="local-video"
+          peerId="local"
           key="local-video"
           stream={localStream}
           isScreenShare={screenShares.length > 0}
@@ -294,9 +305,9 @@ export const CallVideoGrid = () => {
   if (allNormalStreams.length <= 2 && allScreenStreams.length === 0)
     return <OneOrTwo streams={allNormalStreams} />;
   return (
-    <div className="relative flex h-[calc(100vh-100px)] w-full flex-col items-center justify-center gap-6 p-4">
+    <div className="relative mb-20 flex h-[calc(100vh-100px)] w-full flex-col items-center justify-center gap-6 p-4">
       {screenShares.length > 0 && (
-        <div className="flex flex-1 items-center justify-center gap-4 bg-red-400">
+        <div className="flex flex-1 items-center justify-center gap-4">
           {screenShares}
         </div>
       )}
@@ -328,7 +339,9 @@ export const CallVideoGrid = () => {
       ))}
     </div>
   );
-};
+});
+
+CallVideoGrid.displayName = "CallVideoGrid";
 
 interface OneOrTwoProps {
   streams: {
@@ -340,11 +353,12 @@ interface OneOrTwoProps {
   }[];
 }
 
-const OneOrTwo = ({ streams }: OneOrTwoProps) => {
+const OneOrTwo = memo(({ streams }: OneOrTwoProps) => {
   return (
     <div className="relative mb-20 flex h-[calc(100vh-100px)] flex-1 items-center justify-center gap-4 p-4">
       {streams.map(({ id, stream, type, peerId, displayName }) => (
-        <div
+        <m.div
+          layoutId={id}
           key={id}
           className={cn("relative size-full overflow-hidden rounded-2xl", {
             "absolute bottom-8 right-8 z-10 max-h-[200px] max-w-[300px] rounded-lg":
@@ -369,8 +383,8 @@ const OneOrTwo = ({ streams }: OneOrTwoProps) => {
           <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
             {displayName}
           </span>
-        </div>
+        </m.div>
       ))}
     </div>
   );
-};
+});
