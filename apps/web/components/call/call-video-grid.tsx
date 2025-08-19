@@ -354,6 +354,8 @@ interface OneOrTwoProps {
 }
 
 const OneOrTwo = memo(({ streams }: OneOrTwoProps) => {
+  const remoteAudios = useCallSelector((s) => s.remoteAudios);
+
   return (
     <div className="relative mb-20 flex h-[calc(100vh-100px)] flex-1 items-center justify-center gap-4 p-4">
       {streams.map(({ id, stream, type, peerId, displayName }) => (
@@ -368,6 +370,7 @@ const OneOrTwo = memo(({ streams }: OneOrTwoProps) => {
           <video
             autoPlay
             playsInline
+            muted={displayName === "You"}
             className="size-full object-cover"
             ref={(el) => {
               if (el) {
@@ -384,6 +387,26 @@ const OneOrTwo = memo(({ streams }: OneOrTwoProps) => {
             {displayName}
           </span>
         </m.div>
+      ))}
+      {remoteAudios.map(({ stream, id, peerId, displayName }) => (
+        <audio
+          key={id}
+          autoPlay
+          playsInline
+          ref={(el) => {
+            if (el) {
+              el.srcObject = stream;
+              el.onloadedmetadata = () => {
+                el.play().catch((e) =>
+                  console.warn(
+                    `Error playing audio for ${displayName || peerId}:`,
+                    e
+                  )
+                );
+              };
+            }
+          }}
+        />
       ))}
     </div>
   );
