@@ -17,8 +17,6 @@ if (!process.env.BETTER_AUTH_SECRET) {
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.FRONTEND_URL,
-  appName: "Call",
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
@@ -51,6 +49,8 @@ export const auth = betterAuth({
       prompt: "consent",
     },
   },
+
+ 
 
   advanced: {
     crossSubDomainCookies: {
