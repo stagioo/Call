@@ -2,6 +2,11 @@ import Link from "next/link";
 import { Badge } from "@call/ui/components/badge";
 import { siteConfig } from "@/lib/site";
 import { Icons } from "@call/ui/components/icons";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Call - Roadmap",
+};
 
 type Status = "completed" | "in-progress" | "not-started";
 
