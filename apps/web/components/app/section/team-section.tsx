@@ -10,14 +10,14 @@ import { iconvVariants, UserProfile } from "@call/ui/components/use-profile";
 import { cn } from "@call/ui/lib/utils";
 import { LoadingButton } from "@call/ui/components/loading-button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { 
-  MoreVertical, 
-  Users, 
-  UserPlus, 
-  Video, 
+import {
+  MoreVertical,
+  Users,
+  UserPlus,
+  Video,
   LogOut,
   X,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -82,11 +82,11 @@ export const TeamSection = () => {
       return teams.filter((team) => {
         const searchableFields = [
           team.name,
-          ...team.members.map(m => m.name),
-          ...team.members.map(m => m.email)
+          ...team.members.map((m) => m.name),
+          ...team.members.map((m) => m.email),
         ];
-        
-        return searchableFields.some(field => 
+
+        return searchableFields.some((field) =>
           field?.toLowerCase().includes(query)
         );
       });
@@ -108,7 +108,7 @@ export const TeamSection = () => {
 
   if (user.id === "guest") {
     return (
-      <div className="px-10 space-y-6">
+      <div className="space-y-6 px-10">
         <div className="flex flex-col gap-6">
           <NoTeamsFound />
         </div>
@@ -121,8 +121,8 @@ export const TeamSection = () => {
       <div className="space-y-6">
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading teams...</p>
+            <Loader2 className="text-primary h-6 w-6 animate-spin" />
+            <p className="text-muted-foreground text-sm">Loading teams...</p>
           </div>
         </div>
       </div>
@@ -137,8 +137,12 @@ export const TeamSection = () => {
             <div className="rounded-full bg-red-50 p-3">
               <Users className="h-8 w-8 text-red-500" />
             </div>
-            <p className="text-red-500 text-sm">Failed to load teams</p>
-            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+            <p className="text-sm text-red-500">Failed to load teams</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.reload()}
+            >
               Try Again
             </Button>
           </div>
@@ -151,7 +155,7 @@ export const TeamSection = () => {
   const hasSearchResults = filteredTeams.length > 0;
 
   return (
-    <div className="px-10 ">
+    <div className="px-10">
       <div className="flex flex-col gap-6">
         {hasTeams ? (
           <div className="flex items-center gap-2">
@@ -169,26 +173,26 @@ export const TeamSection = () => {
                   variant="ghost"
                   size="icon"
                   onClick={clearSearch}
-                  className="absolute right-2 top-1/2 h-7 w-7 -translate-y-1/2 transform hover:bg-muted/50"
+                  className="hover:bg-muted/50 absolute right-2 top-1/2 h-7 w-7 -translate-y-1/2 transform"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               )}
             </div>
-         
           </div>
         ) : null}
-        
+
         {/* No results message */}
         {hasTeams && !hasSearchResults && (
           <div className="flex h-64 flex-col items-center justify-center text-center">
             <div className="flex flex-col items-center gap-4">
-              <div className="rounded-full bg-muted/50 p-4">
-                <Users className="h-8 w-8 text-muted-foreground" />
+              <div className="bg-muted/50 rounded-full p-4">
+                <Users className="text-muted-foreground h-8 w-8" />
               </div>
               <h3 className="text-lg font-medium">No teams found</h3>
               <p className="text-muted-foreground max-w-sm">
-                No teams match your search criteria. Try adjusting your search terms.
+                No teams match your search criteria. Try adjusting your search
+                terms.
               </p>
               {searchQuery && (
                 <Button variant="outline" size="sm" onClick={clearSearch}>
@@ -203,9 +207,9 @@ export const TeamSection = () => {
         {hasSearchResults && (
           <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredTeams.map((team) => (
-              <TeamCard 
-                key={team.id} 
-                team={team} 
+              <TeamCard
+                key={team.id}
+                team={team}
                 onStartMeeting={startTeamMeeting}
                 onDeleteTeam={deleteTeam}
                 onAddMembers={() => onOpen("add-member-to-team", { team })}
@@ -230,28 +234,47 @@ interface TeamCardProps {
   isPending: boolean;
 }
 
-const TeamCard = ({ team, onStartMeeting, onDeleteTeam, onAddMembers, isPending }: TeamCardProps) => {
+const TeamCard = ({
+  team,
+  onStartMeeting,
+  onDeleteTeam,
+  onAddMembers,
+  isPending,
+}: TeamCardProps) => {
   const membersToShow = 3;
   const remainingMembers = team.members.length - membersToShow;
 
   return (
-    <div className="bg-[#232323]  rounded-2xl p-4 flex flex-col gap-4">
+    <div className="flex flex-col gap-4 rounded-2xl bg-[#232323] p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-base font-medium first-letter:uppercase">
           {team.name}
         </h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-lg hover:bg-white/5">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-lg hover:bg-white/5"
+            >
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44 rounded-lg border-1 border-[#434343] bg-[#2F2F2F] p-1 shadow-xl">
-            <DropdownMenuItem onClick={onAddMembers} className="text-sm rounded-md hover:bg-white/5">
+          <DropdownMenuContent
+            align="end"
+            className="border-1 w-44 rounded-lg border-[#434343] bg-[#2F2F2F] p-1 shadow-xl"
+          >
+            <DropdownMenuItem
+              onClick={onAddMembers}
+              className="rounded-md text-sm hover:bg-white/5"
+            >
               <UserPlus className="mr-2 h-4 w-4" />
               Add Members
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDeleteTeam(team.id)}  className="text-sm text-[#ff6347] rounded-md hover:bg-[#ff6347]">
+            <DropdownMenuItem
+              onClick={() => onDeleteTeam(team.id)}
+              className="rounded-md text-sm text-[#ff6347] hover:bg-[#ff6347]"
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Leave Team
             </DropdownMenuItem>
@@ -259,27 +282,25 @@ const TeamCard = ({ team, onStartMeeting, onDeleteTeam, onAddMembers, isPending 
         </DropdownMenu>
       </div>
 
-      <div className="flex  items-center gap-2">
+      <div className="flex items-center gap-2">
         <Icons.users className="size-4" />
         <div className="flex items-center">
-          {team.members
-            .slice(0, membersToShow)
-            .map((member, index) => (
-              <UserProfile
-                key={index}
-                name={member.name}
-                url={member.image}
-                size="sm"
-                className={cn("-ml-2 border border-[#434343]", {
-                  "-ml-0": index === 0,
-                })}
-              />
-            ))}
+          {team.members.slice(0, membersToShow).map((member, index) => (
+            <UserProfile
+              key={index}
+              name={member.name}
+              url={member.image}
+              size="sm"
+              className={cn("-ml-2 border border-[#434343]", {
+                "-ml-0": index === 0,
+              })}
+            />
+          ))}
           {remainingMembers > 0 && (
             <div
               className={cn(
                 iconvVariants({ size: "sm" }),
-                "bg-[#2F2F2F] z-10 -ml-2 border-1 border-[#434343]"
+                "border-1 z-10 -ml-2 border-[#434343] bg-[#2F2F2F]"
               )}
             >
               <span className="text-xs">+{remainingMembers}</span>
@@ -291,9 +312,8 @@ const TeamCard = ({ team, onStartMeeting, onDeleteTeam, onAddMembers, isPending 
       <LoadingButton
         onClick={() => onStartMeeting(team)}
         loading={isPending}
-        className="h-10 w-full rounded-lg text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
+        className="h-10 w-full rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-50"
       >
-
         Start Meeting
       </LoadingButton>
     </div>
@@ -304,12 +324,14 @@ const NoTeamsFound = () => {
   const { onOpen } = useModal();
   const { user } = useSession();
   const isGuest = !user?.id || user.id === "guest";
-  
+
   return (
     <div className="bg-inset-accent border-inset-accent-foreground col-span-full flex h-96 flex-col items-center justify-center gap-4 rounded-xl border p-4 text-center">
       <div className="flex flex-col items-center">
         <h1 className="text-lg font-medium">
-          {isGuest ? "Sign in to manage teams" : "You don\'t have any teams yet."}
+          {isGuest
+            ? "Sign in to manage teams"
+            : "You don\'t have any teams yet."}
         </h1>
         <p className="text-muted-foreground">
           {isGuest
@@ -322,9 +344,9 @@ const NoTeamsFound = () => {
       ) : (
         <Button
           onClick={() => onOpen("create-team")}
-          className="bg-muted-foreground hover:bg-muted-foreground/80"
+          className="border border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
         >
-          <UserPlus className="h-4 w-4 mr-2" />
+          <UserPlus className="mr-2 h-4 w-4" />
           Create Team
         </Button>
       )}
@@ -333,4 +355,3 @@ const NoTeamsFound = () => {
 };
 
 export default TeamSection;
-

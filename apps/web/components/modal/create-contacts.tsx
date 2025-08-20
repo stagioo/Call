@@ -28,7 +28,7 @@ const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }).trim(),
 });
 
-export const CreateContact = () => {
+export const CreateContacts = () => {
   const { isOpen, onClose, type } = useModal();
   const router = useRouter();
   const { contacts, isLoading, error } = useContacts();
@@ -41,7 +41,7 @@ export const CreateContact = () => {
       form.reset();
     },
     onError: (error: any) => {
-      toast.error("Failed to create contact", {
+      toast.error("Failed to add contact", {
         description: error.response?.data.message || "Unknown error",
       });
     },
@@ -59,13 +59,16 @@ export const CreateContact = () => {
     });
   };
 
-  const isModalOpen = isOpen && type === "create-contact";
+  const isModalOpen = isOpen && type === "create-contacts";
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-sm p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
-        <DialogHeader className="flex flex-col  ">
-          <DialogTitle>Create Contact</DialogTitle>
+      <DialogContent
+        className="!max-w-sm rounded-2xl bg-[#232323] p-6"
+        showCloseButton={false}
+      >
+        <DialogHeader className="flex flex-col">
+          <DialogTitle>Add Contact</DialogTitle>
           <DialogDescription>
             Add a new contact to your contacts list.
           </DialogDescription>
@@ -81,7 +84,7 @@ export const CreateContact = () => {
                     <Input
                       {...field}
                       placeholder="hello@joincall.co"
-                      className="h-12 text-2xl !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white"
+                      className="border-1 h-12 !rounded-lg border-[#434343] bg-[#2F2F2F] text-2xl text-white"
                     />
                   </FormControl>
                   <FormMessage />
@@ -90,11 +93,11 @@ export const CreateContact = () => {
             />
             <LoadingButton
               type="submit"
-              className="h-10 w-full rounded-lg text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
+              className="h-10 w-full rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-50"
               loading={isPending}
               disabled={isPending || !form.formState.isValid}
             >
-              Create Contact
+              Add Contact
             </LoadingButton>
           </form>
         </Form>

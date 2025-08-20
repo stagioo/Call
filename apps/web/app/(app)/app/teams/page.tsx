@@ -16,7 +16,7 @@ export default function TeamsPage() {
         </div>
         <Button
           onClick={() => onOpen("create-team")}
-          className="bg-primary-blue hover:bg-primary-blue/80 font-medium text-white px-4 py-2 rounded-md text-sm"
+          className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50"
         >
           Create Team
         </Button>

@@ -16,7 +16,7 @@ export const CONTACTS_QUERY = {
     if (res.status === 200 || res.status === 201) {
       return res.data;
     }
-    throw new Error("Failed to create contact");
+    throw new Error("Failed to add contact");
   },
 };
 

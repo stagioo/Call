@@ -74,7 +74,7 @@ export function CallHistory() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6 ">
+      <div className="flex flex-col gap-6">
         <div className="relative w-full max-w-md">
           <Input
             type="text"
@@ -120,8 +120,8 @@ export function CallHistory() {
   const hasSearchResults = filteredCalls.length > 0;
 
   return (
-    <div className="space-y-6 ">
-      <div className="flex flex-col gap-6 ">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         {hasCallHistory ? (
           <div className="flex items-center gap-2">
             <div className="relative w-full max-w-md">
@@ -223,20 +223,23 @@ const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
   };
 
   return (
-    <div className="bg-inset-accent flex  flex-col gap-3 rounded-md border p-4">
+    <div className="bg-inset-accent flex flex-col gap-3 rounded-md border p-4">
       <div className="flex items-center justify-between">
-        <h1 className=" font-medium first-letter:uppercase">
-          {call.name}
-        </h1>
-      
-        <div className="flex ">
-          <Button className="flex items-center justify-center " variant="ghost" size="icon" onClick={handleViewUsers}>
-            <Users className=" h-4 w-4" />
+        <h1 className="font-medium first-letter:uppercase">{call.name}</h1>
+
+        <div className="flex">
+          <Button
+            className="flex items-center justify-center"
+            variant="ghost"
+            size="icon"
+            onClick={handleViewUsers}
+          >
+            <Users className="h-4 w-4" />
           </Button>
-          <Button 
-            className="flex items-center justify-center text-[#ff6347] hover:text-[#ff6347]/80" 
-            variant="ghost" 
-            size="icon"  
+          <Button
+            className="flex items-center justify-center text-[#ff6347] hover:text-[#ff6347]/80"
+            variant="ghost"
+            size="icon"
             onClick={handleHideCall}
             disabled={isDeleting}
           >
@@ -306,13 +309,14 @@ const NoCallsFound = () => {
     <div className="bg-inset-accent border-inset-accent-foreground col-span-full flex h-96 flex-col items-center justify-center gap-4 rounded-xl border p-4 text-center">
       <div className="flex flex-col items-center">
         <h1 className="text-lg font-medium">
-          {isGuest
-            ? "Sign in to access your call history"
-            : (
-                <>
-                  Ops <span className="first-letter:uppercase">{user.name}</span>! You don&apos;t have any calls yet.
-                </>
-              )}
+          {isGuest ? (
+            "Sign in to access your call history"
+          ) : (
+            <>
+              Ops <span className="first-letter:uppercase">{user.name}</span>!
+              You don&apos;t have any calls yet.
+            </>
+          )}
         </h1>
         <p className="text-muted-foreground">
           {isGuest
@@ -325,7 +329,7 @@ const NoCallsFound = () => {
       ) : (
         <Button
           onClick={() => onOpen("start-call")}
-          className="bg-muted-foreground hover:bg-muted-foreground/80"
+          className="hover:bg-muted-foreground/80 border border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
         >
           Start a call
         </Button>

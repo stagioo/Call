@@ -22,7 +22,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { ContactSelector } from "./contact-selector";
+import { ContactsSelector } from "./contacts-selector";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }).trim(),
@@ -106,8 +106,11 @@ export const CreateTeam = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
-      <DialogContent className="!max-w-sm p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
-        <DialogHeader className="flex flex-col  ">
+      <DialogContent
+        className="!max-w-sm rounded-2xl bg-[#232323] p-6"
+        showCloseButton={false}
+      >
+        <DialogHeader className="flex flex-col">
           <DialogTitle>Create Team</DialogTitle>
           <DialogDescription>
             Create a new team with your contacts.
@@ -124,7 +127,7 @@ export const CreateTeam = () => {
                     <Input
                       {...field}
                       placeholder="Team name"
-                      className="h-12 text-2xl !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white"
+                      className="border-1 h-12 !rounded-lg border-[#434343] bg-[#2F2F2F] text-2xl text-white"
                     />
                   </FormControl>
                   <FormMessage />
@@ -132,7 +135,7 @@ export const CreateTeam = () => {
               )}
             />
 
-            <ContactSelector
+            <ContactsSelector
               selectedContacts={selectedContacts}
               onContactsChange={setSelectedContacts}
               disabled={isPending}
@@ -140,7 +143,7 @@ export const CreateTeam = () => {
 
             <LoadingButton
               type="submit"
-              className="h-10 w-full rounded-lg text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
+              className="h-10 w-full rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-50"
               loading={isPending}
               disabled={isPending || !form.formState.isValid}
             >
