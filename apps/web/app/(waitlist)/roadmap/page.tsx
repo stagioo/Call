@@ -12,13 +12,13 @@ type Status = "completed" | "in-progress" | "not-started";
 
 function StatusBadge({ status }: { status: Status }) {
   const labelMap: Record<Status, string> = {
-    "completed": "Completed",
+    completed: "Completed",
     "in-progress": "In progress",
     "not-started": "Not started",
   };
 
   const colorMap: Record<Status, string> = {
-    "completed": "bg-emerald-500 text-white border-emerald-500",
+    completed: "bg-emerald-500 text-white border-emerald-500",
     "in-progress": "bg-blue-500 text-white border-blue-500",
     "not-started": "bg-zinc-600 text-white border-zinc-600",
   };
@@ -28,19 +28,22 @@ function StatusBadge({ status }: { status: Status }) {
 
 export default function Page() {
   return (
-    <section className="relative mx-auto w-full max-w-5xl px-6 pt-30 pb-16">
+    <section className="pt-30 relative mx-auto w-full max-w-5xl px-6 pb-16">
       <header className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Roadmap</h1>
-        <Badge asChild  className="gap-1 bg-[#202020] cursor-pointer text-white  hover:bg-[#202020]/80">
-        <a
-          href="https://github.com/joincalldotco"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open Source"
+        <Badge
+          asChild
+          className="cursor-pointer gap-1 bg-[#202020] text-white hover:bg-[#202020]/80"
         >
-         <Icons.github className="h-3 w-3" /> Open Source
-        </a>
-      </Badge>
+          <a
+            href="https://github.com/joincalldotco"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open Source"
+          >
+            <Icons.github className="h-3 w-3" /> Open Source
+          </a>
+        </Badge>
       </header>
 
       <div className="mb-10 flex items-center gap-4">
@@ -52,7 +55,7 @@ export default function Page() {
           className="h-14 w-14 rounded-full object-cover"
         />
         <div className="flex flex-col">
-          <span className="text-sm text-muted-foreground">19/08/2025</span>
+          <span className="text-muted-foreground text-sm">19/08/2025</span>
           <Link
             href="https://x.com/yassratti"
             target="_blank"
@@ -68,22 +71,28 @@ export default function Page() {
         {/* First things first */}
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold tracking-tight">First things first</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              First things first
+            </h2>
             <StatusBadge status="completed" />
           </div>
-          <p className="mt-2 text-lg text-muted-foreground">
-            Create the repo, set up the stack, and launch the waitlist with a Twitter announcement. That’s where we start.
+          <p className="text-muted-foreground mt-2 text-lg">
+            Create the repo, set up the stack, and launch the waitlist with a
+            Twitter announcement. That’s where we start.
           </p>
         </div>
 
         {/* Video calls */}
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold tracking-tight">Video calls (experimental with mediasoup)</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Video calls (experimental with mediasoup)
+            </h2>
             <StatusBadge status="completed" />
           </div>
-          <p className="mt-2 text-lg text-muted-foreground">
-            The goal is to have full control of the conference with no intermediaries. Minimum features inside a call:
+          <p className="text-muted-foreground mt-2 text-lg">
+            The goal is to have full control of the conference with no
+            intermediaries. Minimum features inside a call:
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-lg">
             <li>Chat between members</li>
@@ -97,12 +106,16 @@ export default function Page() {
         {/* History & Meetings */}
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold tracking-tight">History & Meetings</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              History & Meetings
+            </h2>
             <StatusBadge status="completed" />
           </div>
-          <p className="mt-2 text-lg text-muted-foreground">
-            Every call should leave a record: who joined, date, duration, etc. Users should also be able to delete history. It’ll also be possible to
-            schedule meetings (incomplete for now, but planned to integrate with <span className="font-medium">cal.com</span>, who already
+          <p className="text-muted-foreground mt-2 text-lg">
+            Every call should leave a record: who joined, date, duration, etc.
+            Users should also be able to delete history. It’ll also be possible
+            to schedule meetings (incomplete for now, but planned to integrate
+            with <span className="font-medium">cal.com</span>, who already
             showed interest in having us in their app store).
           </p>
         </div>
@@ -110,11 +123,14 @@ export default function Page() {
         {/* Teams */}
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold tracking-tight">Teams (basic)</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Teams (basic)
+            </h2>
             <StatusBadge status="completed" />
           </div>
-          <p className="mt-2 text-lg text-muted-foreground">
-            The idea is that the team can join a meeting with one single click, no need to generate links or repeat setup every time.
+          <p className="text-muted-foreground mt-2 text-lg">
+            The idea is that the team can join a meeting with one single click,
+            no need to generate links or repeat setup every time.
           </p>
         </div>
 
@@ -124,29 +140,38 @@ export default function Page() {
             <h2 className="text-2xl font-semibold tracking-tight">Contacts</h2>
             <StatusBadge status="completed" />
           </div>
-          <p className="mt-2 text-lg text-muted-foreground">
-            Have contacts inside the app to start instant calls without leaving the app or sharing links.
+          <p className="text-muted-foreground mt-2 text-lg">
+            Have contacts inside the app to start instant calls without leaving
+            the app or sharing links.
           </p>
         </div>
 
         {/* Use without signup */}
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold tracking-tight">Use the app without signing up</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Use the app without signing up
+            </h2>
             <StatusBadge status="in-progress" />
           </div>
-          <p className="mt-2 text-lg text-muted-foreground">
-            Craft a great experience for trying the app with no account required: join calls, explore core features, and get real value before creating an account.
+          <p className="text-muted-foreground mt-2 text-lg">
+            Craft a great experience for trying the app with no account
+            required: join calls, explore core features, and get real value
+            before creating an account.
           </p>
         </div>
 
         {/* Notifications */}
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold tracking-tight">Notifications</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Notifications
+            </h2>
             <StatusBadge status="completed" />
           </div>
-          <p className="mt-2 text-lg text-muted-foreground">Everything comes here:</p>
+          <p className="text-muted-foreground mt-2 text-lg">
+            Everything comes here:
+          </p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-lg">
             <li>If someone schedules a call with you (via cal.com)</li>
             <li>Direct call invitations</li>
@@ -157,35 +182,42 @@ export default function Page() {
         {/* What’s next */}
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold tracking-tight">What’s next?</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              What’s next?
+            </h2>
             <StatusBadge status="not-started" />
           </div>
           <div className="flex items-center gap-3">
-          <p className="mt-2 text-lg text-muted-foreground">After all of the above is stable and performance is solid:</p>
-          <StatusBadge status="in-progress" />
+            <p className="text-muted-foreground mt-2 text-lg">
+              After all of the above is stable and performance is solid:
+            </p>
+            <StatusBadge status="in-progress" />
           </div>
-        
+
           <ol className="mt-2 list-decimal space-y-3 pl-5 text-sm">
             <li className="text-lg">
-              <span className="font-medium text-lg">UI/UX</span>: make the experience exceptional.
+              <span className="text-lg font-medium">UI/UX</span>: make the
+              experience exceptional.
             </li>
             <li className="text-lg">
-              <span className="font-medium text-lg">AI features</span>
-              <ul className="mt-2 text-lg list-disc space-y-1 pl-5">
+              <span className="text-lg font-medium">AI features</span>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-lg">
                 <li>Automatic meeting summaries</li>
                 <li>Chat with the meeting content</li>
               </ul>
             </li>
             <li className="text-lg">
-              <span className="font-medium text-lg">Record meetings</span>
+              <span className="text-lg font-medium">Record meetings</span>
             </li>
             <li className="text-lg">
-              <span className="font-medium text-lg">For fun</span> a “no-show fine” option: if people don’t show up, the held money goes to the ones who were waiting lol
+              <span className="text-lg font-medium">For fun</span> a “no-show
+              fine” option: if people don’t show up, the held money goes to the
+              ones who were waiting lol
             </li>
           </ol>
         </div>
       </div>
-      <p className="mt-8 text-xs text-muted-foreground">Updated regularly.</p>
+      <p className="text-muted-foreground mt-8 text-xs">Updated regularly.</p>
     </section>
   );
 }

@@ -40,8 +40,8 @@ const data = {
       icon: Icons.peopleIcon,
     },
     {
-      title: "Contact",
-      url: "#",
+      title: "Contacts",
+      url: "/app/contacts",
       icon: Icons.contactsIcon,
     },
     {

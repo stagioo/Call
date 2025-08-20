@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { LoadingButton } from "@call/ui/components/loading-button";
-import { ContactSelector } from "./contact-selector";
+import { ContactsSelector } from "./contacts-selector";
 
 export const AddMemberToTeam = () => {
   const { isOpen, onClose, type, data } = useModal();
@@ -58,14 +58,19 @@ export const AddMemberToTeam = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-md p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
-        <DialogHeader className="flex flex-col  ">
+      <DialogContent
+        className="!max-w-md rounded-2xl bg-[#232323] p-6"
+        showCloseButton={false}
+      >
+        <DialogHeader className="flex flex-col">
           <DialogTitle>Add Member to {team?.name}</DialogTitle>
-          <DialogDescription>Select contacts to add to this team.</DialogDescription>
+          <DialogDescription>
+            Select contacts to add to this team.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <ContactSelector
+          <ContactsSelector
             selectedContacts={selectedContacts}
             onContactsChange={setSelectedContacts}
             disabled={addMembersPending}
@@ -73,12 +78,11 @@ export const AddMemberToTeam = () => {
           />
 
           <div className="flex justify-end space-x-2 pt-4">
-         
             <LoadingButton
               onClick={handleAddMembers}
               disabled={addMembersPending || selectedContacts.length === 0}
               loading={addMembersPending}
-              className="h-10 rounded-lg w-full text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
+              className="h-10 w-full rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-50"
             >
               Add Members
             </LoadingButton>

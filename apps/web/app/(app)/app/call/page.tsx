@@ -48,11 +48,10 @@ export default function CallPage() {
               onClick={() => handleSectionChange(s.key)}
               className={cn(
                 buttonVariants({ variant: "ghost" }),
-                "relative z-0 transition-all  text-sm hover:bg-transparent text-[#4C4C4C]",
+                "relative z-0 text-sm text-[#4C4C4C] transition-all hover:bg-transparent",
                 sectionKey === s.key &&
-                  "font-medium text-white cursor-pointer hover:text-white px-4 py-2 rounded-md"
+                  "cursor-pointer rounded-md px-4 py-2 font-medium text-white hover:text-white"
               )}
-            
             >
               {s.label}
 
@@ -68,7 +67,7 @@ export default function CallPage() {
         </div>
         <Button
           onClick={() => onOpen("start-call")}
-          className="bg-primary-blue hover:bg-primary-blue/80 font-medium text-white px-4 py-2 rounded-md text-sm"
+          className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50"
         >
           <Icons.plus style={{ width: 14, height: 14 }} />
           Start Call

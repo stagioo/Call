@@ -5,7 +5,7 @@ type ModalType =
   | "create-team"
   | "add-member"
   | "start-call"
-  | "create-contact"
+  | "create-contacts"
   | "thoughts"
   | "add-member-to-team"
   | "view-participants";

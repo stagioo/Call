@@ -6,7 +6,7 @@ import { Button } from "@call/ui/components/button";
 import { useModal } from "@/hooks/use-modal";
 import { CloseSidebarButton } from "@/components/app/section/_components/close-sidebar-button";
 
-export default function ContactPage() {
+export default function ContactsPage() {
   const { onOpen } = useModal();
   return (
     <div className="flex flex-col">
@@ -15,10 +15,10 @@ export default function ContactPage() {
           <CloseSidebarButton className="-ml-8" />
         </div>
         <Button
-          onClick={() => onOpen("create-contact")}
-          className="bg-primary-blue hover:bg-primary-blue/80 font-medium text-white px-4 py-2 rounded-md text-sm"
+          onClick={() => onOpen("create-contacts")}
+          className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50"
         >
-          Create Contact
+          Add Contact
         </Button>
       </Header>
       <ContactsList />

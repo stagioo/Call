@@ -246,9 +246,8 @@ export const MediaControls = ({
               activeSection === "chat" && "border-primary-blue bg-primary-blue"
             )}
           >
-            {(!isChatOpen && unreadChatCount > 0) ? (
+            {!isChatOpen && unreadChatCount > 0 ? (
               <Icons.gotMessageIcon className="size-5" />
-           
             ) : (
               <Icons.messageIcon
                 className="size-5"
