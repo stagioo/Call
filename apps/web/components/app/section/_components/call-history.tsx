@@ -18,7 +18,7 @@ import { Input } from "@call/ui/components/input";
 import { iconvVariants, UserProfile } from "@call/ui/components/use-profile";
 import { cn } from "@call/ui/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, Trash, Users, X } from "lucide-react";
+import { MoreVertical, Trash, Users, X, Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import SocialButton from "@/components/auth/social-button";
 
@@ -191,13 +191,17 @@ const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
   const participantsToShow = 3;
   const remainingParticipants = call.participants.length - participantsToShow;
   const queryClient = useQueryClient();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleHideCall = async () => {
     try {
+      setIsDeleting(true);
       await CALLS_QUERY.hideCall(call.id);
       queryClient.invalidateQueries({ queryKey: ["calls"] });
     } catch (error) {
       console.error("Failed to hide call:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
   const { onOpen } = useModal();
@@ -229,8 +233,18 @@ const CallHistoryCard = ({ call }: CallHistoryCardProps) => {
           <Button className="flex items-center justify-center " variant="ghost" size="icon" onClick={handleViewUsers}>
             <Users className=" h-4 w-4" />
           </Button>
-          <Button className="flex items-center justify-center text-[#ff6347] hover:text-[#ff6347]/80" variant="ghost" size="icon"  onClick={handleHideCall}>
-            <Trash className=" h-4 w-4" />
+          <Button 
+            className="flex items-center justify-center text-[#ff6347] hover:text-[#ff6347]/80" 
+            variant="ghost" 
+            size="icon"  
+            onClick={handleHideCall}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
