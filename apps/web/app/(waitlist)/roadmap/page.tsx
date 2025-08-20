@@ -129,6 +129,17 @@ export default function Page() {
           </p>
         </div>
 
+        {/* Use without signup */}
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight">Use the app without signing up</h2>
+            <StatusBadge status="in-progress" />
+          </div>
+          <p className="mt-2 text-lg text-muted-foreground">
+            Craft a great experience for trying the app with no account required: join calls, explore core features, and get real value before creating an account.
+          </p>
+        </div>
+
         {/* Notifications */}
         <div>
           <div className="flex items-center gap-3">

@@ -45,6 +45,7 @@ export default function ContactsList({ onAddContact }: ContactsListProps) {
   const [deletingContact, setDeletingContact] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [callingContact, setCallingContact] = useState<string | null>(null);
   const router = useRouter();
   const { mutate: createCall, isPending: isCalling } = useMutation({
     mutationFn: CALLS_QUERY.createCall,
@@ -54,6 +55,9 @@ export default function ContactsList({ onAddContact }: ContactsListProps) {
       router.push(`/app/call/${data.callId}`);
     },
     onError: () => toast.error("Failed to create call"),
+    onSettled: () => {
+      setCallingContact(null);
+    },
   });
 
   const fetchContacts = async () => {
@@ -237,13 +241,14 @@ export default function ContactsList({ onAddContact }: ContactsListProps) {
                 contact={contact}
                 onDeleteContact={handleDeleteContact}
                 isDeleting={deletingContact === contact.id}
-                onCallContact={() =>
+                onCallContact={() => {
+                  setCallingContact(contact.email);
                   createCall({
                     name: `Call with ${contact.name || contact.email}`,
                     members: [contact.email],
-                  })
-                }
-                isCalling={isCalling}
+                  });
+                }}
+                isCalling={isCalling && callingContact === contact.email}
               />
             ))}
           </div>
