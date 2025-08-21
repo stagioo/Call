@@ -55,7 +55,7 @@ export function ParticipantsSidebar({
   const creator = participants.find((p) => p.isCreator);
 
   useEffect(() => {
-    if (!isCreator || !open) return;
+    if (!isCreator) return;
 
     const fetchJoinRequests = async () => {
       try {

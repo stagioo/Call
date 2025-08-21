@@ -720,6 +720,94 @@ callsRoutes.delete("/participated", async (c) => {
   }
 });
 
+// GET /api/calls/:id/participants
+callsRoutes.get("/:id/participants", async (c) => {
+  try {
+    const user = c.get("user");
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const callId = c.req.param("id");
+    if (!callId) {
+      return c.json({ error: "Call ID is required" }, 400);
+    }
+
+    // Check if the user is a participant in the call
+    const participation = await db
+      .select()
+      .from(callParticipants)
+      .where(
+        and(
+          eq(callParticipants.callId, callId),
+          eq(callParticipants.userId, user.id as string)
+        )
+      )
+      .limit(1);
+
+    if (!participation || participation.length === 0) {
+      return c.json({ error: "Call not found or user not a participant" }, 404);
+    }
+
+    // Get all participants for this call with their profile information
+    const participants = await db
+      .select({
+        id: userTable.id,
+        name: userTable.name,
+        email: userTable.email,
+        image: userTable.image,
+        joinedAt: callParticipants.joinedAt,
+        leftAt: callParticipants.leftAt,
+      })
+      .from(callParticipants)
+      .innerJoin(userTable, eq(callParticipants.userId, userTable.id))
+      .where(eq(callParticipants.callId, callId));
+
+    // Get call creator info
+    const creatorResult = await db
+      .select({
+        creatorId: calls.creatorId,
+        creatorName: userTable.name,
+        creatorEmail: userTable.email,
+        creatorImage: userTable.image,
+      })
+      .from(calls)
+      .innerJoin(userTable, eq(calls.creatorId, userTable.id))
+      .where(eq(calls.id, callId))
+      .limit(1);
+
+    if (!creatorResult || creatorResult.length === 0) {
+      return c.json({ error: "Call not found" }, 404);
+    }
+
+    const creator = creatorResult[0];
+
+    // Add creator to participants list if not already present
+    const allParticipants = participants.map((participant) => ({
+      ...participant,
+      isCreator: participant.id === creator.creatorId,
+    }));
+
+    // If creator is not in participants list, add them
+    if (!allParticipants.find((p) => p.id === creator.creatorId)) {
+      allParticipants.push({
+        id: creator.creatorId,
+        name: creator.creatorName,
+        email: creator.creatorEmail,
+        image: creator.creatorImage,
+        joinedAt: null,
+        leftAt: null,
+        isCreator: true,
+      });
+    }
+
+    return c.json({ participants: allParticipants });
+  } catch (error) {
+    console.error("Error getting call participants:", error);
+    return c.json({ error: "Failed to get participants info" }, 500);
+  }
+});
+
 // GET /api/calls/:id/creator
 callsRoutes.get("/:id/creator", async (c) => {
   try {

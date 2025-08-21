@@ -35,6 +35,13 @@ export const CALLS_QUERY = {
     }
     throw new Error("Failed to fetch calls");
   },
+  getCallParticipants: async (callId: string) => {
+    const res = await apiClient.get(`/calls/${callId}/participants`);
+    if (res.status === 200) {
+      return res.data.participants;
+    }
+    throw new Error("Failed to fetch call participants");
+  },
   hideCall: async (callId: string) => {
     const res = await apiClient.post(`/calls/${callId}/hide`);
     if (res.status === 200) {

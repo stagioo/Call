@@ -11,6 +11,7 @@ import { useCallMediaControls } from "@/hooks/use-call-media-controls";
 import { useCallProducers } from "@/hooks/use-call-producers";
 import { useNotificationSound } from "@/hooks/use-notification-sound";
 import type { ActiveSection } from "@/lib/types";
+import { CALLS_QUERY } from "@/lib/QUERIES";
 import { Button } from "@call/ui/components/button";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -23,6 +24,7 @@ function CallPageContent() {
   const [activeSection, setActiveSection] = useState<ActiveSection | null>(
     null
   );
+  const [participantsWithProfiles, setParticipantsWithProfiles] = useState<any[]>([]);
   const { state, dispatch, mediasoup, session } = useCallContext();
   const {
     toggleCamera,
@@ -38,6 +40,22 @@ function CallPageContent() {
   const { handleJoin } = useCallJoin();
 
   useCallProducers();
+
+  // Fetch participants with profile information
+  useEffect(() => {
+    if (!state.callId || !state.joined) return;
+
+    const fetchParticipants = async () => {
+      try {
+        const participants = await CALLS_QUERY.getCallParticipants(state.callId as string);
+        setParticipantsWithProfiles(participants);
+      } catch (error) {
+        console.error("Error fetching participants:", error);
+      }
+    };
+
+    fetchParticipants();
+  }, [state.callId, state.joined]);
 
   useEffect(() => {
     if (!mediasoup.socket) return;
@@ -130,66 +148,101 @@ function CallPageContent() {
     });
   }, [mediasoup.remoteStreams, dispatch]);
 
-  const participants = [
-    ...(state.creatorInfo
-      ? [
-          {
-            id: state.creatorInfo.creatorId,
-            displayName:
-              state.creatorInfo.creatorName || state.creatorInfo.creatorEmail,
-            isCreator: true,
-            isMicOn:
-              state.creatorInfo.creatorId === mediasoup.userId
-                ? isMicOn
-                : !mediasoup.remoteStreams.find(
-                    (s) => s.peerId === state.creatorInfo?.creatorId
-                  )?.muted,
-            isCameraOn: (() => {
-              const isLocalCreator =
-                state.creatorInfo.creatorId === mediasoup.userId;
-              if (isLocalCreator) {
-                return (
-                  mediasoup.localStream
-                    ?.getVideoTracks()
-                    .some((track) => track.enabled) ?? false
-                );
-              }
-              return mediasoup.remoteStreams.some(
-                (stream) =>
-                  stream.peerId === state.creatorInfo?.creatorId &&
-                  stream.kind === "video" &&
-                  stream.source === "webcam"
-              );
-            })(),
-          },
-        ]
-      : []),
-    ...mediasoup.peers
-      .filter((peer) => peer.id !== state.creatorInfo?.creatorId)
-      .map((peer) => {
-        const isLocalPeer = peer.id === mediasoup.userId;
-        const cameraEnabled = isLocalPeer
-          ? (mediasoup.localStream
-              ?.getVideoTracks()
-              .some((track) => track.enabled) ?? false)
-          : mediasoup.remoteStreams.some(
+  // Use participants from API if available, otherwise fall back to mediasoup data
+  const participants = participantsWithProfiles.length > 0 
+    ? participantsWithProfiles.map((participant) => {
+        const isLocalUser = participant.id === mediasoup.userId;
+        const isCreator = participant.isCreator;
+        
+        // Get mediasoup data for this participant if available
+        const mediasoupPeer = mediasoup.peers.find(p => p.id === participant.id);
+        const creatorInfo = state.creatorInfo?.creatorId === participant.id ? state.creatorInfo : null;
+        
+        return {
+          id: participant.id,
+          displayName: participant.name || participant.displayName || creatorInfo?.creatorName || creatorInfo?.creatorEmail || "Unknown",
+          image: participant.image,
+          isCreator: isCreator,
+          isMicOn: isLocalUser
+            ? isMicOn
+            : !mediasoup.remoteStreams.find((s) => s.peerId === participant.id)?.muted,
+          isCameraOn: (() => {
+            if (isLocalUser) {
+              return mediasoup.localStream
+                ?.getVideoTracks()
+                .some((track) => track.enabled) ?? false;
+            }
+            return mediasoup.remoteStreams.some(
               (stream) =>
-                stream.peerId === peer.id &&
+                stream.peerId === participant.id &&
                 stream.kind === "video" &&
                 stream.source === "webcam"
             );
-
-        return {
-          id: peer.id,
-          displayName: peer.displayName,
-          isCreator: false,
-          isMicOn: isLocalPeer
-            ? isMicOn
-            : !mediasoup.remoteStreams.find((s) => s.peerId === peer.id)?.muted,
-          isCameraOn: cameraEnabled,
+          })(),
         };
-      }),
-  ];
+      })
+    : [
+        ...(state.creatorInfo
+          ? [
+              {
+                id: state.creatorInfo.creatorId,
+                displayName:
+                  state.creatorInfo.creatorName || state.creatorInfo.creatorEmail,
+                image: undefined,
+                isCreator: true,
+                isMicOn:
+                  state.creatorInfo.creatorId === mediasoup.userId
+                    ? isMicOn
+                    : !mediasoup.remoteStreams.find(
+                        (s) => s.peerId === state.creatorInfo?.creatorId
+                      )?.muted,
+                isCameraOn: (() => {
+                  const isLocalCreator =
+                    state.creatorInfo.creatorId === mediasoup.userId;
+                  if (isLocalCreator) {
+                    return (
+                      mediasoup.localStream
+                        ?.getVideoTracks()
+                        .some((track) => track.enabled) ?? false
+                    );
+                  }
+                  return mediasoup.remoteStreams.some(
+                    (stream) =>
+                      stream.peerId === state.creatorInfo?.creatorId &&
+                      stream.kind === "video" &&
+                      stream.source === "webcam"
+                  );
+                })(),
+              },
+            ]
+          : []),
+        ...mediasoup.peers
+          .filter((peer) => peer.id !== state.creatorInfo?.creatorId)
+          .map((peer) => {
+            const isLocalPeer = peer.id === mediasoup.userId;
+            const cameraEnabled = isLocalPeer
+              ? (mediasoup.localStream
+                  ?.getVideoTracks()
+                  .some((track) => track.enabled) ?? false)
+              : mediasoup.remoteStreams.some(
+                  (stream) =>
+                    stream.peerId === peer.id &&
+                    stream.kind === "video" &&
+                    stream.source === "webcam"
+                );
+
+            return {
+              id: peer.id,
+              displayName: peer.displayName,
+              image: undefined,
+              isCreator: false,
+              isMicOn: isLocalPeer
+                ? isMicOn
+                : !mediasoup.remoteStreams.find((s) => s.peerId === peer.id)?.muted,
+              isCameraOn: cameraEnabled,
+            };
+          }),
+      ];
 
   const openSidebarWithSection = (section: ActiveSection | null) => {
     const paramsCopy = new URLSearchParams(searchParams.toString());
