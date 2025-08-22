@@ -128,6 +128,14 @@ export const useCallJoin = () => {
         type: "SET_MY_PRODUCER_IDS",
         payload: myProducers.map((p: any) => p.id),
       });
+      dispatch({
+        type: "SET_MY_PRODUCERS",
+        payload: myProducers.map((p: any) => ({
+          id: p.id,
+          kind: p.kind,
+          source: p.appData?.source || "unknown"
+        })),
+      });
       dispatch({ type: "SET_JOINED", payload: true });
       console.log(
         "[Call] Successfully joined with producers:",
