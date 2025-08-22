@@ -5,6 +5,10 @@ import { cn } from "@call/ui/lib/utils";
 import { motion, MotionConfig, type Transition } from "motion/react";
 import { useState } from "react";
 import { useUnauthenticatedMeeting } from "@/hooks/use-unauthenticated-meeting";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { CALLS_QUERY } from "@/lib/QUERIES";
+import { toast } from "sonner";
 
 const tabs = ["Join", "Start"] as const;
 
@@ -23,6 +27,7 @@ const formVariants = {
 };
 
 export default function MeetingForm() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Join");
   const {
     formData,

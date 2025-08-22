@@ -1,10 +1,12 @@
 import { Geist, Geist_Mono, Lora } from "next/font/google";
 
-import "@call/ui/globals.css";
+import { SocketProvider } from "@/components/providers/socket";
 import { ThemeAndQueryProviders } from "@/components/providers/theme-and-query";
+import { CallProvider } from "@/contexts/call-context";
 import { siteConfig } from "@/lib/site";
-import type { Metadata } from "next";
+import "@call/ui/globals.css";
 import { Databuddy } from "@databuddy/sdk";
+import type { Metadata } from "next";
 
 const fontSans = Geist({
   subsets: ["latin"],
@@ -54,7 +56,6 @@ export const metadata: Metadata = {
     "AI-Native alternative to Zoom",
     "AI-Native alternative to Google Meet",
     "AI-Native alternative to Microsoft Teams",
-
   ],
   creator: siteConfig.links.author,
   authors: [
@@ -105,23 +106,27 @@ export default function RootLayout({
       <body
         className={`${fontSans.variable} ${fontLora.variable} ${fontMono.variable} custom_scrollbar font-sans antialiased transition-all duration-300`}
       >
-        <ThemeAndQueryProviders>
-          {children}
-          <Databuddy
-            clientId="ciU4COouaNeeu56duBjT7"
-            trackHashChanges={true}
-            trackAttributes={true}
-            trackOutgoingLinks={true}
-            trackInteractions={true}
-            trackEngagement={true}
-            trackScrollDepth={true}
-            trackExitIntent={true}
-            trackBounceRate={true}
-            trackWebVitals={true}
-            trackErrors={true}
-            enableBatching={true}
-          />
-        </ThemeAndQueryProviders>
+        <SocketProvider>
+          <CallProvider>
+            <ThemeAndQueryProviders>
+              {children}
+              <Databuddy
+                clientId="ciU4COouaNeeu56duBjT7"
+                trackHashChanges={true}
+                trackAttributes={true}
+                trackOutgoingLinks={true}
+                trackInteractions={true}
+                trackEngagement={true}
+                trackScrollDepth={true}
+                trackExitIntent={true}
+                trackBounceRate={true}
+                trackWebVitals={true}
+                trackErrors={true}
+                enableBatching={true}
+              />
+            </ThemeAndQueryProviders>
+          </CallProvider>
+        </SocketProvider>
       </body>
     </html>
   );

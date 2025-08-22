@@ -1,5 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { z } from "zod";
+import { useMutation } from "@tanstack/react-query";
+import { CALLS_QUERY } from "@/lib/QUERIES";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { apiClient } from "@/lib/api-client";
 
 const meetingSchema = z.object({
   name: z.string().min(1).max(20).trim(),
@@ -9,24 +14,20 @@ const meetingSchema = z.object({
 type MeetingData = z.infer<typeof meetingSchema>;
 
 interface UseUnauthenticatedMeetingReturn {
-  // Form state
   formData: MeetingData;
   errors: Record<string, string>;
   isLoading: boolean;
-
-  // Actions
   updateFormData: (field: keyof MeetingData, value: string) => void;
   validateForm: () => boolean;
   joinMeeting: (data: MeetingData) => Promise<void>;
   startMeeting: (data: MeetingData) => Promise<void>;
-
-  // Utility
   clearErrors: () => void;
   resetForm: () => void;
 }
 
 const MAX_NAME_LENGTH = 20;
 const MAX_MEETING_ID_LENGTH = 6;
+const DISPLAY_NAME_KEY = "call_display_name";
 
 const validationErrors: Record<string, string> = {
   name: `Name must be less than ${MAX_NAME_LENGTH} characters`,
@@ -35,18 +36,41 @@ const validationErrors: Record<string, string> = {
 
 export const useUnauthenticatedMeeting =
   (): UseUnauthenticatedMeetingReturn => {
-    const [formData, setFormData] = useState<MeetingData>({
-      name: "",
-      meetingId: "",
+    const router = useRouter();
+
+    const [formData, setFormData] = useState<MeetingData>(() => {
+      if (typeof window !== "undefined") {
+        const storedName = localStorage.getItem(DISPLAY_NAME_KEY);
+        return {
+          name: storedName || "",
+          meetingId: "",
+        };
+      }
+      return {
+        name: "",
+        meetingId: "",
+      };
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+      if (typeof window !== "undefined") {
+        const storedName = localStorage.getItem(DISPLAY_NAME_KEY);
+        if (storedName && storedName !== formData.name) {
+          setFormData((prev) => ({ ...prev, name: storedName }));
+        }
+      }
+    }, []);
 
     const updateFormData = useCallback(
       (field: keyof MeetingData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
-        // Clear error when user starts typing
+
+        if (field === "name" && typeof window !== "undefined") {
+          localStorage.setItem(DISPLAY_NAME_KEY, value);
+        }
+
         if (errors[field]) {
           setErrors((prev) => ({ ...prev, [field]: "" }));
         }
@@ -59,21 +83,19 @@ export const useUnauthenticatedMeeting =
     }, []);
 
     const resetForm = useCallback(() => {
-      setFormData({ name: "", meetingId: "" });
+      setFormData((prev) => ({ ...prev, meetingId: "" }));
       setErrors({});
     }, []);
 
     const validateForm = useCallback((): boolean => {
       const newErrors: Record<string, string> = {};
 
-      // Validate name
       if (!formData.name.trim()) {
         newErrors.name = "Name is required";
       } else if (formData.name.length > MAX_NAME_LENGTH) {
         newErrors.name = validationErrors.name || "";
       }
 
-      // Validate meetingId only if joining (not starting)
       if (
         formData.meetingId &&
         formData.meetingId.length > MAX_MEETING_ID_LENGTH
@@ -84,6 +106,40 @@ export const useUnauthenticatedMeeting =
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
     }, [formData]);
+
+    const createCallMutation = useMutation({
+      mutationFn: CALLS_QUERY.createCall,
+      onSuccess: (data: { callId: string }) => {
+        toast.success("Call created successfully!");
+        router.push(`/r/${data.callId}`);
+        resetForm();
+      },
+      onError: (error) => {
+        console.error("Failed to create call:", error);
+        toast.error("Failed to create call. Please try again.");
+      },
+    });
+
+    const joinCallMutation = useMutation({
+      mutationFn: async (meetingId: string) => {
+        const res = await apiClient.post(`/calls/${meetingId}/join`, {
+          name: formData.name,
+        });
+        if (res.status === 200) {
+          return res.data as { callId: string };
+        }
+        throw new Error("Failed to join call");
+      },
+      onSuccess: (data: { callId: string }) => {
+        toast.success("Joined call successfully!");
+        router.push(`/r/${data.callId}`);
+        resetForm();
+      },
+      onError: (error) => {
+        console.error("Failed to join call:", error);
+        toast.error("Failed to join call. Please check the meeting ID.");
+      },
+    });
 
     const joinMeeting = useCallback(
       async (data: MeetingData): Promise<void> => {
@@ -97,9 +153,7 @@ export const useUnauthenticatedMeeting =
           return;
         }
 
-        setIsLoading(true);
         try {
-          // Extract meeting ID from URL if it's a full URL
           const isUrl = data.meetingId.startsWith("https://");
           let meetingIdOrUrl = data.meetingId;
 
@@ -111,7 +165,7 @@ export const useUnauthenticatedMeeting =
           if (!meetingIdOrUrl) {
             setErrors((prev) => ({
               ...prev,
-              meetingId: validationErrors.meetingId ?? "",
+              meetingId: validationErrors.meetingId || "",
             }));
             return;
           }
@@ -119,66 +173,37 @@ export const useUnauthenticatedMeeting =
           if (meetingIdOrUrl.length > MAX_MEETING_ID_LENGTH) {
             setErrors((prev) => ({
               ...prev,
-              meetingId: validationErrors.meetingId ?? "",
+              meetingId: validationErrors.meetingId || "",
             }));
             return;
           }
 
-          // Here you would typically:
-          // 1. Navigate to the meeting page
-          // 2. Or make an API call to join the meeting
-          // 3. Or redirect to the call interface
-
-          console.log("Joining meeting:", {
-            name: data.name,
-            meetingId: meetingIdOrUrl,
-            originalInput: data.meetingId || "",
-          });
-
-          // For now, just reset the form
-          resetForm();
+          joinCallMutation.mutate(meetingIdOrUrl);
         } catch (error) {
           console.error("Error joining meeting:", error);
           setErrors((prev) => ({
             ...prev,
             meetingId: "Failed to join meeting",
           }));
-        } finally {
-          setIsLoading(false);
         }
       },
-      [validateForm, resetForm]
+      [validateForm, joinCallMutation]
     );
 
     const startMeeting = useCallback(
       async (data: MeetingData): Promise<void> => {
         if (!validateForm()) return;
 
-        setIsLoading(true);
-        try {
-          // Here you would typically:
-          // 1. Generate a new meeting ID
-          // 2. Navigate to the meeting page
-          // 3. Or make an API call to create a meeting
-          // 4. Or redirect to the call interface
-
-          console.log("Starting meeting:", {
-            name: data.name,
-            // Generate a random meeting ID for new meetings
-            meetingId: Math.random().toString(36).substring(2, 8).toUpperCase(),
-          });
-
-          // For now, just reset the form
-          resetForm();
-        } catch (error) {
-          console.error("Error starting meeting:", error);
-          setErrors((prev) => ({ ...prev, name: "Failed to start meeting" }));
-        } finally {
-          setIsLoading(false);
-        }
+        createCallMutation.mutate({
+          name: data.name,
+          members: [],
+        });
       },
-      [validateForm, resetForm]
+      [validateForm, createCallMutation]
     );
+
+    const isLoading =
+      createCallMutation.isPending || joinCallMutation.isPending;
 
     return {
       formData,

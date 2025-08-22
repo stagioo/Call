@@ -4,6 +4,7 @@ import { CallPreview } from "@/components/call/call-preview";
 import { CallVideoGrid } from "@/components/call/call-video-grid";
 import { MediaControls } from "@/components/call/media-controls";
 import { ChatSidebar } from "@/components/rooms/chat-sidebar";
+import { RequestJoinToast } from "@/components/toasts/request-join";
 import { useCallContext } from "@/contexts/call-context";
 import { useCallDevices } from "@/hooks/use-call-devices";
 import { useCallJoin } from "@/hooks/use-call-join";
@@ -11,10 +12,9 @@ import { useCallMediaControls } from "@/hooks/use-call-media-controls";
 import { useCallProducers } from "@/hooks/use-call-producers";
 import { useNotificationSound } from "@/hooks/use-notification-sound";
 import type { ActiveSection } from "@/lib/types";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { RequestJoinToast } from "@/components/toasts/request-join";
 
 export function CallRoom({ id }: { id: string }) {
   const router = useRouter();

@@ -24,7 +24,7 @@ export const CALLS_QUERY = {
   createCall: async (data: { name: string; members: string[] }) => {
     const res = await apiClient.post("/calls/create", data);
     if (res.status === 200) {
-      return res.data;
+      return res.data as { callId: string };
     }
     throw new Error("Failed to create call");
   },
