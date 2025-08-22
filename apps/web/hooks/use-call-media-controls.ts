@@ -14,19 +14,36 @@ export const useCallMediaControls = () => {
         const next = !videoTrack.enabled;
         videoTrack.enabled = next;
         dispatch({ type: "SET_LOCAL_CAMERA_ON", payload: next });
+        
+        // Mute/unmute the video producer on the server side
+        const videoProducer = state.myProducers.find(p => p.kind === "video" && p.source === "webcam");
+        
+        if (videoProducer && mediasoup.setProducerMuted) {
+          console.log(`[Camera Toggle] Muting video producer ${videoProducer.id} to ${!next}`);
+          mediasoup.setProducerMuted(videoProducer.id, !next);
+        }
       }
     }
-  }, [mediasoup.localStream, dispatch]);
+  }, [mediasoup.localStream, mediasoup.setProducerMuted, state.myProducerIds, dispatch]);
 
   const toggleMic = useCallback(() => {
     if (mediasoup.localStream) {
       const audioTrack = mediasoup.localStream.getAudioTracks()[0];
       if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        dispatch({ type: "SET_LOCAL_MIC_ON", payload: audioTrack.enabled });
+        const next = !audioTrack.enabled;
+        audioTrack.enabled = next;
+        dispatch({ type: "SET_LOCAL_MIC_ON", payload: next });
+        
+        // Mute/unmute the audio producer on the server side
+        const audioProducer = state.myProducers.find(p => p.kind === "audio" && p.source === "mic");
+        
+        if (audioProducer && mediasoup.setProducerMuted) {
+          console.log(`[Mic Toggle] Muting audio producer ${audioProducer.id} to ${!next}`);
+          mediasoup.setProducerMuted(audioProducer.id, !next);
+        }
       }
     }
-  }, [mediasoup.localStream, dispatch]);
+  }, [mediasoup.localStream, mediasoup.setProducerMuted, state.myProducers, dispatch]);
 
   const handleToggleScreenShare = useCallback(async () => {
     try {

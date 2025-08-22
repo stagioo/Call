@@ -42,7 +42,7 @@ const LocalVideo = memo(function LocalVideo({
         isScreenShare && "aspect-video max-h-[200px] min-h-[200px] w-auto"
       )}
     >
-      {hasVideoTracks ? (
+      {isCameraOn && hasVideoTracks ? (
         <video
           autoPlay
           playsInline
@@ -83,6 +83,7 @@ const RemoteVideoTile = memo(function RemoteVideoTile({
   muted,
   keyId,
   isScreenShare,
+  userImage,
 }: {
   stream: MediaStream;
   peerId: string;
@@ -90,8 +91,23 @@ const RemoteVideoTile = memo(function RemoteVideoTile({
   muted?: boolean;
   keyId: string;
   isScreenShare?: boolean;
+  userImage?: string;
 }) {
-  console.log("tileId remote", keyId);
+  console.log("tileId remote", keyId, "muted:", muted, "userImage:", userImage);
+  
+  // Check if video is muted (no enabled video tracks)
+  const hasVideoTracks = stream
+    ?.getVideoTracks()
+    .some((track) => track.enabled);
+  
+  console.log("RemoteVideoTile debug:", {
+    keyId,
+    muted,
+    hasVideoTracks,
+    userImage,
+    displayName: peerDisplayName,
+  });
+
   return (
     <m.div
       layoutId={keyId}
@@ -100,24 +116,40 @@ const RemoteVideoTile = memo(function RemoteVideoTile({
         isScreenShare && "aspect-video max-h-[200px] min-h-[200px] w-auto"
       )}
     >
-      <video
-        autoPlay
-        playsInline
-        className="size-full object-cover"
-        ref={(el) => {
-          if (el && stream) {
-            el.srcObject = stream;
-            el.onloadedmetadata = () => {
-              el.play().catch((e) =>
-                console.warn(
-                  `Error playing remote video for ${peerDisplayName}:`,
-                  e
-                )
-              );
-            };
-          }
-        }}
-      />
+      {hasVideoTracks && !muted ? (
+        <video
+          autoPlay
+          playsInline
+          className="size-full object-cover"
+          ref={(el) => {
+            if (el && stream) {
+              el.srcObject = stream;
+              el.onloadedmetadata = () => {
+                el.play().catch((e) =>
+                  console.warn(
+                    `Error playing remote video for ${peerDisplayName}:`,
+                    e
+                  )
+                );
+              };
+            }
+          }}
+        />
+      ) : (
+        <div className="flex size-full items-center justify-center bg-black">
+          {userImage ? (
+            <img
+              src={userImage}
+              alt={`${peerDisplayName || "User"}'s profile picture`}
+              className="h-24 w-24 rounded-full border-4 border-white/20 object-cover"
+            />
+          ) : (
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white/20 bg-gray-600">
+              <Icons.users className="h-12 w-12 text-white/70" />
+            </div>
+          )}
+        </div>
+      )}
       <div className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-white">
         <div className="flex items-center gap-2">
           <span className="text-xs">{peerDisplayName || "User"}</span>
@@ -231,6 +263,7 @@ export const CallVideoGrid = memo(() => {
       type: "webcam" | "screen";
       peerId: string;
       displayName?: string;
+      userImage?: string;
       muted?: boolean;
       isLocal?: boolean;
     }[] = [];
@@ -242,7 +275,9 @@ export const CallVideoGrid = memo(() => {
         type: "webcam",
         peerId: "local",
         displayName: "You",
+        userImage: userImage,
         isLocal: true,
+        muted: !isCameraOn,
       });
     }
 
@@ -263,14 +298,15 @@ export const CallVideoGrid = memo(() => {
     }
 
     remoteStreams.forEach(
-      ({ stream, peerId, displayName, producerId, kind, source, muted }) => {
+      ({ stream, peerId, displayName, producerId, kind, source, muted, userImage: remoteUserImage }) => {
         if (!stream) return;
         if (kind !== "video") return;
 
+        // Include streams even if they don't have valid tracks (muted streams)
+        // This ensures we show profile pictures for users with cameras off
         const hasValidTrack = stream
           .getVideoTracks()
           .some((t) => t.readyState === "live" && t.enabled);
-        if (!hasValidTrack) return;
 
         streams.push({
           id: producerId || peerId,
@@ -278,6 +314,7 @@ export const CallVideoGrid = memo(() => {
           type: source === "screen" ? "screen" : "webcam",
           peerId,
           displayName,
+          userImage: remoteUserImage,
           muted,
         });
       }
@@ -314,14 +351,17 @@ export const CallVideoGrid = memo(() => {
         producerId,
         kind,
         source,
+        muted,
+        userImage,
       }) => {
         if (!stream) return;
         if (kind !== "video" || source !== "webcam") return;
 
+        // Include streams even if they don't have valid tracks (muted streams)
+        // This ensures we show profile pictures for users with cameras off
         const hasValidTrack = stream
           .getVideoTracks()
           .some((track) => track.readyState === "live" && track.enabled);
-        if (!hasValidTrack) return;
 
         videos.push(
           <RemoteVideoTile
@@ -331,9 +371,8 @@ export const CallVideoGrid = memo(() => {
             peerId={peerId}
             isScreenShare={screenShares.length > 0}
             peerDisplayName={peerDisplayName}
-            muted={remoteStreams
-              .filter((s) => s.kind === "audio" && s.peerId === peerId)
-              .some((s) => s.muted)}
+            userImage={userImage}
+            muted={muted}
           />
         );
       }
@@ -390,6 +429,8 @@ interface OneOrTwoProps {
     type: "webcam" | "screen";
     peerId: string;
     displayName?: string;
+    userImage?: string;
+    muted?: boolean;
   }[];
 }
 
@@ -401,7 +442,7 @@ const OneOrTwo = memo(({ streams }: OneOrTwoProps) => {
 
   return (
     <div className="relative mb-20 flex h-[calc(100vh-100px)] flex-1 items-center justify-center gap-4 p-4">
-      {streams.map(({ id, stream, type, peerId, displayName }) => {
+      {streams.map(({ id, stream, type, peerId, displayName, userImage: streamUserImage, muted }) => {
         const isLocalUser = displayName === "You";
         const hasVideoTracks = isLocalUser
           ? stream?.getVideoTracks().some((track) => track.enabled)
@@ -418,12 +459,12 @@ const OneOrTwo = memo(({ streams }: OneOrTwoProps) => {
                 isLocalUser && streams.length > 1,
             })}
           >
-            {isLocalUser && !hasVideoTracks ? (
+            {(isLocalUser && !isCameraOn) || (!isLocalUser && muted) ? (
               <div className="flex size-full items-center justify-center bg-black">
-                {userImage ? (
+                {streamUserImage ? (
                   <img
-                    src={userImage}
-                    alt="Your profile picture"
+                    src={streamUserImage}
+                    alt={`${displayName || "User"}'s profile picture`}
                     className="h-20 w-20 rounded-full border-4 border-white/20 object-cover"
                   />
                 ) : (

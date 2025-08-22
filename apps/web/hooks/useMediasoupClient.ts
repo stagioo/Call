@@ -43,6 +43,7 @@ interface RemoteStream {
   kind: "audio" | "video";
   source: "mic" | "webcam" | "screen";
   displayName: string;
+  userImage?: string;
   muted: boolean;
 }
 
@@ -258,6 +259,7 @@ export function useMediasoupClient() {
         roomId,
         peerId: userId,
         displayName,
+        userImage: session?.user?.image,
       });
 
       setCurrentRoomId(roomId);
@@ -348,7 +350,12 @@ export function useMediasoupClient() {
       setRemoteStreams((prev) =>
         prev.map((stream) =>
           stream.producerId === data.producerId
-            ? { ...stream, muted: data.muted }
+            ? { 
+                ...stream, 
+                muted: data.muted,
+                displayName: data.displayName || stream.displayName,
+                userImage: data.userImage || stream.userImage,
+              }
             : stream
         )
       );
@@ -694,6 +701,12 @@ export function useMediasoupClient() {
         consumersRef.current.set(producerId, consumer);
 
         const stream = new MediaStream([consumer.track]);
+        console.log(`[mediasoup] Created stream for producer ${producerId}:`, {
+          track: consumer.track,
+          trackEnabled: consumer.track.enabled,
+          trackReadyState: consumer.track.readyState,
+          muted: res.muted,
+        });
 
         // Usar @close en lugar de producerclose ya que es el evento correcto según los tipos
         consumer.on("@close", () => {
@@ -732,6 +745,7 @@ export function useMediasoupClient() {
                 kind: res.kind,
                 source: res.source || "webcam",
                 displayName: res.displayName || "Unknown",
+                userImage: res.userImage,
                 muted: res.muted ?? initialMutedState ?? false,
               };
 
@@ -747,6 +761,7 @@ export function useMediasoupClient() {
               } else {
                 // Add new stream
                 console.log(`[mediasoup] Adding new remote stream:`, newStream);
+                console.log(`[mediasoup] Stream muted state:`, newStream.muted);
                 return [...prev, newStream];
               }
             });
