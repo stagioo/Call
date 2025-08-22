@@ -302,6 +302,17 @@ export const CallVideoGrid = memo(() => {
         if (!stream) return;
         if (kind !== "video") return;
 
+        console.log(`[VideoGrid] Processing remote stream:`, {
+          peerId,
+          displayName,
+          producerId,
+          kind,
+          source,
+          muted,
+          userImage: remoteUserImage,
+          hasValidTrack: stream.getVideoTracks().some((t) => t.readyState === "live" && t.enabled)
+        });
+
         // Include streams even if they don't have valid tracks (muted streams)
         // This ensures we show profile pictures for users with cameras off
         const hasValidTrack = stream

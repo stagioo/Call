@@ -524,6 +524,11 @@ export function useMediasoupClient() {
   // Produce local media
   const produce = useCallback(
     async (stream: MediaStream, options?: ProduceOptions) => {
+      console.log("[mediasoup] Produce called with stream:", {
+        tracks: stream?.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled, readyState: t.readyState })),
+        options
+      });
+
       if (!sendTransportRef.current) {
         console.error("[mediasoup] No send transport available");
         return [];
@@ -540,17 +545,16 @@ export function useMediasoupClient() {
         return [];
       }
 
-      // Check if tracks are still active
-      const activeTracks = stream
-        .getTracks()
-        .filter((track) => track.readyState === "live" && !track.muted);
+      // Check if tracks exist (even if disabled)
+      const tracks = stream.getTracks();
+      const activeTracks = tracks.filter((track) => track.readyState === "live");
 
-      if (activeTracks.length === 0) {
-        console.error("[mediasoup] No active tracks in stream");
+      if (tracks.length === 0) {
+        console.error("[mediasoup] No tracks in stream");
         return [];
       }
 
-      console.log(`[mediasoup] Producing ${activeTracks.length} tracks`);
+      console.log(`[mediasoup] Producing ${tracks.length} tracks (${activeTracks.length} active)`);
 
       // Define encodings for webcam video
       const webcamEncodings: RtpEncodingParameters[] = [
@@ -572,7 +576,7 @@ export function useMediasoupClient() {
       if (audioTrack) {
         try {
           console.log(
-            `[mediasoup] Producing audio track from source : ${source || "mic"}`
+            `[mediasoup] Producing audio track from source: ${source || "mic"} (enabled: ${audioTrack.enabled})`
           );
           const audioProducer = await sendTransportRef.current.produce({
             track: audioTrack,
@@ -584,7 +588,7 @@ export function useMediasoupClient() {
           });
           producers.push(audioProducer);
           console.log(
-            `[mediasoup] Audio produced created: ${audioProducer.id}`
+            `[mediasoup] Audio producer created: ${audioProducer.id}`
           );
         } catch (e) {
           console.error(`Error producing audio track: `, e);
@@ -597,7 +601,7 @@ export function useMediasoupClient() {
         try {
           const videoSource = source === "screen" ? "screen" : "webcam";
           console.log(
-            `[mediasoup] Producing video track from source: ${videoSource}`
+            `[mediasoup] Producing video track from source: ${videoSource} (enabled: ${videoTrack.enabled})`
           );
 
           const videoProducer = await sendTransportRef.current.produce({
@@ -622,6 +626,19 @@ export function useMediasoupClient() {
         }
       }
 
+      // Mute producers if tracks are disabled
+      for (const producer of producers) {
+        const track = stream.getTracks().find(t => t.kind === producer.kind);
+        if (track && !track.enabled) {
+          console.log(`[mediasoup] Muting producer ${producer.id} because track is disabled`);
+          try {
+            await setProducerMuted(producer.id, true);
+          } catch (e) {
+            console.error(`Error muting producer ${producer.id}:`, e);
+          }
+        }
+      }
+
       // Always update localStream for camera/webcam streams to ensure UI shows the stream
       if (
         !options?.source ||
@@ -637,7 +654,7 @@ export function useMediasoupClient() {
       );
       return producers;
     },
-    [userId, connected]
+    [userId, connected, setProducerMuted]
   );
 
   // Consume remote media
@@ -685,6 +702,7 @@ export function useMediasoupClient() {
         }
 
         console.log(`[mediasoup] Consume response for ${producerId}:`, res);
+        console.log(`[mediasoup] User image from consume response:`, res.userImage);
 
         const consumer = await recvTransportRef.current.consume({
           id: res.id,

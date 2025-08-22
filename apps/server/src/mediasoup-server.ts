@@ -884,6 +884,7 @@ wss.on("connection", (ws: WebSocket) => {
               rtpParameters: consumer.rtpParameters,
               peerId: targetPeer.id,
               displayName: targetPeer.displayName,
+              userImage: targetPeer.userImage,
               source: myProducer.source,
               muted: myProducer.muted || false,
             };
