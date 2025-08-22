@@ -4,7 +4,6 @@ import { Device } from "mediasoup-client";
 import type {
   Transport,
   Consumer,
-  TransportOptions,
   RtpCapabilities,
   RtpParameters,
   RtpEncodingParameters,
@@ -130,9 +129,7 @@ export function useMediasoupClient() {
   const [remoteStreams, setRemoteStreams] = useState<RemoteStream[]>([]);
   const [peers, setPeers] = useState<Peer[]>([]);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
-  // Remove active speaker states and refs
 
-  // Generate or get user ID
   const [userId] = useState(() => {
     if (typeof window !== "undefined") {
       let id = localStorage.getItem("user-id");
@@ -145,7 +142,6 @@ export function useMediasoupClient() {
     return "";
   });
 
-  // Get display name from session or generate one
   const [displayName, setDisplayName] = useState(() => {
     if (session?.user?.name) {
       return session.user.name;
@@ -189,7 +185,6 @@ export function useMediasoupClient() {
     [socket, connected, sendRequest]
   );
 
-  // Cleanup functions
   const cleanupConsumer = useCallback((producerId: string) => {
     const consumer = consumersRef.current.get(producerId);
     if (consumer) {
@@ -241,14 +236,12 @@ export function useMediasoupClient() {
     setCurrentRoomId(null);
   }, [cleanupAllConsumers, cleanupLocalMedia, cleanupTransports]);
 
-  // Join room with cleanup
   const joinRoom = useCallback(
     async (roomId: string): Promise<JoinResponse> => {
       if (!socket || !connected) {
         throw new Error("WebSocket not connected");
       }
 
-      // Cleanup existing resources before joining
       cleanupAll();
 
       console.log(`[mediasoup] Joining room: ${roomId} as ${displayName}`);
@@ -268,8 +261,6 @@ export function useMediasoupClient() {
     [socket, connected, sendRequest, cleanupAll, userId, displayName]
   );
 
-  // Handle WebSocket reconnection - don't cleanup immediately on disconnect
-  // as it might be a temporary network issue
   useEffect(() => {
     if (!connected && currentRoomId) {
       console.log(
