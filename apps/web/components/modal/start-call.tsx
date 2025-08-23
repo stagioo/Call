@@ -1,3 +1,5 @@
+"use client";
+
 import { useSession } from "@/components/providers/session";
 import { useModal } from "@/hooks/use-modal";
 import { CALLS_QUERY } from "@/lib/QUERIES";
@@ -56,13 +58,15 @@ export const StartCall = () => {
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     const userName = user?.name || "User";
-    const finalName = data.name && data.name.trim() !== "" ? data.name : `${userName}-call`;
+    const finalName =
+      data.name && data.name.trim() !== "" ? data.name : `${userName}-call`;
 
     // If guest, create a client-side anonymous call code and navigate directly
     if (!user?.id || user.id === "guest") {
       const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
       let code = "";
-      for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+      for (let i = 0; i < 6; i++)
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
       onClose();
       router.push(`/app/call/${code}`);
       toast.success("Anonymous call created");
@@ -87,8 +91,11 @@ export const StartCall = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
-      <DialogContent className="!max-w-sm p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
-        <DialogHeader className="flex flex-col  ">
+      <DialogContent
+        className="!max-w-sm rounded-2xl bg-[#232323] p-6"
+        showCloseButton={false}
+      >
+        <DialogHeader className="flex flex-col">
           <DialogTitle>Start Call</DialogTitle>
           <DialogDescription>
             Start a call with your contacts.
@@ -98,7 +105,7 @@ export const StartCall = () => {
           <Input
             {...form.register("name")}
             placeholder="Call name (optional)"
-            className="h-12 text-2xl !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white"
+            className="border-1 h-12 !rounded-lg border-[#434343] bg-[#2F2F2F] text-2xl text-white"
             disabled={isPending}
           />
 
@@ -110,7 +117,7 @@ export const StartCall = () => {
 
           <LoadingButton
             type="submit"
-            className="h-10 w-full rounded-lg text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
+            className="bg-primary-blue hover:bg-primary-blue/80 h-10 w-full rounded-lg text-sm font-medium text-white"
             loading={isPending}
             disabled={isPending}
           >

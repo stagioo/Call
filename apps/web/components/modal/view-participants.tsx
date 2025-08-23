@@ -1,4 +1,7 @@
+"use client";
+
 import { useModal } from "@/hooks/use-modal";
+import { Badge } from "@call/ui/components/badge";
 import {
   Dialog,
   DialogContent,
@@ -6,11 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@call/ui/components/dialog";
-import { UserProfile } from "@call/ui/components/use-profile";
 import { ScrollArea } from "@call/ui/components/scroll-area";
-import { Badge } from "@call/ui/components/badge";
-import { FiUsers, FiCalendar, FiClock } from "react-icons/fi";
+import { UserProfile } from "@call/ui/components/use-profile";
 import { formatDistanceToNow } from "date-fns";
+import { FiClock, FiUsers } from "react-icons/fi";
 
 export const ViewParticipants = () => {
   const { isOpen, onClose, type, data } = useModal();
@@ -22,8 +24,11 @@ export const ViewParticipants = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-md p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
-        <DialogHeader className="flex flex-col  ">
+      <DialogContent
+        className="!max-w-md rounded-2xl bg-[#232323] p-6"
+        showCloseButton={false}
+      >
+        <DialogHeader className="flex flex-col">
           <DialogTitle>{callInfo?.name || "Call"} Participants</DialogTitle>
           <DialogDescription>
             {participants.length} participant(s) in this call
@@ -36,7 +41,7 @@ export const ViewParticipants = () => {
               participants.map((participant, index: number) => (
                 <div
                   key={participant.id || index}
-                  className="flex items-center gap-4 rounded-lg border-1 border-[#434343] bg-[#2F2F2F] p-3 transition-colors hover:bg-white/5"
+                  className="border-1 flex items-center gap-4 rounded-lg border-[#434343] bg-[#2F2F2F] p-3 transition-colors hover:bg-white/5"
                 >
                   <UserProfile
                     name={participant.name || "Unknown"}
@@ -59,8 +64,6 @@ export const ViewParticipants = () => {
                     </p>
 
                     <div className="text-muted-foreground flex items-center gap-4 text-xs">
-                    
-
                       {participant.leftAt && (
                         <div className="flex items-center gap-1">
                           <FiClock className="h-3 w-3" />

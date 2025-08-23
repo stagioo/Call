@@ -8,10 +8,10 @@ import {
   useEffect,
 } from "react";
 import { type Session } from "@call/auth/auth";
-import { useUnauthenticatedMeeting } from "@/hooks/use-unauthenticated-meeting";
 
-type SessionContextType = ReturnType<typeof useUnauthenticatedMeeting> &
-  Session;
+type SessionContextType = Session & {
+  isGuest: boolean;
+};
 
 export const SessionContext = createContext<SessionContextType | null>(null);
 
@@ -20,7 +20,6 @@ export const SessionProvider = ({
   value,
 }: PropsWithChildren<{ value?: Session }>) => {
   const [session, setSession] = useState<SessionContextType | null>(null);
-  const meetingHook = useUnauthenticatedMeeting();
 
   useEffect(() => {
     const sessionData: Session = value || {
@@ -44,9 +43,9 @@ export const SessionProvider = ({
 
     setSession({
       ...sessionData,
-      ...meetingHook,
+      isGuest: !value,
     });
-  }, [value, meetingHook]);
+  }, [value]);
 
   if (!session) {
     return null;

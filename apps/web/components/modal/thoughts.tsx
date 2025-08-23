@@ -1,3 +1,5 @@
+"use client";
+
 import { useModal } from "@/hooks/use-modal";
 import { THOUGHTS_QUERY } from "@/lib/QUERIES";
 import {
@@ -74,8 +76,11 @@ export const Thoughts = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-md p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
-        <DialogHeader className="flex flex-col  ">
+      <DialogContent
+        className="!max-w-md rounded-2xl bg-[#232323] p-6"
+        showCloseButton={false}
+      >
+        <DialogHeader className="flex flex-col">
           <DialogTitle>Thoughts?</DialogTitle>
           <DialogDescription>
             We&apos;re always looking for ways to improve. Let us know what you
@@ -94,7 +99,7 @@ export const Thoughts = () => {
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
-                      <SelectTrigger className="w-full h-12 !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white">
+                      <SelectTrigger className="border-1 h-12 w-full !rounded-lg border-[#434343] bg-[#2F2F2F] text-white">
                         <SelectValue placeholder="Select a type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -119,7 +124,7 @@ export const Thoughts = () => {
                     <Textarea
                       {...field}
                       placeholder="What can we do better?"
-                      className="h-40 resize-none text-base !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white"
+                      className="border-1 h-40 resize-none !rounded-lg border-[#434343] bg-[#2F2F2F] text-base text-white"
                     />
                   </FormControl>
                   <FormMessage />
@@ -128,7 +133,7 @@ export const Thoughts = () => {
             />
             <LoadingButton
               type="submit"
-              className="h-10 w-full rounded-lg text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
+              className="bg-primary-blue hover:bg-primary-blue/80 h-10 w-full rounded-lg text-sm font-medium text-white"
               loading={isPending}
               disabled={isPending || !form.formState.isValid}
             >

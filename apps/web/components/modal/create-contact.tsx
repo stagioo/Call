@@ -1,3 +1,5 @@
+"use client";
+
 import { useContacts } from "@/components/providers/contacts";
 import { useModal } from "@/hooks/use-modal";
 import { CONTACTS_QUERY } from "@/lib/QUERIES";
@@ -63,8 +65,11 @@ export const CreateContact = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-sm p-6 bg-[#232323] rounded-2xl" showCloseButton={false}>
-        <DialogHeader className="flex flex-col  ">
+      <DialogContent
+        className="!max-w-sm rounded-2xl bg-[#232323] p-6"
+        showCloseButton={false}
+      >
+        <DialogHeader className="flex flex-col">
           <DialogTitle>Create Contact</DialogTitle>
           <DialogDescription>
             Add a new contact to your contacts list.
@@ -81,7 +86,7 @@ export const CreateContact = () => {
                     <Input
                       {...field}
                       placeholder="hello@joincall.co"
-                      className="h-12 text-2xl !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white"
+                      className="border-1 h-12 !rounded-lg border-[#434343] bg-[#2F2F2F] text-2xl text-white"
                     />
                   </FormControl>
                   <FormMessage />
@@ -90,7 +95,7 @@ export const CreateContact = () => {
             />
             <LoadingButton
               type="submit"
-              className="h-10 w-full rounded-lg text-sm font-medium bg-primary-blue hover:bg-primary-blue/80 text-white "
+              className="bg-primary-blue hover:bg-primary-blue/80 h-10 w-full rounded-lg text-sm font-medium text-white"
               loading={isPending}
               disabled={isPending || !form.formState.isValid}
             >

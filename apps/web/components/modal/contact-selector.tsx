@@ -1,3 +1,5 @@
+"use client";
+
 import { useContacts } from "@/components/providers/contacts";
 import { Checkbox } from "@call/ui/components/checkbox";
 import { Input } from "@call/ui/components/input";
@@ -64,7 +66,7 @@ export function ContactSelector({
           placeholder="Search contacts..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="h-12 text-2xl !rounded-lg border-1 border-[#434343] bg-[#2F2F2F] text-white pl-10"
+          className="border-1 h-12 !rounded-lg border-[#434343] bg-[#2F2F2F] pl-10 text-2xl text-white"
           disabled={disabled}
         />
       </div>
@@ -77,21 +79,22 @@ export function ContactSelector({
         ) : (
           filteredContacts.map((contact) => {
             const isAlreadyMember = disabledEmails.includes(contact.email);
-            const isChecked = isAlreadyMember || selectedContacts.includes(contact.email);
+            const isChecked =
+              isAlreadyMember || selectedContacts.includes(contact.email);
             const isDisabled = disabled || isAlreadyMember;
             return (
               <div
                 key={contact.id}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-muted/50",
+                  "hover:bg-muted/50 flex items-center gap-3 rounded-xl p-3 transition-colors",
                   isChecked && "bg-[#3B3B3B]",
-                  isAlreadyMember && "opacity-70 cursor-not-allowed"
+                  isAlreadyMember && "cursor-not-allowed opacity-70"
                 )}
               >
                 <Checkbox
                   id={contact.id}
                   checked={isChecked}
-                  className="border-inset-accent border-1 border-[#636363] bg-[#4B4B4B] rounded-sm"
+                  className="border-inset-accent border-1 rounded-sm border-[#636363] bg-[#4B4B4B]"
                   onCheckedChange={(checked) =>
                     handleContactToggle(contact.email, checked as boolean)
                   }
@@ -101,7 +104,7 @@ export function ContactSelector({
                   name={contact.name}
                   url={contact.image}
                   size="sm"
-                  className="rounded-lg text-md"
+                  className="text-md rounded-lg"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{contact.name}</div>

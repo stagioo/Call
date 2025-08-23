@@ -7,6 +7,9 @@ import { siteConfig } from "@/lib/site";
 import "@call/ui/globals.css";
 import { Databuddy } from "@databuddy/sdk";
 import type { Metadata } from "next";
+import { SessionProvider } from "@/components/providers/session";
+import { Providers } from "@/components/providers";
+import { SidebarProvider } from "@call/ui/components/sidebar";
 
 const fontSans = Geist({
   subsets: ["latin"],
@@ -106,27 +109,33 @@ export default function RootLayout({
       <body
         className={`${fontSans.variable} ${fontLora.variable} ${fontMono.variable} custom_scrollbar font-sans antialiased transition-all duration-300`}
       >
-        <SocketProvider>
-          <CallProvider>
-            <ThemeAndQueryProviders>
-              {children}
-              <Databuddy
-                clientId="ciU4COouaNeeu56duBjT7"
-                trackHashChanges={true}
-                trackAttributes={true}
-                trackOutgoingLinks={true}
-                trackInteractions={true}
-                trackEngagement={true}
-                trackScrollDepth={true}
-                trackExitIntent={true}
-                trackBounceRate={true}
-                trackWebVitals={true}
-                trackErrors={true}
-                enableBatching={true}
-              />
-            </ThemeAndQueryProviders>
-          </CallProvider>
-        </SocketProvider>
+        <SidebarProvider className="bg-transparent">
+          <ThemeAndQueryProviders>
+            <SessionProvider>
+              <Providers>
+                <SocketProvider>
+                  <CallProvider>
+                    <div className="size-full">{children}</div>
+                    <Databuddy
+                      clientId="ciU4COouaNeeu56duBjT7"
+                      trackHashChanges={true}
+                      trackAttributes={true}
+                      trackOutgoingLinks={true}
+                      trackInteractions={true}
+                      trackEngagement={true}
+                      trackScrollDepth={true}
+                      trackExitIntent={true}
+                      trackBounceRate={true}
+                      trackWebVitals={true}
+                      trackErrors={true}
+                      enableBatching={true}
+                    />
+                  </CallProvider>
+                </SocketProvider>
+              </Providers>
+            </SessionProvider>
+          </ThemeAndQueryProviders>
+        </SidebarProvider>
       </body>
     </html>
   );
