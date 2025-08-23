@@ -12,7 +12,8 @@ import {
 } from "@call/db/schema";
 import { eq, inArray, desc, and, sql } from "drizzle-orm";
 import type { ReqVariables } from "../../index.js";
-import { sendMail } from "@call/auth/utils/send-mail";
+import { sendMail } from "../../lib/email.js";
+import { env } from "@/config/env";
 
 const callsRoutes = new Hono<{ Variables: ReqVariables }>();
 
@@ -135,20 +136,18 @@ callsRoutes.post("/create", async (c) => {
         });
         console.log(`✅ [CALLS DEBUG] Notification created for ${email}`);
 
-        // Try sending email, but do not fail the whole request if it errors
-        try {
-          await sendMail({
-            to: email,
-            subject: "Invitation to join Call",
-            text: `Hello,\n\n${user.name || user.email} is inviting you to a call: ${name}\n\nJoin the call: ${process.env.FRONTEND_URL}/calls/${callId}`,
-          });
-          console.log(`✅ [CALLS DEBUG] Email sent to ${email}`);
-        } catch (emailError) {
+        const mailResult = await sendMail({
+          to: email,
+          subject: "Invitation to join Call",
+          text: `Hello,\n\n${user.name || user.email} is inviting you to a call: ${name}\n\nJoin the call: ${env.FRONTEND_URL}/calls/${callId}`,
+        });
+        if (!mailResult.success) {
           console.error(
             `⚠️ [CALLS DEBUG] Failed to send email to ${email}:`,
-            emailError
+            mailResult.error
           );
-          // Continue without throwing so the call creation succeeds
+        } else {
+          console.log(`✅ [CALLS DEBUG] Email sent to ${email}`);
         }
       }
     }
