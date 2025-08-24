@@ -2,10 +2,7 @@ import * as mediasoup from "mediasoup";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import os from "os";
-import { config } from "dotenv";
-import { resolve } from "path";
-
-config({ path: resolve(process.cwd(), "../../.env") });
+import { env } from "@/config/env";
 
 // --- Types -----
 type Consumer = mediasoup.types.Consumer;
@@ -117,7 +114,7 @@ const mediasoupConfig = {
   },
   webRtcTransport: {
     listenIps: [
-      { ip: "0.0.0.0", announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP },
+  { ip: "0.0.0.0", announcedIp: env.MEDIASOUP_ANNOUNCED_IP },
     ],
     enableUdp: true,
     enableTcp: true,
