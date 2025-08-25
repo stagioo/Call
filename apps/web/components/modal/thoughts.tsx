@@ -1,3 +1,5 @@
+"use client";
+
 import { useModal } from "@/hooks/use-modal";
 import { THOUGHTS_QUERY } from "@/lib/QUERIES";
 import {

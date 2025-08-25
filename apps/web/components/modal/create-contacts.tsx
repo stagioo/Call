@@ -1,3 +1,5 @@
+"use client";
+
 import { useContacts } from "@/components/providers/contacts";
 import { useModal } from "@/hooks/use-modal";
 import { CONTACTS_QUERY } from "@/lib/QUERIES";

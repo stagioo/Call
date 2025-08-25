@@ -54,7 +54,6 @@ export default function CallPage() {
               )}
             >
               {s.label}
-
               {sectionKey === s.key && (
                 <m.div
                   className="bg-inset-accent-foreground absolute inset-0 -z-10 rounded-md"

@@ -1,19 +1,13 @@
-import { SocketProvider } from "./socket";
+"use client";
+
 import Modals from "@/components/modal";
-import { ContactsProvider } from "./contacts";
-import SocketConnectionIndicator from "../socket-connection-indicator";
-import { CallProvider } from "@/contexts/call-context";
+import React from "react";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SocketProvider>
-      <CallProvider>
-        <ContactsProvider>
-          {children}
-          <Modals />
-        </ContactsProvider>
-        <SocketConnectionIndicator />
-      </CallProvider>
-    </SocketProvider>
+    <React.Fragment>
+      {children}
+      <Modals />
+    </React.Fragment>
   );
 }

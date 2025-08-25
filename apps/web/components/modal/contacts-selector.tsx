@@ -1,3 +1,5 @@
+"use client";
+
 import { useContacts } from "@/components/providers/contacts";
 import { Checkbox } from "@call/ui/components/checkbox";
 import { Input } from "@call/ui/components/input";

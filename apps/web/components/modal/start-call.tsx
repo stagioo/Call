@@ -1,3 +1,5 @@
+"use client";
+
 import { useSession } from "@/components/providers/session";
 import { useModal } from "@/hooks/use-modal";
 import { CALLS_QUERY } from "@/lib/QUERIES";
@@ -59,7 +61,6 @@ export const StartCall = () => {
     const finalName =
       data.name && data.name.trim() !== "" ? data.name : `${userName}-call`;
 
-    // If guest, create a client-side anonymous call code and navigate directly
     if (!user?.id || user.id === "guest") {
       const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
       let code = "";

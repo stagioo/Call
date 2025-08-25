@@ -1,41 +1,28 @@
-import { SessionProvider } from "@/components/providers/session";
-import { auth, type Session } from "@call/auth/auth";
-import { headers } from "next/headers";
 import React from "react";
+import { ContactsProvider } from "@/components/providers/contacts";
+import SocketConnectionIndicator from "@/components/socket-connection-indicator";
+import { auth } from "@call/auth/auth";
+import { headers } from "next/headers";
+import { SessionProvider } from "@/components/providers/session";
+import { redirect } from "next/navigation";
 
 const AppLayout = async ({ children }: { children: React.ReactNode }) => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  if (!session) {
-    const now = new Date();
-    const guestSession: Session = {
-      user: {
-        id: "guest",
-        name: "Guest",
-        email: "guest@anonymous",
-        emailVerified: false,
-        image: null,
-        createdAt: now,
-        updatedAt: now,
-      },
-      session: {
-        id: "guest-session",
-        expiresAt: new Date(now.getTime() + 1000 * 60 * 60 * 24 * 7),
-        token: "",
-        createdAt: now,
-        updatedAt: now,
-        ipAddress: null,
-        userAgent: null,
-        userId: "guest",
-      },
-    } as unknown as Session;
+  console.log("session", session);
 
-    return <SessionProvider value={guestSession}>{children}</SessionProvider>;
-  }
+  if (!session) redirect("/login");
 
-  return <SessionProvider value={session}>{children}</SessionProvider>;
+  return (
+    <SessionProvider value={session || undefined}>
+      <ContactsProvider>
+        {children}
+        <SocketConnectionIndicator />
+      </ContactsProvider>
+    </SessionProvider>
+  );
 };
 
 export default AppLayout;
