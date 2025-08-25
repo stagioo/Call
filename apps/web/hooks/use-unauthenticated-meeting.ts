@@ -5,6 +5,7 @@ import { CALLS_QUERY } from "@/lib/QUERIES";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
+import type { Call } from "@/lib/types";
 
 const meetingSchema = z.object({
   name: z.string().min(1).max(20).trim(),
@@ -122,17 +123,15 @@ export const useUnauthenticatedMeeting =
 
     const joinCallMutation = useMutation({
       mutationFn: async (meetingId: string) => {
-        const res = await apiClient.post(`/calls/${meetingId}/join`, {
-          name: formData.name,
-        });
+        const res = await apiClient.get(`/calls/${meetingId}`);
         if (res.status === 200) {
-          return res.data as { callId: string };
+          return res.data as { call: Call };
         }
         throw new Error("Failed to join call");
       },
-      onSuccess: (data: { callId: string }) => {
+      onSuccess: (data: { call: Call }) => {
         toast.success("Joined call successfully!");
-        router.push(`/r/${data.callId}`);
+        router.push(`/r/${data.call.id}`);
         resetForm();
       },
       onError: (error) => {

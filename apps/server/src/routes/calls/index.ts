@@ -34,7 +34,6 @@ function generateCallCode() {
 callsRoutes.post("/create", async (c) => {
   console.log("🔍 [CALLS DEBUG] POST /create called");
 
-  // Get authenticated user (like teams does)
   const user = c.get("user");
   console.log("👤 [CALLS DEBUG] User:", { id: user?.id, email: user?.email });
 
@@ -549,6 +548,22 @@ callsRoutes.get("/:id/join-requests", async (c) => {
     console.error("Error getting join requests:", error);
     return c.json({ error: "Failed to get requests" }, 500);
   }
+});
+
+callsRoutes.get("/:id", async (c) => {
+  const callId = c.req.param("id");
+
+  console.log(`[GET-CALL] Getting call ${callId}`);
+
+  const call = await db.query.calls.findFirst({
+    where: eq(calls.id, callId),
+  });
+
+  if (!call) {
+    return c.json({ error: "Call not found" }, 404);
+  }
+
+  return c.json({ call });
 });
 
 // POST /api/calls/:id/approve-join

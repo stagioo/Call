@@ -9,7 +9,7 @@ import type {
   RtpEncodingParameters,
 } from "mediasoup-client/types";
 import { useSocketContext } from "@/components/providers/socket";
-import { useSession } from "@/hooks/useSession";
+import { useSession } from "@/components/providers/session";
 import { toast } from "sonner";
 
 interface Peer {
@@ -38,7 +38,7 @@ interface RemoteStream {
   stream: MediaStream;
   producerId: string;
   peerId: string;
-  userId: string; // For backward compatibility
+  userId: string;
   kind: "audio" | "video";
   source: "mic" | "webcam" | "screen";
   displayName: string;
@@ -118,7 +118,7 @@ function useWsRequest(socket: WebSocket | null) {
 
 export function useMediasoupClient() {
   const { socket, connected } = useSocketContext();
-  const { session } = useSession();
+  const { user } = useSession();
   const { sendRequest, addEventHandler, removeEventHandler } =
     useWsRequest(socket);
   const deviceRef = useRef<Device | null>(null);
@@ -143,9 +143,17 @@ export function useMediasoupClient() {
   });
 
   const [displayName, setDisplayName] = useState(() => {
-    if (session?.user?.name) {
-      return session.user.name;
+    if (user?.name) {
+      return user.name;
     }
+
+    if (typeof window !== "undefined") {
+      const storedName = localStorage.getItem("call_display_name");
+      if (storedName && storedName.trim()) {
+        return storedName.trim();
+      }
+    }
+
     if (typeof window !== "undefined") {
       let name = localStorage.getItem("display-name");
       if (!name) {
@@ -154,17 +162,24 @@ export function useMediasoupClient() {
       }
       return name;
     }
+
     return "Anonymous";
   });
 
-  // Update display name when session changes
   useEffect(() => {
-    if (session?.user?.name) {
-      setDisplayName(session.user.name);
+    if (user?.name) {
+      setDisplayName(user.name);
+      return;
     }
-  }, [session?.user?.name]);
 
-  // Producer muted
+    if (typeof window !== "undefined") {
+      const storedName = localStorage.getItem("call_display_name");
+      if (storedName && storedName.trim() && storedName !== displayName) {
+        setDisplayName(storedName.trim());
+      }
+    }
+  }, [user?.name, displayName]);
+
   const setProducerMuted = useCallback(
     (producerId: string, muted: boolean) => {
       if (!socket || !connected) {
@@ -267,7 +282,6 @@ export function useMediasoupClient() {
         "[mediasoup] WebSocket disconnected, room active:",
         currentRoomId
       );
-      // Only cleanup after a delay to allow for reconnection
       const timeoutId = setTimeout(() => {
         if (!connected) {
           console.log(
@@ -306,7 +320,6 @@ export function useMediasoupClient() {
       console.log("[mediasoup] Peer left:", data);
       setPeers((prev) => prev.filter((p) => p.id !== data.peerId));
       toast.success(`${data.displayName} left the call`);
-      // Clean up streams from this peer
       setRemoteStreams((prev) => {
         const streamsToRemove = prev.filter((s) => s.peerId === data.peerId);
         streamsToRemove.forEach((stream) => {
@@ -320,7 +333,6 @@ export function useMediasoupClient() {
         return prev.filter((s) => s.peerId !== data.peerId);
       });
 
-      // Clean up consumers from this peer
       consumersRef.current.forEach((consumer, producerId) => {
         if (consumer.appData?.peerId === data.peerId) {
           consumer.close();
@@ -358,7 +370,6 @@ export function useMediasoupClient() {
     };
   }, [socket, addEventHandler, removeEventHandler, cleanupConsumer]);
 
-  // Handle peer joined
   const handlePeerJoined = useCallback((data: any) => {
     console.log("[mediasoup] Peer joined:", data);
     setPeers((prev) => {
@@ -368,14 +379,12 @@ export function useMediasoupClient() {
     });
   }, []);
 
-  // Handle peer left
   const handlePeerLeft = useCallback((data: any) => {
     console.log("[mediasoup] Peer left:", data);
     setPeers((prev) => prev.filter((p) => p.id !== data.id));
     setRemoteStreams((prev) => prev.filter((s) => s.peerId !== data.id));
   }, []);
 
-  // Handle peer updated
   const handlePeerUpdated = useCallback((data: any) => {
     console.log("[mediasoup] Peer updated:", data);
     setPeers((prev) => {
@@ -387,7 +396,6 @@ export function useMediasoupClient() {
     });
   }, []);
 
-  // Add event listeners
   useEffect(() => {
     if (!socket) return;
 
@@ -409,7 +417,6 @@ export function useMediasoupClient() {
     handlePeerUpdated,
   ]);
 
-  // Load mediasoup device
   const loadDevice = useCallback(async (rtpCapabilities: RtpCapabilities) => {
     let device = deviceRef.current;
     if (!device) {
@@ -421,13 +428,11 @@ export function useMediasoupClient() {
     return device;
   }, []);
 
-  // Create send transport
   const createSendTransport = useCallback(async () => {
     if (!socket || !connected) {
       throw new Error("Socket not connected");
     }
 
-    // Close existing transport if any
     if (sendTransportRef.current) {
       sendTransportRef.current.close();
       sendTransportRef.current = null;
@@ -470,13 +475,11 @@ export function useMediasoupClient() {
     return transport;
   }, [socket, sendRequest, connected]);
 
-  // Create recv transport
   const createRecvTransport = useCallback(async () => {
     if (!socket || !connected) {
       throw new Error("Socket not connected");
     }
 
-    // Close existing transport if any
     if (recvTransportRef.current) {
       recvTransportRef.current.close();
       recvTransportRef.current = null;
@@ -505,7 +508,6 @@ export function useMediasoupClient() {
     return transport;
   }, [socket, sendRequest, connected]);
 
-  // Produce local media
   const produce = useCallback(
     async (stream: MediaStream, options?: ProduceOptions) => {
       if (!sendTransportRef.current) {
@@ -518,13 +520,11 @@ export function useMediasoupClient() {
         return [];
       }
 
-      // Validate stream and tracks
       if (!stream || stream.getTracks().length === 0) {
         console.error("[mediasoup] Invalid stream provided");
         return [];
       }
 
-      // Check if tracks are still active
       const activeTracks = stream
         .getTracks()
         .filter((track) => track.readyState === "live" && !track.muted);
@@ -536,7 +536,6 @@ export function useMediasoupClient() {
 
       console.log(`[mediasoup] Producing ${activeTracks.length} tracks`);
 
-      // Define encodings for webcam video
       const webcamEncodings: RtpEncodingParameters[] = [
         { rid: "r0", maxBitrate: 100000, scalabilityMode: "S1T3" },
         { rid: "r1", maxBitrate: 300000, scalabilityMode: "S1T3" },
@@ -551,7 +550,6 @@ export function useMediasoupClient() {
       const producers = [];
       const source = options?.source;
 
-      // Handle audio track
       const audioTrack = stream.getAudioTracks()[0];
       if (audioTrack) {
         try {
@@ -575,7 +573,6 @@ export function useMediasoupClient() {
         }
       }
 
-      // Handle video track with appropriate simulcast settings
       const videoTrack = stream.getVideoTracks()[0];
       if (videoTrack) {
         try {
@@ -606,7 +603,6 @@ export function useMediasoupClient() {
         }
       }
 
-      // Always update localStream for camera/webcam streams to ensure UI shows the stream
       if (
         !options?.source ||
         options.source === "camera" ||
@@ -624,7 +620,6 @@ export function useMediasoupClient() {
     [userId, connected]
   );
 
-  // Consume remote media
   const consume = useCallback(
     async (
       producerId: string,
@@ -686,7 +681,6 @@ export function useMediasoupClient() {
 
         const stream = new MediaStream([consumer.track]);
 
-        // Usar @close en lugar de producerclose ya que es el evento correcto según los tipos
         consumer.on("@close", () => {
           console.log(
             `[mediasoup] Producer closed for consumer: ${consumer.id}`
@@ -708,10 +702,8 @@ export function useMediasoupClient() {
         if (onStream) {
           onStream(stream, res.kind, res.peerId);
         } else {
-          // Don't add if it's our own stream - double check with both peerId and userId
           if (res.peerId !== userId) {
             setRemoteStreams((prev) => {
-              // Check if we already have this stream
               const existingIndex = prev.findIndex(
                 (s) => s.producerId === producerId
               );
@@ -719,7 +711,7 @@ export function useMediasoupClient() {
                 stream,
                 producerId,
                 peerId: res.peerId,
-                userId: res.peerId, // For backward compatibility
+                userId: res.peerId,
                 kind: res.kind,
                 source: res.source || "webcam",
                 displayName: res.displayName || "Unknown",
@@ -727,7 +719,6 @@ export function useMediasoupClient() {
               };
 
               if (existingIndex >= 0) {
-                // Replace existing stream
                 const updated = [...prev];
                 updated[existingIndex] = newStream;
                 console.log(
@@ -736,7 +727,6 @@ export function useMediasoupClient() {
                 );
                 return updated;
               } else {
-                // Add new stream
                 console.log(`[mediasoup] Adding new remote stream:`, newStream);
                 return [...prev, newStream];
               }
@@ -752,20 +742,17 @@ export function useMediasoupClient() {
           `[mediasoup] Error consuming producer ${producerId}:`,
           error
         );
-        // Don't cleanup immediately on error - let the user see what's wrong
       }
     },
     [sendRequest, cleanupConsumer, connected]
   );
 
-  // Handle new producers from existing logic
   useEffect(() => {
     if (!deviceRef.current?.loaded) return;
 
     const handleNewProducer = (data: any) => {
       console.log("[mediasoup] New producer event received:", data);
 
-      // Don't consume our own producers
       if (data.peerId === userId) {
         console.log("[mediasoup] Ignoring own producer:", data.id);
         return;
@@ -795,12 +782,10 @@ export function useMediasoupClient() {
     };
   }, [addEventHandler, removeEventHandler, consume, userId]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       console.log("[mediasoup] Component unmounting, cleaning up...");
       cleanupAllConsumers();
-      // Don't stop local stream tracks on unmount - let the component handle it
     };
   }, [cleanupAllConsumers]);
 

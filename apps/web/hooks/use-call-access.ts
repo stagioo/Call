@@ -111,13 +111,25 @@ export const useCallAccess = () => {
 
   const handleRequestAccess = useCallback(async () => {
     if (!state.callId || !mediasoup.socket) return;
-    // For anonymous rooms, skip request logic
     if (!user.id || user.id === "guest") {
       toast.info("Joining as guest. No approval required.");
       return;
     }
 
-    console.log("requesting access");
+    let username;
+
+    if (typeof window !== "undefined") {
+      const storedName = localStorage.getItem("call_display_name");
+      if (storedName && storedName.trim()) {
+        username = storedName.trim();
+      }
+    }
+
+    if (user) {
+      username = user.name;
+    }
+
+    const userName = username || mediasoup.displayName;
 
     mediasoup.socket.send(
       JSON.stringify({
@@ -125,7 +137,7 @@ export const useCallAccess = () => {
         reqId: state.callId,
         roomId: state.callId,
         peerId: mediasoup.userId,
-        displayName: mediasoup.displayName,
+        displayName: userName,
         requesterId: user.id,
       })
     );
