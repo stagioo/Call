@@ -309,7 +309,7 @@ export const Icons = {
       <path
         d="M9 18C8.33663 18 7.79886 17.4622 7.79886 16.7989V1.20114C7.79886 0.537769 8.33663 0 9 0V0C9.66337 0 10.2011 0.537768 10.2011 1.20114V16.7989C10.2011 17.4622 9.66337 18 9 18V18ZM1.23237 10.2324C0.55175 10.2324 0 9.68062 0 9V9C0 8.31938 0.551749 7.76764 1.23237 7.76764H16.7676C17.4482 7.76764 18 8.31938 18 9V9C18 9.68062 17.4483 10.2324 16.7676 10.2324H8.96382H1.23237Z"
         className={cn(
-          "fill-primary-icon fill-white transition-all duration-300",
+          "fill-primary-icon fill-black transition-all duration-300",
           props.fill
         )}
       />
@@ -486,80 +486,84 @@ export const Icons = {
 
   gotMessageIcon: (props: IconProps) => (
     <svg
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className="size-5"
-    aria-label="Unread messages"
-    {...props}
-  >
-    <path
-      d="M12.0004 2.40002C6.70719 2.40002 2.40039 6.70683 2.40039 12C2.40039 13.728 2.86599 15.3468 3.66879 16.7496L2.44719 20.4156C2.33919 20.7396 2.42319 21.096 2.66439 21.3372C2.83599 21.5088 3.06519 21.6012 3.30039 21.6012C3.39639 21.6012 3.49239 21.5856 3.58479 21.5544L7.25079 20.3328C8.65359 21.1356 10.2724 21.6012 12.0004 21.6012C17.2936 21.6012 21.6004 17.2944 21.6004 12.0012C21.6004 6.70803 17.2936 2.40002 12.0004 2.40002Z"
-      fill="#929292"
-    />
-    <g filter="url(#filter0_di_14_47)">
-      <circle cx="17.5" cy="3.5" r="2.5" fill="#FF3E3E" />
-    </g>
-    <defs>
-      <filter
-        id="filter0_di_14_47"
-        x="14"
-        y="0"
-        width="7"
-        height="7"
-        filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
-      >
-        <feFlood flood-opacity="0" result="BackgroundImageFix" />
-        <feColorMatrix
-          in="SourceAlpha"
-          type="matrix"
-          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-          result="hardAlpha"
-        />
-        <feOffset />
-        <feGaussianBlur stdDeviation="0.5" />
-        <feComposite in2="hardAlpha" operator="out" />
-        <feColorMatrix
-          type="matrix"
-          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"
-        />
-        <feBlend
-          mode="normal"
-          in2="BackgroundImageFix"
-          result="effect1_dropShadow_14_47"
-        />
-        <feBlend
-          mode="normal"
-          in="SourceGraphic"
-          in2="effect1_dropShadow_14_47"
-          result="shape"
-        />
-        <feColorMatrix
-          in="SourceAlpha"
-          type="matrix"
-          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-          result="hardAlpha"
-        />
-        <feMorphology
-          radius="1"
-          operator="erode"
-          in="SourceAlpha"
-          result="effect2_innerShadow_14_47"
-        />
-        <feOffset />
-        <feGaussianBlur stdDeviation="0.15" />
-        <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
-        <feColorMatrix
-          type="matrix"
-          values="0 0 0 0 1 0 0 0 0 0.00673089 0 0 0 0 0.00673089 0 0 0 0.25 0"
-        />
-        <feBlend mode="normal" in2="shape" result="effect2_innerShadow_14_47" />
-      </filter>
-    </defs>
-  </svg>
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="size-5"
+      aria-label="Unread messages"
+      {...props}
+    >
+      <path
+        d="M12.0004 2.40002C6.70719 2.40002 2.40039 6.70683 2.40039 12C2.40039 13.728 2.86599 15.3468 3.66879 16.7496L2.44719 20.4156C2.33919 20.7396 2.42319 21.096 2.66439 21.3372C2.83599 21.5088 3.06519 21.6012 3.30039 21.6012C3.39639 21.6012 3.49239 21.5856 3.58479 21.5544L7.25079 20.3328C8.65359 21.1356 10.2724 21.6012 12.0004 21.6012C17.2936 21.6012 21.6004 17.2944 21.6004 12.0012C21.6004 6.70803 17.2936 2.40002 12.0004 2.40002Z"
+        fill="#929292"
+      />
+      <g filter="url(#filter0_di_14_47)">
+        <circle cx="17.5" cy="3.5" r="2.5" fill="#FF3E3E" />
+      </g>
+      <defs>
+        <filter
+          id="filter0_di_14_47"
+          x="14"
+          y="0"
+          width="7"
+          height="7"
+          filterUnits="userSpaceOnUse"
+          color-interpolation-filters="sRGB"
+        >
+          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feColorMatrix
+            in="SourceAlpha"
+            type="matrix"
+            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+            result="hardAlpha"
+          />
+          <feOffset />
+          <feGaussianBlur stdDeviation="0.5" />
+          <feComposite in2="hardAlpha" operator="out" />
+          <feColorMatrix
+            type="matrix"
+            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"
+          />
+          <feBlend
+            mode="normal"
+            in2="BackgroundImageFix"
+            result="effect1_dropShadow_14_47"
+          />
+          <feBlend
+            mode="normal"
+            in="SourceGraphic"
+            in2="effect1_dropShadow_14_47"
+            result="shape"
+          />
+          <feColorMatrix
+            in="SourceAlpha"
+            type="matrix"
+            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+            result="hardAlpha"
+          />
+          <feMorphology
+            radius="1"
+            operator="erode"
+            in="SourceAlpha"
+            result="effect2_innerShadow_14_47"
+          />
+          <feOffset />
+          <feGaussianBlur stdDeviation="0.15" />
+          <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
+          <feColorMatrix
+            type="matrix"
+            values="0 0 0 0 1 0 0 0 0 0.00673089 0 0 0 0 0.00673089 0 0 0 0.25 0"
+          />
+          <feBlend
+            mode="normal"
+            in2="shape"
+            result="effect2_innerShadow_14_47"
+          />
+        </filter>
+      </defs>
+    </svg>
   ),
 
   emojiIcon: (props: IconProps) => (
@@ -803,7 +807,7 @@ export const Icons = {
       />
     </svg>
   ),
-  
+
   //friends-Icon-for-now-lol
   friends: (props: IconProps) => (
     <svg

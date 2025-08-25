@@ -2,10 +2,7 @@ import * as mediasoup from "mediasoup";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import os from "os";
-import { config } from "dotenv";
-import { resolve } from "path";
-
-config({ path: resolve(process.cwd(), "../../.env") });
+import { env } from "@/config/env";
 
 // --- Types -----
 type Consumer = mediasoup.types.Consumer;
@@ -50,6 +47,7 @@ export type MyConsumer = {
 export type MyPeer = {
   id: string;
   displayName: string;
+  userImage?: string;
   device: any;
   ws: WebSocket;
   connectionState: "new" | "connecting" | "connected" | "disconnected";
@@ -116,7 +114,7 @@ const mediasoupConfig = {
   },
   webRtcTransport: {
     listenIps: [
-      { ip: "0.0.0.0", announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP },
+  { ip: "0.0.0.0", announcedIp: env.MEDIASOUP_ANNOUNCED_IP },
     ],
     enableUdp: true,
     enableTcp: true,
@@ -217,7 +215,8 @@ async function createPeer(
   roomId: string,
   peerId: string,
   displayName: string,
-  ws: WebSocket
+  ws: WebSocket,
+  userImage?: string
 ): Promise<MyPeer> {
   const room = await createRoom(roomId);
 
@@ -226,6 +225,7 @@ async function createPeer(
   const peer: MyPeer = {
     id: peerId,
     displayName,
+    userImage,
     device: null,
     ws,
     connectionState: "new",
@@ -356,10 +356,10 @@ wss.on("connection", (ws: WebSocket) => {
         }
 
         case "joinRoom": {
-          const { roomId, peerId, displayName = "Anonymous" } = data;
+          const { roomId, peerId, displayName = "Anonymous", userImage } = data;
 
           const room = await createRoom(roomId);
-          const peer = await createPeer(roomId, peerId, displayName, ws);
+          const peer = await createPeer(roomId, peerId, displayName, ws, userImage);
 
           peer.connectionState = "connecting";
 
@@ -371,6 +371,7 @@ wss.on("connection", (ws: WebSocket) => {
               kind: mediasoup.types.MediaKind;
               source: ProducerSource;
               displayName: string;
+              userImage?: string;
               muted: boolean;
             }>
           >((acc, otherPeer) => {
@@ -382,6 +383,7 @@ wss.on("connection", (ws: WebSocket) => {
                   kind: myProducer.producer.kind,
                   source: myProducer.source,
                   displayName: otherPeer.displayName,
+                  userImage: otherPeer.userImage,
                   muted: myProducer.muted || false,
                 });
               });
@@ -741,6 +743,7 @@ wss.on("connection", (ws: WebSocket) => {
             kind: producer.kind,
             source: myProducer.source,
             displayName: peer.displayName,
+            userImage: peer.userImage,
             muted: myProducer.muted || false,
           };
 
@@ -838,7 +841,7 @@ wss.on("connection", (ws: WebSocket) => {
             const consumer = await peer.recvTransport.consume({
               producerId: myProducer.producer.id,
               rtpCapabilities: data.rtpCapabilities,
-              paused: false,
+              paused: false, // Always create unpaused, let client handle muted state
             });
 
             const myConsumer: MyConsumer = {
@@ -878,6 +881,7 @@ wss.on("connection", (ws: WebSocket) => {
               rtpParameters: consumer.rtpParameters,
               peerId: targetPeer.id,
               displayName: targetPeer.displayName,
+              userImage: targetPeer.userImage,
               source: myProducer.source,
               muted: myProducer.muted || false,
             };
@@ -970,6 +974,8 @@ wss.on("connection", (ws: WebSocket) => {
                     peerId: peer.id,
                     producerId,
                     muted,
+                    displayName: peer.displayName,
+                    userImage: peer.userImage,
                   })
                 );
                 notifiedCount++;

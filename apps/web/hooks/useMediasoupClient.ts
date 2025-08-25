@@ -42,6 +42,7 @@ interface RemoteStream {
   kind: "audio" | "video";
   source: "mic" | "webcam" | "screen";
   displayName: string;
+  userImage?: string;
   muted: boolean;
 }
 
@@ -266,6 +267,7 @@ export function useMediasoupClient() {
         roomId,
         peerId: userId,
         displayName,
+        userImage: user?.image,
       });
 
       setCurrentRoomId(roomId);
@@ -351,7 +353,12 @@ export function useMediasoupClient() {
       setRemoteStreams((prev) =>
         prev.map((stream) =>
           stream.producerId === data.producerId
-            ? { ...stream, muted: data.muted }
+            ? {
+                ...stream,
+                muted: data.muted,
+                displayName: data.displayName || stream.displayName,
+                userImage: data.userImage || stream.userImage,
+              }
             : stream
         )
       );
@@ -510,6 +517,15 @@ export function useMediasoupClient() {
 
   const produce = useCallback(
     async (stream: MediaStream, options?: ProduceOptions) => {
+      console.log("[mediasoup] Produce called with stream:", {
+        tracks: stream?.getTracks().map((t) => ({
+          kind: t.kind,
+          enabled: t.enabled,
+          readyState: t.readyState,
+        })),
+        options,
+      });
+
       if (!sendTransportRef.current) {
         console.error("[mediasoup] No send transport available");
         return [];
@@ -525,16 +541,20 @@ export function useMediasoupClient() {
         return [];
       }
 
-      const activeTracks = stream
-        .getTracks()
-        .filter((track) => track.readyState === "live" && !track.muted);
+      // Check if tracks exist (even if disabled)
+      const tracks = stream.getTracks();
+      const activeTracks = tracks.filter(
+        (track) => track.readyState === "live"
+      );
 
-      if (activeTracks.length === 0) {
-        console.error("[mediasoup] No active tracks in stream");
+      if (tracks.length === 0) {
+        console.error("[mediasoup] No tracks in stream");
         return [];
       }
 
-      console.log(`[mediasoup] Producing ${activeTracks.length} tracks`);
+      console.log(
+        `[mediasoup] Producing ${tracks.length} tracks (${activeTracks.length} active)`
+      );
 
       const webcamEncodings: RtpEncodingParameters[] = [
         { rid: "r0", maxBitrate: 100000, scalabilityMode: "S1T3" },
@@ -554,7 +574,7 @@ export function useMediasoupClient() {
       if (audioTrack) {
         try {
           console.log(
-            `[mediasoup] Producing audio track from source : ${source || "mic"}`
+            `[mediasoup] Producing audio track from source: ${source || "mic"} (enabled: ${audioTrack.enabled})`
           );
           const audioProducer = await sendTransportRef.current.produce({
             track: audioTrack,
@@ -566,7 +586,7 @@ export function useMediasoupClient() {
           });
           producers.push(audioProducer);
           console.log(
-            `[mediasoup] Audio produced created: ${audioProducer.id}`
+            `[mediasoup] Audio producer created: ${audioProducer.id}`
           );
         } catch (e) {
           console.error(`Error producing audio track: `, e);
@@ -578,7 +598,7 @@ export function useMediasoupClient() {
         try {
           const videoSource = source === "screen" ? "screen" : "webcam";
           console.log(
-            `[mediasoup] Producing video track from source: ${videoSource}`
+            `[mediasoup] Producing video track from source: ${videoSource} (enabled: ${videoTrack.enabled})`
           );
 
           const videoProducer = await sendTransportRef.current.produce({
@@ -603,6 +623,22 @@ export function useMediasoupClient() {
         }
       }
 
+      // Mute producers if tracks are disabled
+      for (const producer of producers) {
+        const track = stream.getTracks().find((t) => t.kind === producer.kind);
+        if (track && !track.enabled) {
+          console.log(
+            `[mediasoup] Muting producer ${producer.id} because track is disabled`
+          );
+          try {
+            await setProducerMuted(producer.id, true);
+          } catch (e) {
+            console.error(`Error muting producer ${producer.id}:`, e);
+          }
+        }
+      }
+
+      // Always update localStream for camera/webcam streams to ensure UI shows the stream
       if (
         !options?.source ||
         options.source === "camera" ||
@@ -617,7 +653,7 @@ export function useMediasoupClient() {
       );
       return producers;
     },
-    [userId, connected]
+    [userId, connected, setProducerMuted]
   );
 
   const consume = useCallback(
@@ -664,6 +700,10 @@ export function useMediasoupClient() {
         }
 
         console.log(`[mediasoup] Consume response for ${producerId}:`, res);
+        console.log(
+          `[mediasoup] User image from consume response:`,
+          res.userImage
+        );
 
         const consumer = await recvTransportRef.current.consume({
           id: res.id,
@@ -680,6 +720,12 @@ export function useMediasoupClient() {
         consumersRef.current.set(producerId, consumer);
 
         const stream = new MediaStream([consumer.track]);
+        console.log(`[mediasoup] Created stream for producer ${producerId}:`, {
+          track: consumer.track,
+          trackEnabled: consumer.track.enabled,
+          trackReadyState: consumer.track.readyState,
+          muted: res.muted,
+        });
 
         consumer.on("@close", () => {
           console.log(
@@ -715,6 +761,7 @@ export function useMediasoupClient() {
                 kind: res.kind,
                 source: res.source || "webcam",
                 displayName: res.displayName || "Unknown",
+                userImage: res.userImage,
                 muted: res.muted ?? initialMutedState ?? false,
               };
 
@@ -728,6 +775,7 @@ export function useMediasoupClient() {
                 return updated;
               } else {
                 console.log(`[mediasoup] Adding new remote stream:`, newStream);
+                console.log(`[mediasoup] Stream muted state:`, newStream.muted);
                 return [...prev, newStream];
               }
             });

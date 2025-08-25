@@ -12,7 +12,8 @@ import {
 } from "@call/db/schema";
 import { eq, inArray, desc, and, sql } from "drizzle-orm";
 import type { ReqVariables } from "../../index.js";
-import { sendMail } from "@call/auth/utils/send-mail";
+import { sendMail } from "../../lib/email.js";
+import { env } from "@/config/env";
 
 const callsRoutes = new Hono<{ Variables: ReqVariables }>();
 
@@ -134,20 +135,18 @@ callsRoutes.post("/create", async (c) => {
         });
         console.log(`✅ [CALLS DEBUG] Notification created for ${email}`);
 
-        // Try sending email, but do not fail the whole request if it errors
-        try {
-          await sendMail({
-            to: email,
-            subject: "Invitation to join Call",
-            text: `Hello,\n\n${user.name || user.email} is inviting you to a call: ${name}\n\nJoin the call: ${process.env.FRONTEND_URL}/calls/${callId}`,
-          });
-          console.log(`✅ [CALLS DEBUG] Email sent to ${email}`);
-        } catch (emailError) {
+        const mailResult = await sendMail({
+          to: email,
+          subject: "Invitation to join Call",
+          text: `Hello,\n\n${user.name || user.email} is inviting you to a call: ${name}\n\nJoin the call: ${env.FRONTEND_URL}/calls/${callId}`,
+        });
+        if (!mailResult.success) {
           console.error(
             `⚠️ [CALLS DEBUG] Failed to send email to ${email}:`,
-            emailError
+            mailResult.error
           );
-          // Continue without throwing so the call creation succeeds
+        } else {
+          console.log(`✅ [CALLS DEBUG] Email sent to ${email}`);
         }
       }
     }
@@ -732,6 +731,192 @@ callsRoutes.delete("/participated", async (c) => {
   } catch (error) {
     console.error("Error deleting call history:", error);
     return c.json({ error: "Failed to delete call history" }, 500);
+  }
+});
+
+// GET /api/calls/:id/participants
+callsRoutes.get("/:id/participants", async (c) => {
+  try {
+    const user = c.get("user");
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const callId = c.req.param("id");
+    if (!callId) {
+      return c.json({ error: "Call ID is required" }, 400);
+    }
+
+    // Check if the user is a participant in the call
+    const participation = await db
+      .select()
+      .from(callParticipants)
+      .where(
+        and(
+          eq(callParticipants.callId, callId),
+          eq(callParticipants.userId, user.id as string)
+        )
+      )
+      .limit(1);
+
+    if (!participation || participation.length === 0) {
+      return c.json({ error: "Call not found or user not a participant" }, 404);
+    }
+
+    // Get all participants for this call with their profile information
+    const participants = await db
+      .select({
+        id: userTable.id,
+        name: userTable.name,
+        email: userTable.email,
+        image: userTable.image,
+        joinedAt: callParticipants.joinedAt,
+        leftAt: callParticipants.leftAt,
+      })
+      .from(callParticipants)
+      .innerJoin(userTable, eq(callParticipants.userId, userTable.id))
+      .where(eq(callParticipants.callId, callId));
+
+    // Get call creator info
+    const creatorResult = await db
+      .select({
+        creatorId: calls.creatorId,
+        creatorName: userTable.name,
+        creatorEmail: userTable.email,
+        creatorImage: userTable.image,
+      })
+      .from(calls)
+      .innerJoin(userTable, eq(calls.creatorId, userTable.id))
+      .where(eq(calls.id, callId))
+      .limit(1);
+
+    if (!creatorResult || creatorResult.length === 0) {
+      return c.json({ error: "Call not found" }, 404);
+    }
+
+    const creator = creatorResult[0];
+    if (!creator) {
+      return c.json({ error: "Call creator not found" }, 404);
+    }
+
+    // Add creator to participants list if not already present
+    const allParticipants = participants.map((participant) => ({
+      ...participant,
+      isCreator: participant.id === creator.creatorId,
+    }));
+
+    // If creator is not in participants list, add them
+    if (!allParticipants.find((p) => p.id === creator.creatorId)) {
+      allParticipants.push({
+        id: creator.creatorId,
+        name: creator.creatorName,
+        email: creator.creatorEmail,
+        image: creator.creatorImage,
+        joinedAt: new Date(),
+        leftAt: null,
+        isCreator: true,
+      });
+    }
+
+    return c.json({ participants: allParticipants });
+  } catch (error) {
+    console.error("Error getting call participants:", error);
+    return c.json({ error: "Failed to get participants info" }, 500);
+  }
+});
+
+// POST /api/calls/:id/invite
+callsRoutes.post("/:id/invite", async (c) => {
+  try {
+    const user = c.get("user");
+    if (!user || !user.id) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const callId = c.req.param("id");
+    if (!callId) {
+      return c.json({ error: "Call ID is required" }, 400);
+    }
+
+    const body = await c.req.json();
+    const { email } = body;
+
+    if (!email) {
+      return c.json({ error: "Email is required" }, 400);
+    }
+
+    // Check if the user is the creator of the call
+    const call = await db
+      .select()
+      .from(calls)
+      .where(eq(calls.id, callId))
+      .limit(1);
+
+    if (!call || call.length === 0) {
+      return c.json({ error: "Call not found" }, 404);
+    }
+
+    const callData = call[0];
+    if (!callData) {
+      return c.json({ error: "Call not found" }, 404);
+    }
+
+    if (callData.creatorId !== user.id) {
+      return c.json({ error: "Only the call creator can invite users" }, 403);
+    }
+
+    // Find the user to invite
+    const userToInvite = await db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.email, email))
+      .limit(1);
+
+    if (!userToInvite || userToInvite.length === 0) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    const invitee = userToInvite[0];
+    if (!invitee) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    // Check if user is already a participant
+    const existingParticipation = await db
+      .select()
+      .from(callParticipants)
+      .where(
+        and(
+          eq(callParticipants.callId, callId),
+          eq(callParticipants.userId, invitee.id)
+        )
+      )
+      .limit(1);
+
+    if (existingParticipation.length > 0) {
+      return c.json({ error: "User is already a participant" }, 400);
+    }
+
+    // Create invitation
+    await db.insert(callInvitations).values({
+      callId,
+      inviteeId: invitee.id,
+      inviteeEmail: email,
+      status: "pending",
+    });
+
+    // Send notification to the invited user
+    await db.insert(notifications).values({
+      userId: invitee.id,
+      type: "call",
+      message: `${user.name || user.email} invited you to join a call`,
+      callId,
+    });
+
+    return c.json({ success: true, message: "Invitation sent successfully" });
+  } catch (error) {
+    console.error("Error sending call invitation:", error);
+    return c.json({ error: "Failed to send invitation" }, 500);
   }
 });
 

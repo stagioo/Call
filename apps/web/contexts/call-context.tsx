@@ -43,6 +43,7 @@ interface CallState {
   }>;
   producers: any[];
   myProducerIds: string[];
+  myProducers: Array<{ id: string; kind: "audio" | "video"; source: string }>;
   recvTransportReady: boolean;
   unreadChatCount: number;
 }
@@ -68,6 +69,7 @@ type CallAction =
   | { type: "SET_REMOTE_AUDIOS"; payload: CallState["remoteAudios"] }
   | { type: "SET_PRODUCERS"; payload: any[] }
   | { type: "SET_MY_PRODUCER_IDS"; payload: string[] }
+  | { type: "SET_MY_PRODUCERS"; payload: Array<{ id: string; kind: "audio" | "video"; source: string }> }
   | { type: "SET_RECV_TRANSPORT_READY"; payload: boolean }
   | { type: "INCREMENT_UNREAD_CHAT" }
   | { type: "RESET_UNREAD_CHAT" }
@@ -94,6 +96,7 @@ const initialState: CallState = {
   remoteAudios: [],
   producers: [],
   myProducerIds: [],
+  myProducers: [],
   recvTransportReady: false,
   unreadChatCount: 0,
 };
@@ -140,6 +143,8 @@ function callReducer(state: CallState, action: CallAction): CallState {
       return { ...state, producers: action.payload };
     case "SET_MY_PRODUCER_IDS":
       return { ...state, myProducerIds: action.payload };
+    case "SET_MY_PRODUCERS":
+      return { ...state, myProducers: action.payload };
     case "SET_RECV_TRANSPORT_READY":
       return { ...state, recvTransportReady: action.payload };
     case "INCREMENT_UNREAD_CHAT":

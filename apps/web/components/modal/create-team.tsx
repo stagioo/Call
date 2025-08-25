@@ -24,7 +24,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { ContactSelector } from "./contact-selector";
+import { ContactsSelector } from "./contacts-selector";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }).trim(),
@@ -137,7 +137,7 @@ export const CreateTeam = () => {
               )}
             />
 
-            <ContactSelector
+            <ContactsSelector
               selectedContacts={selectedContacts}
               onContactsChange={setSelectedContacts}
               disabled={isPending}
@@ -145,7 +145,7 @@ export const CreateTeam = () => {
 
             <LoadingButton
               type="submit"
-              className="bg-primary-blue hover:bg-primary-blue/80 h-10 w-full rounded-lg text-sm font-medium text-white"
+              className="h-10 w-full rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-50"
               loading={isPending}
               disabled={isPending || !form.formState.isValid}
             >

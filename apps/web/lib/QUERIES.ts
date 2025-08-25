@@ -16,7 +16,7 @@ export const CONTACTS_QUERY = {
     if (res.status === 200 || res.status === 201) {
       return res.data;
     }
-    throw new Error("Failed to create contact");
+    throw new Error("Failed to add contact");
   },
 };
 
@@ -34,6 +34,20 @@ export const CALLS_QUERY = {
       return res.data.calls as Call[];
     }
     throw new Error("Failed to fetch calls");
+  },
+  getCallParticipants: async (callId: string) => {
+    const res = await apiClient.get(`/calls/${callId}/participants`);
+    if (res.status === 200) {
+      return res.data.participants;
+    }
+    throw new Error("Failed to fetch call participants");
+  },
+  inviteToCall: async (callId: string, email: string) => {
+    const res = await apiClient.post(`/calls/${callId}/invite`, { email });
+    if (res.status === 200) {
+      return res.data;
+    }
+    throw new Error("Failed to invite user to call");
   },
   hideCall: async (callId: string) => {
     const res = await apiClient.post(`/calls/${callId}/hide`);

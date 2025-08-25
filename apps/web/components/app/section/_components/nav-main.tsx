@@ -41,13 +41,13 @@ export function NavMain({
             tooltip="Start Call"
             isActive={true}
             onClick={() => onOpen("start-call")}
-            className="flex items-center text-sm !font-semibold !bg-primary-blue rounded-lg justify-center gap-3"
+            className="flex items-center justify-center gap-3 rounded-lg border border-gray-200 !bg-white text-sm !font-semibold hover:bg-gray-50"
           >
             <Icons.plus style={{ width: 14, height: 14 }} />
-            {isExpanded && <span>Start Call</span>}
+            {isExpanded && <span className="text-black">Start Call</span>}
           </SidebarMenuButton>
         </SidebarMenuItem>
-      
+
         {items.map((item) => (
           <Collapsible
             key={item.title}

@@ -4,6 +4,7 @@ import { useCallContext } from "@/contexts/call-context";
 import { useCallAccess } from "@/hooks/use-call-access";
 import { useCallDevices } from "@/hooks/use-call-devices";
 import { useCallJoin } from "@/hooks/use-call-join";
+import { useSession } from "@/components/providers/session";
 import { Button } from "@call/ui/components/button";
 import {
   DropdownMenu,
@@ -19,6 +20,7 @@ import { useEffect, useRef } from "react";
 
 export const CallPreview = () => {
   const { state, dispatch, mediasoup } = useCallContext();
+  const session = useSession();
   const {
     videoDevices,
     audioDevices,
@@ -130,13 +132,29 @@ export const CallPreview = () => {
     <div className="flex size-full items-center justify-center">
       <div className="flex w-full max-w-3xl flex-col gap-4">
         <div className="bg-sidebar aspect-video w-full overflow-hidden rounded-xl border">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="size-full object-cover"
-          />
+          {state.isLocalCameraOn && state.previewStream ? (
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="size-full object-cover"
+            />
+          ) : (
+            <div className="flex size-full items-center justify-center bg-black">
+              {session?.user?.image ? (
+                <img
+                  src={session.user.image}
+                  alt="Your profile picture"
+                  className="h-32 w-32 rounded-full border-4 border-white/20 object-cover"
+                />
+              ) : (
+                <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white/20 bg-gray-600">
+                  <Icons.users className="h-16 w-16 text-white/70" />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="item-center flex justify-center gap-2.5">

@@ -66,7 +66,7 @@ export default function CallPage() {
         </div>
         <Button
           onClick={() => onOpen("start-call")}
-          className="bg-primary-blue hover:bg-primary-blue/80 rounded-md px-4 py-2 text-sm font-medium text-white"
+          className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50"
         >
           <Icons.plus style={{ width: 14, height: 14 }} />
           Start Call

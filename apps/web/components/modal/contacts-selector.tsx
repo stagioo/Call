@@ -8,19 +8,19 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@call/ui/lib/utils";
 
-interface ContactSelectorProps {
+interface ContactsSelectorProps {
   selectedContacts: string[];
   onContactsChange: (emails: string[]) => void;
   disabled?: boolean;
   disabledEmails?: string[];
 }
 
-export function ContactSelector({
+export function ContactsSelector({
   selectedContacts,
   onContactsChange,
   disabled = false,
   disabledEmails = [],
-}: ContactSelectorProps) {
+}: ContactsSelectorProps) {
   const { contacts, isLoading, error } = useContacts();
   const [searchTerm, setSearchTerm] = useState("");
 

@@ -11,6 +11,8 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
     headers: await headers(),
   });
 
+  console.log("session", session);
+
   if (!session) redirect("/login");
 
   return (
