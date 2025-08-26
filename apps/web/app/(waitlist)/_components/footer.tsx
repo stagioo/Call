@@ -22,7 +22,7 @@ const Footer = () => {
               <span className="font-lora text-xl">Call</span>
             </Link>
             <p className="text-muted-foreground text-sm">
-              A short description about your product or company goes here. Replace this text later.
+              open source video conferencing platform, its gonna be ai native 😉
             </p>
             <div className="flex items-center gap-2">
               <Link
