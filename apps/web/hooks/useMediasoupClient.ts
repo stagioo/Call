@@ -143,43 +143,31 @@ export function useMediasoupClient() {
     return "";
   });
 
-  const [displayName, setDisplayName] = useState(() => {
-    if (user?.name) {
-      return user.name;
-    }
-
-    if (typeof window !== "undefined") {
-      const storedName = localStorage.getItem("call_display_name");
-      if (storedName && storedName.trim()) {
-        return storedName.trim();
-      }
-    }
-
-    if (typeof window !== "undefined") {
-      let name = localStorage.getItem("display-name");
-      if (!name) {
-        name = `User-${Math.random().toString(36).slice(2, 8)}`;
-        localStorage.setItem("display-name", name);
-      }
-      return name;
-    }
-
-    return "Anonymous";
-  });
+  const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
-    if (user?.name) {
-      setDisplayName(user.name);
-      return;
-    }
+    const isGuest = user?.id === "guest" || user?.name === "Guest";
 
-    if (typeof window !== "undefined") {
-      const storedName = localStorage.getItem("call_display_name");
-      if (storedName && storedName.trim() && storedName !== displayName) {
-        setDisplayName(storedName.trim());
+    if (isGuest) {
+      if (typeof window !== "undefined") {
+        const storedName = localStorage.getItem("call_display_name");
+        if (storedName && storedName.trim()) {
+          setDisplayName(storedName.trim());
+          return;
+        }
+      }
+
+      if (typeof window !== "undefined") {
+        let guestName = localStorage.getItem("display-name");
+        if (!guestName) {
+          guestName = `User-${Math.random().toString(36).slice(2, 8)}`;
+          localStorage.setItem("display-name", guestName);
+        }
+        setDisplayName(guestName);
+        return;
       }
     }
-  }, [user?.name, displayName]);
+  }, []);
 
   const setProducerMuted = useCallback(
     (producerId: string, muted: boolean) => {
