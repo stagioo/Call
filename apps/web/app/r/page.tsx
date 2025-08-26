@@ -1,10 +1,10 @@
 "use client";
 
+import { useUnauthenticatedMeeting } from "@/hooks/use-unauthenticated-meeting";
 import { LoadingButton } from "@call/ui/components/loading-button";
 import { cn } from "@call/ui/lib/utils";
 import { motion, MotionConfig, type Transition } from "motion/react";
-import { useState, useEffect } from "react";
-import { useUnauthenticatedMeeting } from "@/hooks/use-unauthenticated-meeting";
+import { useEffect, useRef, useState } from "react";
 
 const tabs = ["Join", "Start"] as const;
 
@@ -28,6 +28,7 @@ export default function MeetingForm({
   searchParams: { meetingId: string };
 }) {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Join");
+  const hasSetMeetingId = useRef(false);
   const {
     formData,
     errors,
@@ -39,9 +40,16 @@ export default function MeetingForm({
   } = useUnauthenticatedMeeting();
 
   useEffect(() => {
-    setActiveTab("Join");
-    updateFormData("meetingId", searchParams.meetingId);
-  }, [searchParams.meetingId, updateFormData]);
+    if (!hasSetMeetingId.current) {
+      setActiveTab("Join");
+      updateFormData("meetingId", searchParams.meetingId);
+      hasSetMeetingId.current = true;
+    }
+  }, [searchParams.meetingId]);
+
+  useEffect(() => {
+    console.log("Form data changed:", formData);
+  }, [formData]);
 
   const handleTabChange = (tab: (typeof tabs)[number]) => {
     setActiveTab(tab);

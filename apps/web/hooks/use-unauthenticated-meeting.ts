@@ -58,7 +58,7 @@ export const useUnauthenticatedMeeting =
     useEffect(() => {
       if (typeof window !== "undefined") {
         const storedName = localStorage.getItem(DISPLAY_NAME_KEY);
-        if (storedName && storedName !== formData.name) {
+        if (storedName) {
           setFormData((prev) => ({ ...prev, name: storedName }));
         }
       }
@@ -76,7 +76,7 @@ export const useUnauthenticatedMeeting =
           setErrors((prev) => ({ ...prev, [field]: "" }));
         }
       },
-      [errors]
+      []
     );
 
     const clearErrors = useCallback(() => {
@@ -131,6 +131,7 @@ export const useUnauthenticatedMeeting =
       },
       onSuccess: (data: { call: Call }) => {
         toast.success("Joined call successfully!");
+        router.refresh();
         router.push(`/r/${data.call.id}`);
         resetForm();
       },
