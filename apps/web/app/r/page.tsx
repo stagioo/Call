@@ -3,7 +3,7 @@
 import { LoadingButton } from "@call/ui/components/loading-button";
 import { cn } from "@call/ui/lib/utils";
 import { motion, MotionConfig, type Transition } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUnauthenticatedMeeting } from "@/hooks/use-unauthenticated-meeting";
 
 const tabs = ["Join", "Start"] as const;
@@ -22,7 +22,11 @@ const formVariants = {
   exit: { opacity: 0, y: 20 },
 };
 
-export default function MeetingForm() {
+export default function MeetingForm({
+  searchParams,
+}: {
+  searchParams: { meetingId: string };
+}) {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Join");
   const {
     formData,
@@ -33,6 +37,11 @@ export default function MeetingForm() {
     startMeeting,
     clearErrors,
   } = useUnauthenticatedMeeting();
+
+  useEffect(() => {
+    setActiveTab("Join");
+    updateFormData("meetingId", searchParams.meetingId);
+  }, [searchParams.meetingId, updateFormData]);
 
   const handleTabChange = (tab: (typeof tabs)[number]) => {
     setActiveTab(tab);
