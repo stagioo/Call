@@ -167,6 +167,13 @@ export function useMediasoupClient() {
         return;
       }
     }
+
+    if (user?.name) {
+      setDisplayName(user.name);
+      return;
+    }
+
+    setDisplayName("Anonymous");
   }, []);
 
   const setProducerMuted = useCallback(
