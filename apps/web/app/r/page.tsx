@@ -1,10 +1,10 @@
 "use client";
 
-import { useUnauthenticatedMeeting } from "@/hooks/use-unauthenticated-meeting";
 import { LoadingButton } from "@call/ui/components/loading-button";
 import { cn } from "@call/ui/lib/utils";
 import { motion, MotionConfig, type Transition } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef, use } from "react";
+import { useUnauthenticatedMeeting } from "@/hooks/use-unauthenticated-meeting";
 
 const tabs = ["Join", "Start"] as const;
 
@@ -22,11 +22,11 @@ const formVariants = {
   exit: { opacity: 0, y: 20 },
 };
 
-export default function MeetingForm({
-  searchParams,
-}: {
-  searchParams: { meetingId: string };
-}) {
+interface MeetingFormProps {
+  searchParams: Promise<{ meetingId?: string }>;
+}
+
+function MeetingFormClient({ searchParams }: MeetingFormProps) {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Join");
   const hasSetMeetingId = useRef(false);
   const {
@@ -39,14 +39,18 @@ export default function MeetingForm({
     clearErrors,
   } = useUnauthenticatedMeeting();
 
+  // Use React's 'use' hook to unwrap the Promise-based searchParams
+  const resolvedSearchParams = use(searchParams);
+
   useEffect(() => {
     if (!hasSetMeetingId.current) {
       setActiveTab("Join");
-      updateFormData("meetingId", searchParams.meetingId);
+      updateFormData("meetingId", resolvedSearchParams.meetingId || "");
       hasSetMeetingId.current = true;
     }
-  }, [searchParams.meetingId]);
+  }, [resolvedSearchParams.meetingId, updateFormData]);
 
+  // Debug: Log form data changes
   useEffect(() => {
     console.log("Form data changed:", formData);
   }, [formData]);
@@ -180,4 +184,12 @@ export default function MeetingForm({
       </div>
     </MotionConfig>
   );
+}
+
+export default function MeetingForm({
+  searchParams,
+}: {
+  searchParams: Promise<{ meetingId?: string }>;
+}) {
+  return <MeetingFormClient searchParams={searchParams} />;
 }
