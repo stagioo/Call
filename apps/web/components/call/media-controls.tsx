@@ -1,3 +1,4 @@
+import React from "react";
 import { useCallContext } from "@/contexts/call-context";
 import { useOrigin } from "@/hooks/use-origin";
 import { Button } from "@call/ui/components/button";
@@ -23,7 +24,7 @@ import {
   MotionConfig,
   type HTMLMotionProps,
 } from "motion/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FiChevronDown, FiMonitor, FiVideoOff } from "react-icons/fi";
 import { toast } from "sonner";
 
@@ -46,7 +47,7 @@ interface MediaControlsProps {
   selectedAudio: string;
 }
 
-export const MediaControls = ({
+const MediaControlsComponent = ({
   localStream,
   joined,
   onHangup,
@@ -80,14 +81,81 @@ export const MediaControls = ({
     }
   }, [localStream]);
 
-  const handleToggleCamera = () => {
+  const handleToggleCamera = useCallback(() => {
     onToggleCamera();
     setIsCameraOn((prev) => !prev);
-  };
+  }, [onToggleCamera]);
 
-  const handleDeviceChange = (type: "video" | "audio", deviceId: string) => {
-    onDeviceChange(type, deviceId);
-  };
+  const handleDeviceChange = useCallback(
+    (type: "video" | "audio", deviceId: string) => {
+      onDeviceChange(type, deviceId);
+    },
+    [onDeviceChange]
+  );
+
+  const cameraButtonClassName = useMemo(
+    () =>
+      cn(
+        !isCameraOn &&
+          "bg-primary-red/10 border-primary-red/10 hover:bg-primary-red/10 hover:text-primary-red"
+      ),
+    [isCameraOn]
+  );
+
+  const micButtonClassName = useMemo(
+    () =>
+      cn(
+        !isMicOn &&
+          "bg-primary-red/10 border-primary-red/10 hover:bg-primary-red/10 hover:text-primary-red"
+      ),
+    [isMicOn]
+  );
+
+  const screenShareButtonClassName = useMemo(
+    () =>
+      cn(
+        isScreenSharing &&
+          "border-primary-blue bg-primary-blue hover:bg-primary-blue"
+      ),
+    [isScreenSharing]
+  );
+
+  const participantsButtonClassName = useMemo(
+    () =>
+      cn(
+        activeSection === "participants" &&
+          "border-primary-blue bg-primary-blue"
+      ),
+    [activeSection]
+  );
+
+  const chatButtonClassName = useMemo(
+    () =>
+      cn(
+        "relative",
+        activeSection === "chat" && "border-primary-blue bg-primary-blue"
+      ),
+    [activeSection]
+  );
+
+  const screenShareIconClassName = useMemo(
+    () =>
+      cn(
+        "fill-primary-icon stroke-primary-icon size-5 transition-all duration-300",
+        isScreenSharing && "fill-white stroke-white"
+      ),
+    [isScreenSharing]
+  );
+
+  const participantsIconFill = useMemo(
+    () => cn(activeSection === "participants" && "fill-white stroke-white"),
+    [activeSection]
+  );
+
+  const chatIconFill = useMemo(
+    () => cn(activeSection === "chat" && "fill-white"),
+    [activeSection]
+  );
 
   return (
     <div className="fixed bottom-0 left-0 flex h-20 w-full items-center justify-center">
@@ -100,12 +168,7 @@ export const MediaControls = ({
       <div className="z-10 z-50 flex flex-1 items-center justify-between px-10">
         <CopyButton />
         <div className="flex items-center justify-center gap-2.5">
-          <ControlButton
-            className={cn(
-              !isCameraOn &&
-                "bg-primary-red/10 border-primary-red/10 hover:bg-primary-red/10 hover:text-primary-red"
-            )}
-          >
+          <ControlButton className={cameraButtonClassName}>
             <button
               onClick={handleToggleCamera}
               aria-label={isCameraOn ? "Turn camera off" : "Turn camera on"}
@@ -154,12 +217,7 @@ export const MediaControls = ({
               </DropdownMenuContent>
             </DropdownMenu>
           </ControlButton>
-          <ControlButton
-            className={cn(
-              !isMicOn &&
-                "bg-primary-red/10 border-primary-red/10 hover:bg-primary-red/10 hover:text-primary-red"
-            )}
-          >
+          <ControlButton className={micButtonClassName}>
             <button
               onClick={onToggleMic}
               aria-label={isMicOn ? "Mute microphone" : "Unmute microphone"}
@@ -210,49 +268,27 @@ export const MediaControls = ({
           </ControlButton>
 
           <ControlButton
-            className={cn(
-              isScreenSharing &&
-                "border-primary-blue bg-primary-blue hover:bg-primary-blue"
-            )}
+            className={screenShareButtonClassName}
             onClick={onToggleScreenShare}
           >
-            <FiMonitor
-              className={cn(
-                "fill-primary-icon stroke-primary-icon size-5 transition-all duration-300",
-                isScreenSharing && "fill-white stroke-white"
-              )}
-            />
+            <FiMonitor className={screenShareIconClassName} />
           </ControlButton>
 
           <ControlButton
             onClick={onToggleParticipants}
-            className={cn(
-              activeSection === "participants" &&
-                "border-primary-blue bg-primary-blue"
-            )}
+            className={participantsButtonClassName}
           >
             <Icons.users
               className="fill-primary-icon size-5"
-              fill={cn(
-                activeSection === "participants" && "fill-white stroke-white"
-              )}
+              fill={participantsIconFill}
             />
           </ControlButton>
 
-          <ControlButton
-            onClick={onToggleChat}
-            className={cn(
-              "relative",
-              activeSection === "chat" && "border-primary-blue bg-primary-blue"
-            )}
-          >
+          <ControlButton onClick={onToggleChat} className={chatButtonClassName}>
             {!isChatOpen && unreadChatCount > 0 ? (
               <Icons.gotMessageIcon className="size-5" />
             ) : (
-              <Icons.messageIcon
-                className="size-5"
-                fill={cn(activeSection === "chat" && "fill-white")}
-              />
+              <Icons.messageIcon className="size-5" fill={chatIconFill} />
             )}
           </ControlButton>
 
@@ -275,7 +311,9 @@ export const MediaControls = ({
   );
 };
 
-const ControlButton = (props: HTMLMotionProps<"div">) => {
+export const MediaControls = React.memo(MediaControlsComponent);
+
+const ControlButton = React.memo((props: HTMLMotionProps<"div">) => {
   const { className, ...rest } = props;
   return (
     <m.div
@@ -287,16 +325,17 @@ const ControlButton = (props: HTMLMotionProps<"div">) => {
       whileTap={{ scale: 0.98 }}
     />
   );
-};
+});
 
-const CopyButton = () => {
+const CopyButton = React.memo(() => {
   const origin = useOrigin();
   const [copying, setCopying] = useState(false);
   const [copyingCallId, setCopyingCallId] = useState(false);
   const {
     state: { callId },
   } = useCallContext();
-  const handleCopyInviteLink = () => {
+
+  const handleCopyInviteLink = useCallback(() => {
     setCopying(true);
     const url = `${origin}/app/call/${callId}`;
     navigator.clipboard.writeText(url);
@@ -304,9 +343,9 @@ const CopyButton = () => {
     setTimeout(() => {
       setCopying(false);
     }, 2000);
-  };
+  }, [origin, callId]);
 
-  const handleCopyCallId = () => {
+  const handleCopyCallId = useCallback(() => {
     if (callId) {
       setCopyingCallId(true);
       navigator.clipboard.writeText(callId);
@@ -315,7 +354,7 @@ const CopyButton = () => {
         setCopyingCallId(false);
       }, 2000);
     }
-  };
+  }, [callId]);
 
   return (
     <div className="flex items-center gap-2">
@@ -387,12 +426,7 @@ const CopyButton = () => {
               <m.span>Copied</m.span>
             </m.span>
           ) : (
-            <m.span
-              animate="visible"
-              exit="hidden"
-              initial="hidden"
-              variants={copyVariants}
-            >
+            <m.span animate="visible" exit="hidden" initial="hidden">
               {callId}
             </m.span>
           )}
@@ -400,6 +434,6 @@ const CopyButton = () => {
       </Button>
     </div>
   );
-};
+});
 
 export default MediaControls;
