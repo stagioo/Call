@@ -131,8 +131,7 @@ export const useUnauthenticatedMeeting =
       },
       onSuccess: (data: { call: Call }) => {
         toast.success("Joined call successfully!");
-        router.refresh();
-        router.push(`/r/${data.call.id}`);
+        window.location.href = `/r/${data.call.id}`;
         resetForm();
       },
       onError: (error) => {
