@@ -1,10 +1,11 @@
 "use client";
 
+import React from "react";
 import { useCallSelector, useMediasoupSelector } from "@/contexts/call-context";
 import { useSession } from "@/components/providers/session";
 import { Icons } from "@call/ui/components/icons";
 import { cn } from "@call/ui/lib/utils";
-import { type JSX, memo, useMemo } from "react";
+import { type JSX, memo, useCallback, useMemo } from "react";
 import { motion as m } from "motion/react";
 
 const LocalVideo = memo(function LocalVideo({
@@ -29,10 +30,19 @@ const LocalVideo = memo(function LocalVideo({
     userImage,
   });
 
-  // Check if camera is on (has enabled video tracks)
   const hasVideoTracks = stream
     ?.getVideoTracks()
     .some((track) => track.enabled);
+
+  // Memoize the video ref callback
+  const videoRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      if (el && stream) {
+        el.srcObject = stream;
+      }
+    },
+    [stream]
+  );
 
   return (
     <m.div
@@ -48,11 +58,7 @@ const LocalVideo = memo(function LocalVideo({
           playsInline
           muted
           className="size-full object-cover"
-          ref={(el) => {
-            if (el && stream) {
-              el.srcObject = stream;
-            }
-          }}
+          ref={videoRef}
         />
       ) : (
         <div className="flex size-full items-center justify-center bg-black">
@@ -94,12 +100,11 @@ const RemoteVideoTile = memo(function RemoteVideoTile({
   userImage?: string;
 }) {
   console.log("tileId remote", keyId, "muted:", muted, "userImage:", userImage);
-  
-  // Check if video is muted (no enabled video tracks)
+
   const hasVideoTracks = stream
     ?.getVideoTracks()
     .some((track) => track.enabled);
-  
+
   console.log("RemoteVideoTile debug:", {
     keyId,
     muted,
@@ -107,6 +112,24 @@ const RemoteVideoTile = memo(function RemoteVideoTile({
     userImage,
     displayName: peerDisplayName,
   });
+
+  // Memoize the video ref callback
+  const videoRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      if (el && stream) {
+        el.srcObject = stream;
+        el.onloadedmetadata = () => {
+          el.play().catch((e) =>
+            console.warn(
+              `Error playing remote video for ${peerDisplayName}:`,
+              e
+            )
+          );
+        };
+      }
+    },
+    [stream, peerDisplayName]
+  );
 
   return (
     <m.div
@@ -121,19 +144,7 @@ const RemoteVideoTile = memo(function RemoteVideoTile({
           autoPlay
           playsInline
           className="size-full object-cover"
-          ref={(el) => {
-            if (el && stream) {
-              el.srcObject = stream;
-              el.onloadedmetadata = () => {
-                el.play().catch((e) =>
-                  console.warn(
-                    `Error playing remote video for ${peerDisplayName}:`,
-                    e
-                  )
-                );
-              };
-            }
-          }}
+          ref={videoRef}
         />
       ) : (
         <div className="flex size-full items-center justify-center bg-black">
@@ -170,22 +181,29 @@ const ScreenShareTile = memo(function ScreenShareTile({
   keyId: string;
 }) {
   console.log("tileId screen", keyId, label);
+
+  // Memoize the video ref callback
+  const videoRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      if (el) {
+        el.srcObject = stream;
+        el.onloadedmetadata = () => {
+          el.play().catch((e) =>
+            console.warn(`Error playing screen share for ${label}:`, e)
+          );
+        };
+      }
+    },
+    [stream, label]
+  );
+
   return (
     <m.div layoutId={keyId} className="relative size-full">
       <video
         autoPlay
         playsInline
         className="size-full rounded-lg bg-black shadow-lg"
-        ref={(el) => {
-          if (el) {
-            el.srcObject = stream;
-            el.onloadedmetadata = () => {
-              el.play().catch((e) =>
-                console.warn(`Error playing screen share for ${label}:`, e)
-              );
-            };
-          }
-        }}
+        ref={videoRef}
       />
       <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
         {label}
@@ -194,7 +212,7 @@ const ScreenShareTile = memo(function ScreenShareTile({
   );
 });
 
-export const CallVideoGrid = memo(() => {
+const CallVideoGridComponent = memo(() => {
   const screenStream = useCallSelector((s) => s.screenStream);
   const remoteAudios = useCallSelector((s) => s.remoteAudios);
   const isCameraOn = useCallSelector((s) => s.isLocalCameraOn);
@@ -298,7 +316,16 @@ export const CallVideoGrid = memo(() => {
     }
 
     remoteStreams.forEach(
-      ({ stream, peerId, displayName, producerId, kind, source, muted, userImage: remoteUserImage }) => {
+      ({
+        stream,
+        peerId,
+        displayName,
+        producerId,
+        kind,
+        source,
+        muted,
+        userImage: remoteUserImage,
+      }) => {
         if (!stream) return;
         if (kind !== "video") return;
 
@@ -310,14 +337,10 @@ export const CallVideoGrid = memo(() => {
           source,
           muted,
           userImage: remoteUserImage,
-          hasValidTrack: stream.getVideoTracks().some((t) => t.readyState === "live" && t.enabled)
+          hasValidTrack: stream
+            .getVideoTracks()
+            .some((t) => t.readyState === "live" && t.enabled),
         });
-
-        // Include streams even if they don't have valid tracks (muted streams)
-        // This ensures we show profile pictures for users with cameras off
-        const hasValidTrack = stream
-          .getVideoTracks()
-          .some((t) => t.readyState === "live" && t.enabled);
 
         streams.push({
           id: producerId || peerId,
@@ -332,10 +355,17 @@ export const CallVideoGrid = memo(() => {
     );
 
     return streams;
-  }, [localStream, screenStream, remoteStreams]);
+  }, [localStream, screenStream, remoteStreams, isCameraOn, userImage]);
 
-  const allNormalStreams = allStreams.filter((s) => s.type === "webcam");
-  const allScreenStreams = allStreams.filter((s) => s.type === "screen");
+  const allNormalStreams = useMemo(
+    () => allStreams.filter((s) => s.type === "webcam"),
+    [allStreams]
+  );
+
+  const allScreenStreams = useMemo(
+    () => allStreams.filter((s) => s.type === "screen"),
+    [allStreams]
+  );
 
   const videoStreams = useMemo(() => {
     const videos: JSX.Element[] = [];
@@ -368,12 +398,6 @@ export const CallVideoGrid = memo(() => {
         if (!stream) return;
         if (kind !== "video" || source !== "webcam") return;
 
-        // Include streams even if they don't have valid tracks (muted streams)
-        // This ensures we show profile pictures for users with cameras off
-        const hasValidTrack = stream
-          .getVideoTracks()
-          .some((track) => track.readyState === "live" && track.enabled);
-
         videos.push(
           <RemoteVideoTile
             key={producerId || peerId}
@@ -390,10 +414,11 @@ export const CallVideoGrid = memo(() => {
     );
 
     return videos;
-  }, [localStream, remoteStreams, screenShares]);
+  }, [localStream, remoteStreams, screenShares, isCameraOn, userImage]);
 
   if (allNormalStreams.length <= 2 && allScreenStreams.length === 0)
     return <OneOrTwo streams={allNormalStreams} />;
+
   return (
     <div className="relative mb-20 flex h-[calc(100vh-100px)] w-full flex-col items-center justify-center gap-6 p-4">
       {screenShares.length > 0 && (
@@ -431,7 +456,10 @@ export const CallVideoGrid = memo(() => {
   );
 });
 
-CallVideoGrid.displayName = "CallVideoGrid";
+CallVideoGridComponent.displayName = "CallVideoGridComponent";
+
+// Memoize the entire component
+export const CallVideoGrid = React.memo(CallVideoGridComponent);
 
 interface OneOrTwoProps {
   streams: {
@@ -451,84 +479,111 @@ const OneOrTwo = memo(({ streams }: OneOrTwoProps) => {
   const session = useSession();
   const userImage = session?.user?.image || "/avatars/default.jpg";
 
+  // Memoize the video ref callback
+  const videoRef = useCallback(
+    (
+      el: HTMLVideoElement | null,
+      stream: MediaStream,
+      displayName?: string
+    ) => {
+      if (el) {
+        el.srcObject = stream;
+        el.onloadedmetadata = () => {
+          el.play().catch((e) =>
+            console.warn(`Error playing video for ${displayName || "User"}:`, e)
+          );
+        };
+      }
+    },
+    []
+  );
+
+  // Memoize the audio ref callback
+  const audioRef = useCallback(
+    (
+      el: HTMLAudioElement | null,
+      stream: MediaStream,
+      displayName: string | undefined,
+      peerId: string
+    ) => {
+      if (el) {
+        el.srcObject = stream;
+        el.onloadedmetadata = () => {
+          el.play().catch((e) =>
+            console.warn(`Error playing audio for ${displayName || peerId}:`, e)
+          );
+        };
+      }
+    },
+    []
+  );
+
   return (
     <div className="relative mb-20 flex h-[calc(100vh-100px)] flex-1 items-center justify-center gap-4 p-4">
-      {streams.map(({ id, stream, type, peerId, displayName, userImage: streamUserImage, muted }) => {
-        const isLocalUser = displayName === "You";
-        const hasVideoTracks = isLocalUser
-          ? stream?.getVideoTracks().some((track) => track.enabled)
-          : stream
-              ?.getVideoTracks()
-              .some((track) => track.readyState === "live" && track.enabled);
+      {streams.map(
+        ({
+          id,
+          stream,
+          type,
+          peerId,
+          displayName,
+          userImage: streamUserImage,
+          muted,
+        }) => {
+          const isLocalUser = displayName === "You";
+          const hasVideoTracks = isLocalUser
+            ? stream?.getVideoTracks().some((track) => track.enabled)
+            : stream
+                ?.getVideoTracks()
+                .some((track) => track.readyState === "live" && track.enabled);
 
-        return (
-          <m.div
-            layoutId={id}
-            key={id}
-            className={cn("relative size-full overflow-hidden rounded-2xl", {
-              "absolute bottom-8 right-8 z-10 max-h-[200px] max-w-[300px] rounded-lg":
-                isLocalUser && streams.length > 1,
-            })}
-          >
-            {(isLocalUser && !isCameraOn) || (!isLocalUser && muted) ? (
-              <div className="flex size-full items-center justify-center bg-black">
-                {streamUserImage ? (
-                  <img
-                    src={streamUserImage}
-                    alt={`${displayName || "User"}'s profile picture`}
-                    className="h-20 w-20 rounded-full border-4 border-white/20 object-cover"
-                  />
-                ) : (
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white/20 bg-gray-600">
-                    <Icons.users className="h-10 w-10 text-white/70" />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <video
-                autoPlay
-                playsInline
-                muted={isLocalUser}
-                className="size-full object-cover"
-                ref={(el) => {
-                  if (el) {
-                    el.srcObject = stream;
-                    el.onloadedmetadata = () => {
-                      el.play().catch((e) =>
-                        console.warn(
-                          `Error playing video for ${displayName}:`,
-                          e
-                        )
-                      );
-                    };
-                  }
-                }}
-              />
-            )}
-            <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
-              {displayName}
-            </span>
-          </m.div>
-        );
-      })}
+          return (
+            <m.div
+              layoutId={id}
+              key={id}
+              className={cn("relative size-full overflow-hidden rounded-2xl", {
+                "absolute bottom-8 right-8 z-10 max-h-[200px] max-w-[300px] rounded-lg":
+                  isLocalUser && streams.length > 1,
+              })}
+            >
+              {(isLocalUser && !isCameraOn) || (!isLocalUser && muted) ? (
+                <div className="flex size-full items-center justify-center bg-black">
+                  {streamUserImage ? (
+                    <img
+                      src={streamUserImage}
+                      alt={`${displayName || "User"}'s profile picture`}
+                      className="h-20 w-20 rounded-full border-4 border-white/20 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white/20 bg-gray-600">
+                      <Icons.users className="h-10 w-10 text-white/70" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <video
+                  autoPlay
+                  playsInline
+                  muted={isLocalUser}
+                  className="size-full object-cover"
+                  ref={(el) => videoRef(el, stream, displayName || "User")}
+                />
+              )}
+              <span className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white">
+                {displayName}
+              </span>
+            </m.div>
+          );
+        }
+      )}
       {remoteAudios.map(({ stream, id, peerId, displayName }) => (
         <audio
           key={id}
           autoPlay
           playsInline
-          ref={(el) => {
-            if (el) {
-              el.srcObject = stream;
-              el.onloadedmetadata = () => {
-                el.play().catch((e) =>
-                  console.warn(
-                    `Error playing audio for ${displayName || peerId}:`,
-                    e
-                  )
-                );
-              };
-            }
-          }}
+          ref={(el) =>
+            audioRef(el, stream, displayName || "User", peerId || "User")
+          }
         />
       ))}
     </div>

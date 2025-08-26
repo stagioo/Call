@@ -31,6 +31,8 @@ export const StartCall = () => {
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const { user } = useSession();
 
+  console.log(user);
+
   const { mutate: createCall, isPending } = useMutation({
     mutationFn: CALLS_QUERY.createCall,
     onSuccess: (data) => {
