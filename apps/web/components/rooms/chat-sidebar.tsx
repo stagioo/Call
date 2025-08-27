@@ -93,7 +93,9 @@ export function ChatSidebar({
                 activeSection === (section.key as typeof activeSection)
               }
               aria-label={`Show ${section.label}`}
-              onClick={() => onActiveSectionChange(section.key as ActiveSection)}
+              onClick={() =>
+                onActiveSectionChange(section.key as ActiveSection)
+              }
               className={cn(
                 "relative z-0",
                 buttonVariants({ variant: "ghost" }),
