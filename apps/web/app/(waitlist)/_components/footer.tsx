@@ -12,7 +12,7 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className="bg-[#151515] border-t border-border mt-auto w-full">
+    <footer className="border-border mt-auto w-full border-t bg-[#151515]">
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
         <div className="grid grid-cols-1 gap-20 md:grid-cols-2">
           {/* Left: Brand + description + socials */}
@@ -28,21 +28,21 @@ const Footer = () => {
               <Link
                 href="#"
                 aria-label="GitHub"
-                className="rounded-md p-2 hover:bg-muted-foreground/10"
+                className="hover:bg-muted-foreground/10 rounded-md p-2"
               >
                 <Icons.github className="size-4" />
               </Link>
               <Link
                 href="#"
                 aria-label="Discord"
-                className="rounded-md p-2 hover:bg-muted-foreground/10"
+                className="hover:bg-muted-foreground/10 rounded-md p-2"
               >
                 <Icons.discord />
               </Link>
               <Link
                 href="#"
                 aria-label="X"
-                className="rounded-md p-2 hover:bg-muted-foreground/10"
+                className="hover:bg-muted-foreground/10 rounded-md p-2"
               >
                 <Icons.x className="size-4" />
               </Link>
@@ -52,21 +52,33 @@ const Footer = () => {
           {/* Right: Template sections */}
           <div className="grid grid-cols-2 gap-6 text-sm">
             <div className="flex flex-col gap-2">
-              <h3 className="text-white/90 font-medium">Company</h3>
-              <Link href="#" className="text-muted-foreground hover:underline">Blog</Link>
-              <Link href="#" className="text-muted-foreground hover:underline">Contributors</Link>
-              <Link href="#" className="text-muted-foreground hover:underline">About</Link>
-
+              <h3 className="font-medium text-white/90">Company</h3>
+              <Link href="#" className="text-muted-foreground hover:underline">
+                Blog
+              </Link>
+              <Link
+                href="/contributors"
+                className="text-muted-foreground hover:underline"
+              >
+                Contributors
+              </Link>
+              <Link href="#" className="text-muted-foreground hover:underline">
+                About
+              </Link>
             </div>
             <div className="flex flex-col gap-2">
-              <h3 className="text-white/90 font-medium">Product</h3>
-              <Link href="/roadmap" className="text-muted-foreground hover:underline">Roadmap</Link>
-           
+              <h3 className="font-medium text-white/90">Product</h3>
+              <Link
+                href="/roadmap"
+                className="text-muted-foreground hover:underline"
+              >
+                Roadmap
+              </Link>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="text-muted-foreground mt-8 flex items-center gap-2 text-xs">
           <p>&copy; {currentYear} Call. All rights reserved.</p>
         </div>
       </div>
