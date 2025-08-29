@@ -26,21 +26,24 @@ const Footer = () => {
             </p>
             <div className="flex items-center gap-2">
               <Link
-                href="#"
+                href="https://github.com/Call0dotco/call"
+                target="_blank"
                 aria-label="GitHub"
                 className="hover:bg-muted-foreground/10 rounded-md p-2"
               >
                 <Icons.github className="size-4" />
               </Link>
               <Link
-                href="#"
+                href="https://discord.com/invite/bre4echNxB"
+                target="_blank"
                 aria-label="Discord"
                 className="hover:bg-muted-foreground/10 rounded-md p-2"
               >
                 <Icons.discord />
               </Link>
               <Link
-                href="#"
+                href="https://x.com/joincalldotco"
+                target="_blank"
                 aria-label="X"
                 className="hover:bg-muted-foreground/10 rounded-md p-2"
               >
