@@ -28,6 +28,7 @@ const Footer = () => {
               <Link
                 href="https://github.com/Call0dotco/call"
                 target="_blank"
+                rel="noopener noreferrer"
                 aria-label="GitHub"
                 className="hover:bg-muted-foreground/10 rounded-md p-2"
               >
@@ -36,6 +37,7 @@ const Footer = () => {
               <Link
                 href="https://discord.com/invite/bre4echNxB"
                 target="_blank"
+                rel="noopener noreferrer"
                 aria-label="Discord"
                 className="hover:bg-muted-foreground/10 rounded-md p-2"
               >
@@ -44,6 +46,7 @@ const Footer = () => {
               <Link
                 href="https://x.com/joincalldotco"
                 target="_blank"
+                rel="noopener noreferrer"
                 aria-label="X"
                 className="hover:bg-muted-foreground/10 rounded-md p-2"
               >
