@@ -77,7 +77,7 @@ Ready to escape complex, data-hungry meeting apps? Join the future of video call
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/Call0dotco/call.git
+   git clone https://github.com/joincalldotco/call.git
    cd call
    ```
 
